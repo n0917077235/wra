@@ -1,0 +1,170 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title></title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script type="text/javascript">
+
+
+        function ShowAllReservation() {
+            var xhttp = new XMLHttpRequest();
+            xhttp.open("GET", "https://localhost:7003/TaipeiGate", true);
+            xhttp.send();
+
+            xhttp.onreadystatechange = function () {
+                var tbody = document.getElementById("apiTable").querySelector("tbody");
+                tbody.innerHTML = "";
+                if (this.readyState == 4 && this.status == 200) {
+                    alert(this.responseText);
+                    JSON.parse(this.responseText).forEach(function (data, index) {
+                        tbody.innerHTML += "<tr><td>" + data.sensorName + "</td>" + "<td>" + data.lastTime + "</td>" + "<td>" + data.gateValue + "</td></tr>";
+                    });
+                }
+            };
+        }
+
+        function getData() {
+            fetch('https://localhost:7003/api/TaipeiGate', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    // Process the response data
+                    alert(data);
+                    console.log(data);
+                })
+                .catch(error => {
+                    
+                    alert('Error:', error);
+                });
+        }
+
+
+        $(document).ready(function () {
+            //return new Promise((resolve) => {
+            $.ajax({
+                type: "GET",
+                async: false,
+                dataType: "json",
+                url: "http://localhost:5003/api/TaipeiGate/GetTaipeiGate",
+                //url: "http://localhost:5265/api/student",
+                contentType: "application/json; charset=utf-8",
+                success: function (data) {
+                    /*
+                    var tbody = document.getElementById("apiTable").querySelector("tbody");
+                    tbody.innerHTML = "";
+                        JSON.parse(this.responseText).forEach(function (data, index) {
+                            tbody.innerHTML += "<tr><td>" + data.sensorName + "</td>" + "<td>" + data.lastTime + "</td>" + "<td>" + data.gateValue + "</td></tr>";
+                        });
+                        */
+                    $("#DIV").html('');
+                    var DIV = '';
+                    $.each(data, function (i, item) {
+                        
+                        var rows = "<tr>" +
+                            "<td id='sensor'>" + item.sensorName + "</td>" +
+                            "<td id='time'>" + item.lastTime + "</td>" +
+                            "<td id='value'>" + item.gateValue + "</td>" +
+                            "</tr>";
+ 
+                        $('#apiTable').append(rows);
+
+
+                        
+                    }); //End of foreach Loop   
+                    console.log(data);
+                    const csvData = '\ufeff' +convertToCsv(data);
+
+                    // Create a Blob object from the CSV string
+                    const blob = new Blob([csvData], { type: 'text/csv;' });
+
+                    // Create a temporary URL for the Blob
+                    const url = URL.createObjectURL(blob);
+
+                    // Create a link element
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = 'data.csv'; // Set the desired file name
+
+                    // Append the link to the document body
+                    document.body.appendChild(link);
+
+                    // Click the link to trigger the file download
+                    link.click();
+
+                    // Remove the link from the document body
+                    document.body.removeChild(link);
+
+                }, //End of AJAX Success function  
+
+                failure: function (data) {
+                    alert('f:' + data);
+                }, //End of AJAX failure function  
+                error: function (xhr, status, error) {
+                    alert('e'+error);
+                    var errorMessage = xhr.responseText;
+                    alert(errorMessage);
+                }
+                /*
+                error: function (data) {
+                    for (var key in data) {
+                        if (data.hasOwnProperty(key)) {
+                            var value = data[key];
+                            //if (key='status')
+                                alert(key + ": " + value);
+                        }
+                    }
+                }
+                */
+
+            });
+        });
+        //});
+
+        function convertToCsv(data) {
+            // Convert array of objects to CSV string
+            const headers = Object.keys(data[0]).join(',');
+            const rows = data.map(obj => Object.values(obj).join(','));
+            return headers + '\n' + rows.join('\n');
+        }
+
+        function convertToCsv2(data) {
+            // Convert array of objects to CSV string with Big5 encoding
+            const headers = Object.keys(data[0]).join(',');
+            const rows = data.map(obj => Object.values(obj).join(','));
+            const csvContent = headers + '\n' + rows.join('\n');
+
+            // Convert CSV string from UTF-8 to Big5 encoding
+            const utf8Encoder = new TextEncoder('UTF-8');
+            const big5Decoder = new TextDecoder('big5');
+            const utf8Data = utf8Encoder.encode(csvContent);
+            const big5Data = big5Decoder.decode(utf8Data);
+            //alert(big5Data);
+            return big5Data;
+        }
+    </script>
+
+
+</head>
+<body >
+    <input type="text" class="form-control" id="Id" />
+    <button id="GetButton" onclick="GetReservation()">Get Reservation</button>
+    <div>
+        <table id="apiTable">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Start Location</th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>
