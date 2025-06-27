@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width">
+    <title>Checkbox List Vue Component</title>
+    <style>
+        html,
+        body {
+            font-size: 9pt;
+        }
+
+        [v-cloak] {
+            display: none;
+        }
+
+        fieldset {
+            width: 320px;
+            padding: 12px;
+        }
+
+            fieldset div {
+                background-color: #eee;
+            }
+    </style>
+</head>
+
+<body>
+    <div id="app" v-cloak>
+        <fieldset>
+            <legend>Checkbox List (string array options &amp; multi-select)</legend>
+            <v-chkbox-list v-model="SelValues1" v-bind:items="StrArrayOptions"></v-chkbox-list>
+            <div class="value-view">{{SelValues1}}</div>
+        </fieldset>
+        <fieldset>
+            <legend>Checkbox List (value/text options &amp; exclusive choice)</legend>
+            <v-chkbox-list v-model="SelValue2" v-bind:items="ValueTextArrayOptions" exclusive="true"></v-chkbox-list>
+            <div class="value-view">{{SelValue2}}</div>
+        </fieldset>
+    </div>
+    <script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.0.3/vue.js"></script>
+    <script>
+        //實際應用時，元件會另存成 vue-components-filename.js 方便重複利用
+        Vue.component('v-chkbox-list', {
+            props: {
+                value: Array,
+                items: Array,
+                exclusive: Boolean
+            },
+            template: '<span><label v-for="item in items">' +
+                '<input type="checkbox" v-bind:value="item.value || item" />' +
+                '<span>{{item.text || item}}</span>&#160;&#160;</label></span>',
+            mounted: function () {
+                var self = this;
+                var el = $(self.$el);
+                el.find("input").each(function () {
+                    if (self.exclusive) {
+                        this.checked = this.value == self.value;
+                    }
+                    else {
+                        this.checked = $.inArray(this.value, self.value) > -1;
+                    }
+                });
+                el.on("change", "input[type=checkbox]", function () {
+                    if (self.exclusive) {
+                        $(this).closest("span").find("input").not(this).prop("checked", false);
+                        self.$emit('input', this.value);
+                    }
+                    else {
+                        var selValues = $.map(el.find(":checked"), function (cbx) {
+                            return cbx.value;
+                        });
+                        self.$emit('input', selValues);
+                    }
+                });
+
+            }
+        });
+    </script>
+    <script>
+        const vm = Vue.createApp({
+            data: {
+                return :{
+                    StrArrayOptions: ["Value1", "Value2", "Value3"],
+                    SelValues1: ["Value2"],
+                    ValueTextArrayOptions: [
+                        { value: "Value1", text: "Text1" },
+                        { value: "Value2", text: "Text2" },
+                        { value: "Value3", text: "Text3" }
+                    ],
+                    SelValue2: "Value2"
+                }
+            }
+        });
+        vm.mount('#app');
+    </script>
+</body>
+</html>

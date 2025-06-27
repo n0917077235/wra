@@ -1,0 +1,25 @@
+.el-menu {
+  .el-menu-item.is-active {
+    background-color: $pressed;
+  }
+
+  .el-sub-menu {
+    .el-menu-item.is-active {
+      background-color: $pressed;
+    }
+
+    &.is-active.is-opened {
+      background-color: $pressed;
+    }
+  }
+}
+
+.el-menu--popup {
+  .el-menu-item.is-active {
+    background-color: $pressed;
+  }
+}
+
+.el-menu--collapse {
+  width: 82px;
+}

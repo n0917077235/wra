@@ -1,0 +1,12 @@
+.el-button {
+  height: 56px;
+  border-radius: 8px;
+  &.icon-button {
+    padding: 0;
+    height: fit-content;
+  }
+}
+
+.el-picker-panel__link-btn {
+  height: unset;
+}

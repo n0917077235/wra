@@ -1,0 +1,61 @@
+<template>
+  <div>
+    <ul>
+      <li>
+        <a
+          class="blue-underline"
+          href="http://211.23.16.134:8088/SensorQuery2022_1.aspx"
+          target="_blank"
+          >感測器詳情
+        </a>
+      </li>
+      <li>
+        <a
+          class="blue-underline"
+          href="http://211.23.16.134:8088/Yansantzi2.aspx"
+          target="_blank"
+          >員山子總覽</a
+        >
+      </li>
+      <li>
+        <a
+          class="blue-underline"
+          href="http://211.23.16.134:8088/dragon.aspx"
+          target="_blank"
+          >龍壽總覽</a
+        >
+      </li>
+      <li>
+        <a
+          class="blue-underline"
+          href="http://211.23.16.134:8088/StationInfo.aspx"
+          target="_blank"
+          >地圖總覽</a
+        >
+      </li>
+      <li>
+        <a
+          class="blue-underline"
+          href="http://211.23.16.134:8088/gates2.html"
+          target="_blank"
+          >雙北橫移門啟閉</a
+        >
+      </li>
+      <li>
+        <a
+          class="blue-underline"
+          href="http://211.23.16.134:8088/ChartTansuiWater.aspx"
+          >淡水河水位</a
+        >
+      </li>
+    </ul>
+  </div>
+</template>
+
+<script setup lang="ts"></script>
+<style>
+.blue-underline {
+  color: blue; /* 设置文本颜色为蓝色 */
+  text-decoration: underline; /* 添加下划线 */
+}
+</style>

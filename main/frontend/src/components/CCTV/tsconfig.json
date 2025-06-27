@@ -1,0 +1,82 @@
+{
+    "layers": [
+        {
+            "name": "衛星圖",
+            "type": "maptype",
+            "state": "check"
+        },
+        {
+            "name": "電子地圖",
+            "type": "maptype",
+            "state": "check"
+        },
+        {
+            "name": "監測站圖層",
+            "type": "group",
+            "state":  "check",
+            "layers": [
+                {
+                    "name": "淡水河水門監測站",
+                    "type": "layer",
+                    "state": "check"
+                },
+                {
+                    "name": "員山子分洪監測站",
+                    "type": "layer",
+                    "state": "check"
+                },
+                {
+                    "name": "堤防安全監測站",
+                    "type": "layer",
+                    "state": "check"
+                },
+                {
+                    "name": "堤防安全監測站",
+                    "type": "layer",
+                    "state": "check"
+                }
+            ]
+        },
+        {
+            "name": "監測站圖層",
+            "type": "group",
+            "expanded": true,
+            "layers": [
+                {
+                    "name": "淡水河水門監測站",
+                    "type": "existing",
+                    "default": true
+                },
+                {
+                    "name": "員山子分洪監測站",
+                    "type": "existing",
+                    "default": true
+                },
+                {
+                    "name": "堤防安全監測站",
+                    "type": "existing",
+                    "default": true
+                },
+                {
+                    "name": "影像監視站",
+                    "type": "existing",
+                    "default": false
+                }
+            ]
+        },
+        {
+            "name": "感測器圖層",
+            "type": "group",
+            "expanded": false,
+            "layers": [
+                {
+                    "name": "沉陷計",
+                    "type": "new",
+                    "default": false
+                }
+                // 其他感測器...
+            ]
+        }
+        // 其他圖層...
+    ]
+}

@@ -1,0 +1,29 @@
+.el-card {
+  width: 100%;
+  --el-box-shadow-light: -0.5px 0.5px 3px 0px rgba(0, 0, 0, 0.15);
+  border: 2px solid transparent;
+  &:hover {
+    border: 2px solid $hover;
+  }
+  &.box-active {
+    background: $primary;
+    box-shadow: -0.5px 0.5px 3px 0px rgba(0, 0, 0, 0.15);
+    .el-card__header {
+      border-bottom-color: $primary;
+      color: $white;
+    }
+  }
+  @media (max-width: $lg) {
+    width: 225px;
+    height: 145px;
+  }
+  @media (max-width: $sm) {
+    width: 116px;
+    height: 85px;
+  }
+}
+
+.el-card__header {
+  padding: 4px;
+  font-size: 12px;
+}

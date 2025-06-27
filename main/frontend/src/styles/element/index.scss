@@ -1,0 +1,74 @@
+@forward 'element-plus/theme-chalk/src/common/var.scss' with (
+  $colors: (
+    'primary': (
+      'base': #015495,
+    ),
+  ),
+  $form: (
+    'label-font-size': 14px,
+  ),
+  $input: (
+    'border-color': #999999,
+    'border-radius': 8px,
+    'placeholder-color': #999999,
+    'hover-border-color': #999999,
+    'focus-border-color': #999999,
+  ),
+  $select: (
+    'border-color-hover': #999999,
+    'input-color': #015495,
+    'input-focus-border-color': #999999,
+  ),
+  $menu: (
+    'active-color': #ffffff,
+    'text-color': #ffffff,
+    'hover-text-color': #ffffff,
+    'bg-color': #015495,
+    'hover-bg-color': #2a78b6,
+    'item-height': 44px,
+    'border-color': #015495,
+    'item-font-size': 16px,
+  ),
+  $header: (
+    'padding': 12px,
+    'height': 58px,
+  ),
+  $drawer: (
+    'bg-color': 'transparent',
+    'padding-primary': 0,
+  ),
+  $scrollbar: (
+    'bg-color': #015495,
+    'hover-bg-color': #123c57,
+  ),
+  $card: (
+    'border-color': #fcfcfc,
+    'padding': 0 4px 4px,
+  ),
+  $tag: (
+    'font-size': 14px,
+    'border-radius': 8px 8px 0px 0px,
+  ),
+  $table: (
+    'text-color': #333333,
+    'header-bg-color': #f6f6f6,
+  ),
+  $datepicker: (
+    'text-color': #015495,
+  )
+);
+
+@use 'element-plus/theme-chalk/src/index.scss' as *;
+
+@import './aside';
+@import './button';
+@import './card';
+@import './divider';
+@import './form';
+@import './header';
+@import './input';
+@import './menu';
+@import './popper';
+@import './scrollbar';
+@import './select';
+@import './tag';

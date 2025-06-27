@@ -1,0 +1,42 @@
+.hover-input {
+  &.el-form-item {
+    position: relative;
+    margin-bottom: 0;
+    .el-form-item__label {
+      --el-text-color-regular: #999999;
+      position: absolute;
+      bottom: 10px;
+      left: 16px;
+      transition: 0.36s;
+      z-index: 999;
+      @media (max-width: $md) {
+        font-size: 12px;
+      }
+    }
+
+    &.active {
+      .el-form-item__label {
+        --el-text-color-regular: #333333;
+        bottom: 23px;
+      }
+    }
+  }
+
+  &.el-form-item.is-error .el-input__wrapper {
+    // update error input border color
+    box-shadow: 0 0 0 1px var(--el-input-border-color) inset;
+  }
+
+  .el-form-item__error {
+    color: $red;
+    margin-left: 16px;
+    margin-top: 4px;
+  }
+}
+
+.el-form--inline .el-form-item {
+  margin-right: 16px;
+  @media (max-width: $sm) {
+    margin-right: 0;
+  }
+}

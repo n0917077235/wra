@@ -1,0 +1,6 @@
+.el-header {
+  background-color: $light;
+  @media (max-width: $md) {
+    background-color: $primary;
+  }
+}

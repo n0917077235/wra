@@ -1,0 +1,48 @@
+<svg
+  width="20"
+  height="20"
+  viewBox="0 0 20 20"
+  fill="none"
+  xmlns="http://www.w3.org/2000/svg"
+>
+  <rect width="20" height="20" fill="#1E1E1E" />
+  <g
+    id="[PC] 3 &#231;&#155;&#163;&#232;&#166;&#150;&#231;&#171;&#153;&#231;&#184;&#189;&#232;&#166;&#189;"
+    clip-path="url(#clip0_1_2)"
+  >
+    <rect
+      width="1440"
+      height="1024"
+      transform="translate(-264 -17)"
+      fill="#FCFCFC"
+    />
+    <g id="SideMenu">
+      <path
+        id="Rectangle 15"
+        d="M-264 -17H28C32.4183 -17 36 -13.4183 36 -9V999C36 1003.42 32.4183 1007 28 1007H-264V-17Z"
+        fill="#015495"
+      />
+      <g id="icon_toggle">
+        <g id="icon_toggle_2">
+          <g id="Layer_1">
+            <path
+              id="Vector"
+              d="M13.4198 18.5027L5.40224 10.9568C4.85105 10.438 4.85105 9.56207 5.40224 9.04332L13.4198 1.49732C14.0222 0.930381 15.0107 1.35744 15.0107 2.18469L15.0107 17.8153C15.0107 18.6426 14.0222 19.0696 13.4198 18.5027Z"
+              fill="#FCFCFC"
+            />
+          </g>
+        </g>
+      </g>
+    </g>
+  </g>
+  <defs>
+    <clipPath id="clip0_1_2">
+      <rect
+        width="1440"
+        height="1024"
+        fill="white"
+        transform="translate(-264 -17)"
+      />
+    </clipPath>
+  </defs>
+</svg>
