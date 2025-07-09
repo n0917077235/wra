@@ -44,7 +44,7 @@ export interface EQEventDetailResponse {
     lstY: string[];
     lstZ: string[];
 }
-//11309 �קאּ  GetEQEventRangeIntensity
+//11309 н╫зям░  GetEQEventRangeIntensity
 export async function apiGetEQEventRange(
   payload: EarthquakeBySearchPayload,
 ): Promise<EQEventRangeResponse[]> {

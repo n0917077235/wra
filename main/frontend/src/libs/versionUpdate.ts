@@ -10,7 +10,7 @@ const isNewVersion = (): void => {
             localStorage.setItem('vueVersion', vueVersion);
 
             if (localVueVersion && localVueVersion !== vueVersion) {
-                alert('ÀË´úµo²{·sª©¥»¡A½Ğ½T»{«á§ó·s¡C');
+                alert('æª¢æ¸¬ç™¼ç¾æ–°ç‰ˆæœ¬ï¼Œè«‹ç¢ºèªå¾Œæ›´æ–°ã€‚');
                 window.location.reload();
                 return;
             }

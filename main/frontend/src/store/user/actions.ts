@@ -1,6 +1,4 @@
-import { ActionTree } from 'vuex';
-import { State } from './state';
-//¥H¤W1130828
+//HW1130828
 import { LoginRequest, apiLogin, apiLogout } from '@/resource/login';
 import * as actionTypes from './actionTypes';
 import * as mutationTypes from './mutationTypes';

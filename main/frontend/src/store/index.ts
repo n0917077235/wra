@@ -10,7 +10,7 @@ export default createStore({
     user,
     sensor,
         image,
-        drawings, // ½T«O³o¸Ì¦³¥¿½Tª`¥U drawings ¼Ò²Õ
+        drawings, // ç¢ºä¿é€™è£¡æœ‰æ­£ç¢ºæ³¨å†Š drawings æ¨¡çµ„
   },
   plugins: [
     createPersistedState({

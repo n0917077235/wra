@@ -37,7 +37,7 @@ const actions = {
 };
 
 export default {
-    namespaced: true, // ½T«O¨Ï¥Î©R¦WªÅ¶¡
+    namespaced: true, // ç¢ºä¿ä½¿ç”¨å‘½åç©ºé–“
   state,
   mutations,
   actions

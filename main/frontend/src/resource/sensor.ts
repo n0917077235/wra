@@ -52,7 +52,7 @@ export async function apiGetWaterSensorAreaCCTV(): Promise<
   return response.data;
 }
 
-//1130920 ÁÙ¶·­×§ï
+//1130920 é‚„é ˆä¿®æ”¹
 export async function apiGetWaterEmbankAlarm(): Promise<
     SensorGeneralQueryDataResponse[]
     > {
@@ -190,7 +190,7 @@ export async function apiGetSensorChartData(
   payload: GetSensorChartDataRequest,
 ): Promise<GetSensorChartDataResponse> {
     //tag1130826
-    //alert(payload.); payload ¦p¦ó²£¥Í
+    //alert(payload.); payload å¦‚ä½•ç”¢ç”Ÿ
   const response = await apiClient.post<GetSensorChartDataResponse>(
     `/Sensor/GetSensorChartData`,
     payload,
@@ -209,7 +209,7 @@ export async function apiGetSensorMoreDataByStationName(
         {},
     );
     //return response.data
-    // ±N object Âà´«¦¨ string
+    // å°‡ object è½‰æ›æˆ string
     const jsonString = JSON.stringify(response.data);
     return jsonString;
 }

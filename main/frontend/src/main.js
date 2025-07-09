@@ -7,7 +7,7 @@ import store from './store';
 
 import ElementPlus from 'element-plus' //11308
 app.use(ElementPlus)
-//ª©±± 1130717
+//ç‰ˆæ§ 1130717
 //versionUpdate.isNewVersion();
 
 Object.assign(window, { $: jQuery, jQuery });
@@ -16,15 +16,15 @@ const app = createApp(App);
 app.config.globalProperties.$productionTip = true;
 
 
-//ª©±± 1130717
+//ç‰ˆæ§ 1130717
 app.use(router);
 app.use(stroe);
 
 app.mount('#app');
 
-// ½T«O TGOS ¤w¥[¸ü
+// ç¢ºä¿ TGOS å·²åŠ è¼‰
 if (typeof TGOS === 'undefined') {
-    console.error('TGOS API ¥¼¥[¸ü');
+    console.error('TGOS API æœªåŠ è¼‰');
 } else {
-    console.log('TGOS API ¤w¥[¸ü');
+    console.log('TGOS API å·²åŠ è¼‰');
 }

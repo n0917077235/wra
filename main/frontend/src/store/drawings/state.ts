@@ -1,6 +1,6 @@
 interface Drawing {
     type: string;
-    geometry: any; // ¨ãÅéÃş«¬¥i®Ú¾Ú»İ­n¶i¤@¨B¸Ô²Ó©w¸q
+    geometry: any; // å…·é«”é¡å‹å¯æ ¹æ“šéœ€è¦é€²ä¸€æ­¥è©³ç´°å®šç¾©
     properties?: any;
 }
 

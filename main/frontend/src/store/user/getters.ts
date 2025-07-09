@@ -2,5 +2,5 @@
 import { State } from './state';
 
 export const getters = {
-    isAuthenticated: (state: State) => !!state.token, // °²³] token ¦s¦b§Y¬°¤w±ÂÅv
+    isAuthenticated: (state: State) => !!state.token, // å‡è¨­ token å­˜åœ¨å³ç‚ºå·²æˆæ¬Š
 };

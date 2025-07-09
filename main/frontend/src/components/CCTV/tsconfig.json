@@ -1,82 +1,82 @@
 {
     "layers": [
         {
-            "name": "½Ã¬P¹Ï",
+            "name": "è¡›æ˜Ÿåœ–",
             "type": "maptype",
             "state": "check"
         },
         {
-            "name": "¹q¤l¦a¹Ï",
+            "name": "é›»å­åœ°åœ–",
             "type": "maptype",
             "state": "check"
         },
         {
-            "name": "ºÊ´ú¯¸¹Ï¼h",
+            "name": "ç›£æ¸¬ç«™åœ–å±¤",
             "type": "group",
             "state":  "check",
             "layers": [
                 {
-                    "name": "²H¤ôªe¤ôªùºÊ´ú¯¸",
+                    "name": "æ·¡æ°´æ²³æ°´é–€ç›£æ¸¬ç«™",
                     "type": "layer",
                     "state": "check"
                 },
                 {
-                    "name": "­û¤s¤l¤À¬xºÊ´ú¯¸",
+                    "name": "å“¡å±±å­åˆ†æ´ªç›£æ¸¬ç«™",
                     "type": "layer",
                     "state": "check"
                 },
                 {
-                    "name": "³ö¨¾¦w¥şºÊ´ú¯¸",
+                    "name": "å ¤é˜²å®‰å…¨ç›£æ¸¬ç«™",
                     "type": "layer",
                     "state": "check"
                 },
                 {
-                    "name": "³ö¨¾¦w¥şºÊ´ú¯¸",
+                    "name": "å ¤é˜²å®‰å…¨ç›£æ¸¬ç«™",
                     "type": "layer",
                     "state": "check"
                 }
             ]
         },
         {
-            "name": "ºÊ´ú¯¸¹Ï¼h",
+            "name": "ç›£æ¸¬ç«™åœ–å±¤",
             "type": "group",
             "expanded": true,
             "layers": [
                 {
-                    "name": "²H¤ôªe¤ôªùºÊ´ú¯¸",
+                    "name": "æ·¡æ°´æ²³æ°´é–€ç›£æ¸¬ç«™",
                     "type": "existing",
                     "default": true
                 },
                 {
-                    "name": "­û¤s¤l¤À¬xºÊ´ú¯¸",
+                    "name": "å“¡å±±å­åˆ†æ´ªç›£æ¸¬ç«™",
                     "type": "existing",
                     "default": true
                 },
                 {
-                    "name": "³ö¨¾¦w¥şºÊ´ú¯¸",
+                    "name": "å ¤é˜²å®‰å…¨ç›£æ¸¬ç«™",
                     "type": "existing",
                     "default": true
                 },
                 {
-                    "name": "¼v¹³ºÊµø¯¸",
+                    "name": "å½±åƒç›£è¦–ç«™",
                     "type": "existing",
                     "default": false
                 }
             ]
         },
         {
-            "name": "·P´ú¾¹¹Ï¼h",
+            "name": "æ„Ÿæ¸¬å™¨åœ–å±¤",
             "type": "group",
             "expanded": false,
             "layers": [
                 {
-                    "name": "¨I³´­p",
+                    "name": "æ²‰é™·è¨ˆ",
                     "type": "new",
                     "default": false
                 }
-                // ¨ä¥L·P´ú¾¹...
+                // å…¶ä»–æ„Ÿæ¸¬å™¨...
             ]
         }
-        // ¨ä¥L¹Ï¼h...
+        // å…¶ä»–åœ–å±¤...
     ]
 }
