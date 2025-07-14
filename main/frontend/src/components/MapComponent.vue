@@ -12,12 +12,12 @@
       initMap() {
           const map = new TGOS.TGOnlineMap(document.getElementById('map'), TGOS.TGCoordSys.EPSG3857);
 
-      // °òÂ¦¦a¹Ï¹Ï¼h
-      const baseLayer = new TGOS.TGImageServiceLayer(map, '¹q¤l¦a¹Ï', {
+      // åŸºç¤åœ°åœ–åœ–å±¤
+      const baseLayer = new TGOS.TGImageServiceLayer(map, 'é›»å­åœ°åœ–', {
         visible: true
       });
 
-      // ¦Û­q¹Ï¼h
+      // è‡ªè¨‚åœ–å±¤
       const layer1 = new TGOS.TGShpLayer('URL_TO_YOUR_LAYER_1', {
         map: map,
         visible: false
