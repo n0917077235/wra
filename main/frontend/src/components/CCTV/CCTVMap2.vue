@@ -87,11 +87,10 @@
 <script lang="ts" setup>
 /* eslint-disable */
     
-    import { computed, nextTick, onMounted, ref, watch } from 'vue';
-    import { useStore } from 'vuex';
-    import { apiGetGeoJsonFileNmae, apiGetGeoJsonDataByFileName } from '@/resource/geojson'
-    import { apiGetTansuiGps, getGeoJsonLayer, getGetStationGps, apiGetGps, apiGetIsoseismal, GetIsoseismalRequest, GetIsoseismalResponse } from '@/resource/geojson'
-    import { apiGetSensorMoreDataByStationName} from  '@/resource/sensor'
+    import { apiGetGps, apiGetIsoseismal, GetIsoseismalResponse } from '@/resource/geojson';
+import { apiGetSensorMoreDataByStationName } from '@/resource/sensor';
+import { computed, nextTick, onMounted, ref, watch } from 'vue';
+import { useStore } from 'vuex';
     
     interface Props {
         title?: string;
@@ -319,6 +318,7 @@
                 minZoom: 7,
             }
         );
+        
         pMap.value.setCenter(new TGOS.TGPoint(121.44678969866742, 24.99384208911512));
         /*
         markerPoint.value = new TGOS.TGPoint(121.44678969866742, 24.99384208911512);
