@@ -1,0 +1,921 @@
+﻿using Microsoft.AspNetCore.Mvc;
+using System.Collections.Generic;
+using Microsoft.Data.SqlClient;
+using SqlHelper = SQLHelper.SQLHelper;
+using System.Data;
+using System.Reflection.PortableExecutable;
+using Newtonsoft.Json;
+using System.ComponentModel;
+using DocumentFormat.OpenXml.Bibliography;
+using DocumentFormat.OpenXml.EMMA;
+using Microsoft.VisualBasic;
+
+namespace Wra10MaintainWebApi.Controllers
+{
+    [ApiController]
+    [Route("api/forms")]
+    public class InputController : ControllerBase
+    {
+
+        private readonly string _connection;
+        //private readonly string _connection2;
+        private readonly string _connectionWater2022;
+        private readonly IConfiguration _configuration;
+        public InputController(IConfiguration configuration)//SqlConnection connection, SqlConnection connectionWater2022)
+        {
+            _configuration = configuration;
+            _connection = _configuration.GetConnectionString("DefaultConnection");
+            _connectionWater2022 = _configuration.GetConnectionString("Water2022Connection");
+        }
+
+        [HttpGet]
+        public ActionResult<IEnumerable<object>> GetFormData()
+        {
+            // Simulate fetching form field data from a database or other source
+            var formData = new List<object>
+            {
+                new { label = "Name", fieldType = "text" },
+                new { label = "Email", fieldType = "text" },
+                new { label = "Country", fieldType = "select", options = new [] { "USA", "Canada", "UK" } },
+                new { label = "Agree to Terms", fieldType = "checkbox" }
+            };
+
+            return Ok(formData);
+        }
+
+        [HttpGet("{formId}")]
+        public IActionResult GetFormDefinition(int formId)
+        {
+            try
+            {
+                SqlHelper sqlHelper = new SqlHelper(_connection);
+
+                var sql = $"SELECT Name, Definition FROM Forms WHERE Id = @FormId";
+                List<SqlParameter> parameters = new List<SqlParameter>();
+
+                parameters.Add(new SqlParameter("@FormId", formId));
+
+                DataTable dt = sqlHelper.ExecuteQuery(sql, parameters.ToArray());
+                if (dt.Rows.Count > 9)
+                {
+                    var formName = dt.Rows[0][0].ToString();
+                    var formDefinition = dt.Rows[0][1].ToString();
+
+                    return Ok(new { Name = formName, Definition = formDefinition });
+                }
+                else
+                {
+                    return NotFound();
+                }
+            
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"An error occurred: {ex.Message}");
+            }
+            
+        }
+        /*
+        [HttpGet("getFormField")]
+        public IActionResult GetFormDefinition(string category, string date, string station)
+        {
+            try
+            {
+                _connection.Open();
+                var sql = $"SELECT Name, Definition FROM Forms WHERE Id = @FormId";
+                var sql2 = $"SELECT ItemName,FieldName FROM ExtraItems WHERE formId = @FormId and  stationId=@stationId order by seq";
+                using (var command = new SqlCommand(sql, _connection))
+                {
+                    command.Parameters.AddWithValue("@FormId", category);
+
+                    using (var reader = command.ExecuteReader())
+                    {
+                        if (reader.Read())
+                        {
+                            Form form = new Form();
+                            var formName = reader.GetString(0);
+                            var formDefinition = reader.GetString(1);
+                            reader.Close(); 
+                            using (var command2 = new SqlCommand(sql2, _connection))
+                            {
+                                command2.Parameters.AddWithValue("@FormId", category);
+                                command2.Parameters.AddWithValue("@StationId", station);
+                                using (var reader2 = command2.ExecuteReader())
+                                {
+                                    while(reader2.Read())
+                                    {
+                                        var itemName = reader2.GetString(0);
+                                        var fieldName="";
+                                        if (!reader2.IsDBNull(reader2.GetOrdinal("fieldName")))
+                                        {
+                                            fieldName = reader2.GetString(1);
+                                        }
+                                        form.lstExtraItem.Add(new ExtraItem(itemName, fieldName));
+                                    }
+                                }
+                            }
+                            form.Name = formName;
+                            form.Definition= formDefinition;
+
+                            return Ok(form);
+
+                        }
+                        else
+                        {
+                            return NotFound();
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"An error occurred: {ex.Message}");
+            }
+            finally
+            {
+                _connection.Close();
+            }
+        }
+        */
+
+        public class UploadModels
+        {
+            public string? formId { get; set; }
+            public string? stationId { get; set; }
+            public string? date { get; set; }
+            public IFormFileCollection? files { get; set; }
+        }
+
+        [HttpPost("files")]
+        [RequestFormLimits(ValueLengthLimit = int.MaxValue, MultipartBodyLengthLimit = int.MaxValue)]
+        public async Task<IActionResult> UploadFiles([FromForm] UploadModels uploadModels)
+        {
+            try
+            {
+                SqlHelper sqlHelper = new SqlHelper(_connection);
+                List<SqlParameter> parameters = new List<SqlParameter>();
+                string guid = Guid.NewGuid().ToString();
+                foreach (var file in uploadModels.files)
+                {
+                    if (file.Length > 0)
+                    {
+                        // Ensure the uploads folder exists
+                        var uploadPath = Path.Combine(Directory.GetCurrentDirectory(), "Uploads");
+                        if (!Directory.Exists(uploadPath))
+                        {
+                            Directory.CreateDirectory(uploadPath);
+                        }
+                        parameters.Clear();
+                        // Generate a unique file name
+                        var fileName = Path.GetRandomFileName() + Path.GetExtension(file.FileName);
+                        var filePath = Path.Combine(uploadPath, fileName);
+
+                        // Save the file to the server
+
+                        using (var memoryStream = new MemoryStream())
+                        {
+                            await file.CopyToAsync(memoryStream);
+                            var imageData = memoryStream.ToArray();
+
+
+                            var insert = "INSERT INTO ImageData (guid, image) VALUES (@guid, @image)";
+                            parameters.Add(new SqlParameter("@guid", guid));
+                            parameters.Add(new SqlParameter("@image", imageData));
+
+                            sqlHelper.ExecuteNonQuery(insert, parameters.ToArray());
+
+                        }
+
+                    }
+                }
+
+                return Ok("guid:" + guid);
+            }
+            catch (System.Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
+
+        [HttpPost("savedata")]
+        public IActionResult PostFormData([FromBody] object formData)
+        {
+            try
+            {
+                string date = DateTime.Now.ToString("yyyy-MM-dd");
+
+                string? jsonString = formData.ToString();
+                DataModel? dataModel = JsonConvert.DeserializeObject<DataModel>(jsonString);
+                SqlHelper sqlHelper = new SqlHelper(_connection);
+                Dictionary<string, string>? dicData = JsonConvert.DeserializeObject<Dictionary<string, string>>(dataModel.FormData);
+                string getGuid = @"select fieldValue from formdata where formid=@formid and recordtime=@recordtime and stationId=@stationid and fieldname='image'";
+                //string update = @"update formdata set @fieldName=@fieldvalue where formid=@formid and recordtime=@recordtime and stationId=@stationid and fieldName=@fieldName";
+                //string insert = @"insert into formdata (formid,recordtime,stationid,fieldname,fieldvalue) values (@formid,@recordtime,@stationid,@fieldname,@fieldvalue)";
+                List<SqlParameter> parameters = new List<SqlParameter>();
+                for (int i = 0; i < dicData?.Count; i++)
+                {
+                    parameters.Clear();
+                    parameters.Add(new SqlParameter("@formId", dataModel.Category));
+                    parameters.Add(new SqlParameter("@stationId", dataModel.Station));
+                    parameters.Add(new SqlParameter("@recordtime", dataModel.Date));
+                    string fieldName = dicData.ElementAt(i).Key;
+                    string fieldValue = dicData.ElementAt(i).Value;
+                    if (i == 0 && dataModel.guid != "")
+                    {
+                        DataTable dt3 = sqlHelper.ExecuteQuery(getGuid, parameters.ToArray());
+                        if (dt3.Rows.Count > 0)
+                        {
+                            if (!String.IsNullOrEmpty(dt3.Rows[0][0].ToString()))
+                            {
+                                string? oriGuid = dt3.Rows[0][0].ToString();
+
+                                sqlHelper.ExecuteNonQuery("update imageData set guid='" + oriGuid + "' where guid='" + dataModel.guid + "'");
+                                dataModel.guid = oriGuid;
+                            }
+                        }
+                    }
+                    parameters.Add(new SqlParameter("@fieldName", fieldName));
+                    SqlParameter parameter = new SqlParameter("@fieldValue", SqlDbType.NVarChar, -1);
+                    parameter.Value = fieldValue;
+                    parameters.Add(parameter);
+                    if (fieldName != "formDate")
+                    {
+                        
+                        DataTable dt = sqlHelper.ExecuteStoreProcedureQuery("sp_updateFormData", parameters.ToArray());
+                        int nUpdate = 0;
+                        int.TryParse(dt.Rows[0][0].ToString(), out nUpdate);
+                        if (dt.Rows.Count > 0 &&  nUpdate <= 0)
+                        {
+                            //sqlHelper.ExecuteNonQuery(insert, parameters.ToArray());
+                            sqlHelper.ExecuteStoreProcedureQuery("sp_insertFormData", parameters.ToArray());
+                        }
+                    }
+                }
+                if (dataModel.maintainer.Count > 0)
+                {
+                    try
+                    {
+                        List<string> data = new List<string>();
+                        for (int i = 0; i < dataModel.maintainer.Count; i++)
+                        {
+                            data.Add(dataModel.maintainer[i].Id);
+                        }
+                        string joined = string.Join(",", data);
+                        List<SqlParameter> parameters1 = new List<SqlParameter>();
+                        parameters1.Add(new SqlParameter("@formId", dataModel.Category));
+                        parameters1.Add(new SqlParameter("@stationId", dataModel.Station));
+                        parameters1.Add(new SqlParameter("@recordtime", dataModel.Date));
+                        parameters1.Add(new SqlParameter("@fieldName", "maintainer"));
+                        parameters1.Add(new SqlParameter("@fieldValue", joined));
+                        string sql8 = @"update formdata set fieldValue=@fieldValue where formid=@formid and recordtime=@recordtime and stationId=@stationid and fieldname=@fieldName";
+                        int nUpdate = sqlHelper.ExecuteNonQuery(sql8, parameters1.ToArray());
+                        if (nUpdate == 0)
+                        {
+                            sql8 = @"insert into formdata (formId,stationId,recordtime,fieldName,fieldValue)
+                                     values (@formId,@stationId,@recordtime,@fieldName,@fieldValue)";
+                            sqlHelper.ExecuteNonQuery(sql8, parameters1.ToArray());
+                        }
+                    }
+                    catch(Exception ex)
+                    {
+
+                    }
+                }
+                if (dataModel.manager!=null)
+                {
+                    try
+                    {
+                        
+                        string? managerId = dataModel.manager[0].Id;
+
+                        List<SqlParameter> parameters1 = new List<SqlParameter>();
+                        parameters1.Add(new SqlParameter("@formId", dataModel.Category));
+                        parameters1.Add(new SqlParameter("@stationId", dataModel.Station));
+                        parameters1.Add(new SqlParameter("@recordtime", dataModel.Date));
+                        parameters1.Add(new SqlParameter("@fieldName", "manager"));
+                        parameters1.Add(new SqlParameter("@fieldValue", managerId));
+                        string sql9 = @"update formdata set fieldValue=@fieldValue where formid=@formid and recordtime=@recordtime and stationId=@stationid and fieldname=@fieldName";
+                        int nUpdate = sqlHelper.ExecuteNonQuery(sql9, parameters1.ToArray());
+                        if (nUpdate == 0)
+                        {
+                            sql9 = @"insert into formdata (formId,stationId,recordtime,fieldName,fieldValue)
+                                     values (@formId,@stationId,@recordtime,@fieldName,@fieldValue)";
+                            sqlHelper.ExecuteNonQuery(sql9, parameters1.ToArray());
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+
+                    }
+                }
+                if (dataModel.guid != "")
+                {
+                    parameters.Clear();
+                    parameters.Add(new SqlParameter("@formId", dataModel.Category));
+                    parameters.Add(new SqlParameter("@stationId", dataModel.Station));
+                    parameters.Add(new SqlParameter("@recordtime", dataModel.Date));
+
+                    parameters.Add(new SqlParameter("@fieldName", "image"));
+                    //SqlParameter parameter = new SqlParameter("@fieldValue", SqlDbType.NVarChar);
+                    SqlParameter parameter = new SqlParameter("@fieldValue", SqlDbType.NVarChar, -1);
+                    parameter.Value = dataModel.guid;
+                    parameters.Add(parameter);
+                    DataTable dt = sqlHelper.ExecuteStoreProcedureQuery("sp_updateFormData", parameters.ToArray());
+                    int nUpdate = 0;
+                    int.TryParse(dt.Rows[0][0].ToString(), out nUpdate);
+                    if (dt.Rows.Count > 0 &&  nUpdate <= 0)
+                    {
+                        //sqlHelper.ExecuteNonQuery(insert, parameters.ToArray());
+                        sqlHelper.ExecuteStoreProcedureQuery("sp_insertFormData", parameters.ToArray());
+                    }
+                }
+                //List<SaveDataFormat> lstData= JsonConvert.DeserializeObject<List<SaveDataFormat>>(ld);
+
+                return Ok("Form data received successfully.");
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpGet("getscheduledata")]
+        public IActionResult GetSheduleData(string startYearMonth, string maintainType )
+        {
+            try
+            {
+
+                SqlHelper sqlHelper = new SqlHelper(_connection);
+                string sqlSelect = "Select yearmonth  from MaintainSchedule where startyearmonth=@startyearmonth and Maintaintype=@maintaintype";
+                //string sqlDelete = "delete from MaintainSchedule where startyearmonth=@startyearmonth and Maintaintype=@maintaintype";
+                //string sqlInsert = "insert into MaintainSchedule (startYearMonth,yearmonth,maintaintype) values (@startyearmonth, @yearmonth, @maintaintype)";
+                List<SqlParameter> parameters = new List<SqlParameter>();
+                parameters.Clear();
+                parameters.Add(new SqlParameter("@startyearmonth", startYearMonth));
+                parameters.Add(new SqlParameter("@maintaintype", maintainType));
+                DataTable dt=sqlHelper.ExecuteQuery(sqlSelect, parameters.ToArray());
+                List<String> lstSelected = new List<String>();
+                for (int i = 0; i < dt.Rows.Count; i++)
+                {
+                    lstSelected.Add(dt.Rows[i][0].ToString());
+                }
+
+                return Ok(lstSelected) ;
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpDelete("deletescheduledata")]
+        public IActionResult DeleteSheduleData(string startYearMonth, string maintainType)
+        {
+            try
+            {
+
+                SqlHelper sqlHelper = new SqlHelper(_connection);
+                //string sqlSelect = "Select yearmonth  from MaintainSchedule where startyearmonth=@startyearmonth and Maintaintype=@maintaintype";
+                string sqlDelete = "delete from MaintainSchedule where startyearmonth=@startyearmonth and Maintaintype=@maintaintype";
+                //string sqlInsert = "insert into MaintainSchedule (startYearMonth,yearmonth,maintaintype) values (@startyearmonth, @yearmonth, @maintaintype)";
+                List<SqlParameter> parameters = new List<SqlParameter>();
+                parameters.Clear();
+                parameters.Add(new SqlParameter("@startyearmonth", startYearMonth));
+                parameters.Add(new SqlParameter("@maintaintype", maintainType));
+                int nDelete=sqlHelper.ExecuteNonQuery(sqlDelete, parameters.ToArray());
+                
+                return Ok(nDelete);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+
+        [HttpPost("savescheduledata")]
+        public IActionResult SaveSheduleData([FromBody] object scheduleFormData)
+        {
+            try
+            {
+                
+                string? jsonString = scheduleFormData.ToString();
+                ScheduleForm? scheduleFrom = JsonConvert.DeserializeObject<ScheduleForm>(jsonString);
+                ScheduleFormData? scheduleFromdata = JsonConvert.DeserializeObject<ScheduleFormData>(scheduleFrom.scheduleFormData);
+                SqlHelper sqlHelper = new SqlHelper(_connection);
+                string sqlDelete="delete from MaintainSchedule where startyearmonth=@startyearmonth and Maintaintype=@maintaintype";
+                string sqlInsert = "insert into MaintainSchedule (startYearMonth,yearmonth,maintaintype) values (@startyearmonth, @yearmonth, @maintaintype)";
+                List<SqlParameter> parameters = new List<SqlParameter>();
+                parameters.Clear();
+                parameters.Add(new SqlParameter("@startyearmonth", scheduleFromdata.startYearMonth));
+                parameters.Add(new SqlParameter("@maintaintype", scheduleFromdata.maintainType));
+                sqlHelper.ExecuteNonQuery(sqlDelete, parameters.ToArray());
+                for (int i = 0; i < scheduleFromdata.selectedDates.Count; i++)
+                {
+                    parameters.Clear();
+                    parameters.Add(new SqlParameter("@startyearmonth", scheduleFromdata.startYearMonth));
+                    parameters.Add(new SqlParameter("@maintaintype", scheduleFromdata.maintainType));
+                    parameters.Add(new SqlParameter("@yearmonth", scheduleFromdata.selectedDates[i]));
+                    sqlHelper.ExecuteNonQuery(sqlInsert, parameters.ToArray());
+                }
+
+                return Ok("MaintainSchedule data saved.");
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+
+        [HttpPost("removeImage")]
+        public IActionResult RemoveImage(string imageId)
+        {
+            try
+            {
+                SqlHelper sqlHelper = new SqlHelper(_connection);
+                sqlHelper.ExecuteNonQuery("delete from imageData where sequence=" + imageId);
+                return Ok(imageId);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"An error occurred: {ex.Message}");
+            }
+        }
+
+
+        [HttpGet("getFormField")]
+        public IActionResult GetFormDefinition(string category, string date, string station)
+        {
+            try
+            {
+                SqlHelper sqlHelper = new SqlHelper(_connection);
+
+                var sql = $"SELECT Name, Definition FROM Forms WHERE Id = @FormId";
+                var sql2 = $"SELECT ItemName,FieldName FROM ExtraItems WHERE formId = @FormId and  stationId=@stationId order by seq";
+                var sql3 = $"Select fieldName,fieldValue from formdata where FormId=@FormId and stationId=@stationId and recordtime=@recordtime";
+                var sql4 = @"select fieldName,fieldValue,recordtime from formdata a
+                             inner join 
+                             (Select max(recordtime) as rt from formdata where FormId=@FormId and stationId=@stationId) as b on a.recordtime=b.rt";
+                var sql5 = @"select sequence,image from imagedata 
+                             where guid=@guId";
+                var sql6 = @"select managerid,managername from manager";
+
+                List<SqlParameter> parameters = new List<SqlParameter>();
+                parameters.Add(new SqlParameter("@formId", category));
+
+                DataTable dt = sqlHelper.ExecuteQuery(sql, parameters.ToArray());
+                if (dt.Rows.Count > 0)
+                {
+                    FormDef form = new FormDef();
+                    var formName = dt.Rows[0][0].ToString();
+                    var formDefinition = dt.Rows[0][1].ToString();
+                    form.Name = formName;
+                    form.Definition = formDefinition;
+                    parameters.Add(new SqlParameter("@stationId", station));
+                    dt.Clear();
+                    dt = sqlHelper.ExecuteQuery(sql2, parameters.ToArray());
+                    string? fieldName = "";
+                    for (int i = 0; i < dt.Rows.Count; i++)
+                    {
+                        var itemName = dt.Rows[i][0].ToString();
+
+
+                        if (dt.Rows[i][1] != DBNull.Value)
+                        {
+                            fieldName = dt.Rows[i][1].ToString();
+                            form.lstExtraItem.Add(new ExtraItem(itemName, fieldName));
+                        }
+
+
+                    }
+
+                    dt.Clear();
+                    parameters.Add(new SqlParameter("@recordtime", date));
+                    dt = sqlHelper.ExecuteQuery(sql3, parameters.ToArray());
+                    form.Date = DateTime.Parse(date);
+                    if (dt.Rows.Count > 0)
+                    {
+                        for (int i = 0; i < dt.Rows.Count; i++)
+                        {
+                            fieldName = dt.Rows[i][0].ToString();
+                            var fieldValue = "";
+                            if (fieldName?.ToLower() != "image")
+                            {
+
+
+                                if (dt.Rows[i][1] != DBNull.Value)
+                                {
+                                    fieldValue = dt.Rows[i][1].ToString();
+                                }
+                                form.lstFormData.Add(new FormData(fieldName, fieldValue));
+                            }
+                            else
+                            {
+                                List<SqlParameter> parameters2 = new List<SqlParameter>();
+                                parameters2.Add(new SqlParameter("@guid", dt.Rows[i][1].ToString()));
+                                DataTable dt2 = sqlHelper.ExecuteQuery(sql5, parameters2.ToArray());
+                                for (int j = 0; j < dt2.Rows.Count; j++)
+                                {
+                                    string? imageId = dt2.Rows[j]["sequence"].ToString();
+                                    ImageData id = new ImageData();
+                                    id.Id = imageId;
+                                    id.Image = (byte[])dt2.Rows[j]["image"];
+                                    form.lstImageData.Add(id);
+
+                                }
+                            }
+                        }
+                    }
+                    else
+                    {
+                        dt.Clear();
+                        parameters.RemoveAt(parameters.Count - 1);
+                        dt = sqlHelper.ExecuteQuery(sql4, parameters.ToArray());
+                        for (int i = 0; i < dt.Rows.Count; i++)
+                        {
+                            if (i == 0)
+                            {
+                                form.Date = DateTime.Parse(dt.Rows[i][2].ToString());
+                            }
+                            fieldName = dt.Rows[i][0].ToString();
+                            var fieldValue = "";
+                            if (fieldName?.ToLower() != "image")
+                            {
+
+
+                                if (dt.Rows[i][1] != DBNull.Value)
+                                {
+                                    fieldValue = dt.Rows[i][1].ToString();
+                                }
+                                form.lstFormData.Add(new FormData(fieldName, fieldValue));
+                            }
+                            else
+                            {
+                                List<SqlParameter> parameters2 = new List<SqlParameter>();
+                                parameters2.Add(new SqlParameter("@guid", dt.Rows[i][1].ToString()));
+                                DataTable dt2 = sqlHelper.ExecuteQuery(sql5, parameters2.ToArray());
+                                for (int j = 0; j < dt2.Rows.Count; j++)
+                                {
+                                    string? imageId = dt2.Rows[j]["sequence"].ToString();
+                                    ImageData id = new ImageData();
+                                    id.Id = imageId;
+                                    id.Image = (byte[])dt2.Rows[j]["image"];
+                                    form.lstImageData.Add(id);
+
+                                }
+                            }
+                        }
+                    }
+                    dt.Clear();
+                    dt = sqlHelper.ExecuteQuery(sql6);
+                    for(int i=0; i<dt.Rows.Count;i++)
+                    {
+                        Manager manager = new Manager()
+                        {
+                            Id = dt.Rows[i]["ManagerId"].ToString(),
+                            Name = dt.Rows[i]["ManagerName"].ToString(),
+                        };
+                        form.lstManager.Add(manager);
+                    }
+                    dt.Clear();
+                    SqlHelper sqlHelper2 = new SqlHelper(_connectionWater2022);
+                    string sql7 = "Select userid,username from users where specialuser=3";
+                    dt = sqlHelper2.ExecuteQuery(sql7);
+                    for (int i = 0; i < dt.Rows.Count; i++)
+                    {
+                        Maintainer  mr= new Maintainer()
+                        {
+                            Id = dt.Rows[i]["userId"].ToString(),
+                            Name = dt.Rows[i]["userName"].ToString(),
+                        };
+                        form.lstMaintainer.Add(mr);
+                    }
+
+                    return Ok(form);
+                }
+                else
+                {
+                    return NotFound();
+                }
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"An error occurred: {ex.Message}");
+            }
+            
+        }
+        [HttpGet("GetStationCategory")]
+        public IActionResult GetStationCategory()
+        {
+            try
+            {
+                SqlHelper sqlHelper = new SqlHelper(_connection);
+                SqlHelper sqlHelper2 = new SqlHelper(_connectionWater2022);
+
+                DataTable dt = sqlHelper2.ExecuteQuery("Select stationid as id ,stationnameA as name from stations order by name");
+                StationCategory sc = new StationCategory();
+                for (int i = 0; i < dt.Rows.Count; i++)
+                {
+                    sc.lstStations.Add(new ComboData(dt.Rows[i]["name"].ToString(), dt.Rows[i]["id"].ToString()));
+                }
+
+                dt.Clear();
+                dt = sqlHelper.ExecuteQuery(@"select [CategoryId],'('+CategoryId+') '+[CategoryName] as CategoryName
+                                              FROM FormCategory order by categoryId");
+                for (int i = 0; i < dt.Rows.Count; i++)
+                {
+                    sc.lstCategories.Add(new ComboData(dt.Rows[i]["categoryname"].ToString(), dt.Rows[i]["categoryid"].ToString()));
+                }
+                return Ok(sc);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"An error occurred: {ex.Message}");
+            }
+            finally
+            {
+
+            }
+        }
+
+        async Task<List<ExtraItemEdit>> getItems(string station, string category)
+        {
+            List<ExtraItemEdit> items = new List<ExtraItemEdit>();
+            SqlHelper sqlHelper = new SqlHelper(_connection);
+            string sql = @"Select sequence, stationname, itemname,seq,fieldName from extraitems where stationid=@stationId and formId=@formId order by seq";
+            
+            List<SqlParameter> parameters = new List<SqlParameter>();   
+            parameters.Add(new SqlParameter("@stationId", station));
+            parameters.Add(new SqlParameter("@formId", category));
+            DataTable dt = sqlHelper.ExecuteQuery(sql, parameters.ToArray());
+            for(int i=0;i<dt.Rows.Count;i++)
+            {
+                items.Add(new ExtraItemEdit
+                {
+                    sequence = dt.Rows[i]["sequence"].ToString(),
+                    ItemName = dt.Rows[i]["itemName"].ToString(),
+                    FieldName = dt.Rows[i]["fieldName"].ToString(),
+                    Seq = dt.Rows[i]["seq"].ToString(),
+                }); ;
+            }
+
+            
+            
+            return items;
+        }
+
+        [HttpGet("getItems")]
+        public async Task<ActionResult<IEnumerable<ExtraItemEdit>>> GetItems(string station, string category)
+        {
+
+            return await getItems(station, category);
+        }
+
+
+        [HttpGet("item/{id}")]
+        public async Task<ActionResult<ExtraItemEdit>> GetItem(int id)
+        {
+            //var item = await _context.Items.FindAsync(id);
+            var item = new ExtraItemEdit
+            {
+                ItemName = "4",
+                FieldName = "Cam4",
+                Seq = "4",
+            };
+            if (item == null)
+            {
+                return NotFound();
+            }
+
+            return item;
+        }
+
+        // POST: api/Items
+        [HttpPost("item/add/{station}/{formId}")]
+        public async Task<ActionResult<ExtraItemEdit>> AddExtraItem(string station,string formId,ExtraItemEdit item)
+        {
+            try
+            {
+
+                SqlHelper sqlHelper = new SqlHelper(_connection);
+                string sql = @"insert into extraitems  (stationId, formId, itemName,fieldName,seq) values (@stationId,@formId,@itemName,@fieldName,@seq);
+                              select * from extraitems where sequence=SCOPE_IDENTITY()";
+                List<SqlParameter> parameters = new List<SqlParameter>();
+                parameters.Add(new SqlParameter("@stationId", station));
+                parameters.Add(new SqlParameter("@formId", formId));
+                parameters.Add(new SqlParameter("@itemName", item.ItemName));
+                parameters.Add(new SqlParameter("@fieldName", item.FieldName));
+                parameters.Add(new SqlParameter("@seq", item.Seq));
+
+                DataTable dt=sqlHelper.ExecuteQuery(sql, parameters.ToArray());
+                if (dt != null)
+                {
+                    var newItem = new ExtraItemEdit
+                    {
+                        ItemName = dt.Rows[0]["itemName"].ToString(),
+                        FieldName = dt.Rows[0]["fieldName"].ToString(),
+                        Seq = dt.Rows[0]["seq"].ToString(),
+                        sequence = dt.Rows[0]["Sequence"].ToString(),
+                    };
+                    return Ok(newItem);
+                }
+                else
+                    return BadRequest("-1");
+            }
+            catch (Exception ex)
+            {
+                return BadRequest("-1");
+            }
+        }
+
+        // PUT: api/Items/5
+        [HttpPost("item/edit/{sequence}")]
+        public async Task<IActionResult> EditExtraItem(string sequence, ExtraItemEdit item)
+        {
+            try
+            {
+
+                SqlHelper sqlHelper = new SqlHelper(_connection);
+                string sql = @"Update extraitems set itemName=@itemName, fieldName=@fieldName, seq=@seq where sequence=@sequence";
+                List<SqlParameter> parameters = new List<SqlParameter>();
+                parameters.Add(new SqlParameter("@sequence", sequence));
+                parameters.Add(new SqlParameter("@itemName", item.ItemName));
+                parameters.Add(new SqlParameter("@fieldName", item.FieldName));
+                parameters.Add(new SqlParameter("@seq", item.Seq));
+
+                int nUpdate = sqlHelper.ExecuteNonQuery(sql, parameters.ToArray());
+                if (nUpdate > 0)
+                    return Ok("OK");
+                else
+                    return Ok("Nothing delete");
+            }
+            catch(Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            
+        }
+
+        // DELETE: api/Items/5
+        [HttpDelete("item/delete")]
+        //public async Task<IActionResult> DeleteItem(string station, string category, string itemname,string seq)
+        public async Task<IActionResult> DeleteItem(string sequence)
+        {
+            
+            try
+            {
+                SqlHelper sqlHelper = new SqlHelper(_connection);
+                //string sql = @"delete from extraitems where stationid=@stationId and formId=@formId and itemName=@itemName and seq=@seq";
+                string sql = @"delete from extraitems where sequence=@sequence";
+
+                List<SqlParameter> parameters = new List<SqlParameter>();
+                parameters.Add(new SqlParameter("@sequence", sequence));
+                /*
+                parameters.Add(new SqlParameter("@stationId", station));
+                parameters.Add(new SqlParameter("@formId", category));
+                parameters.Add(new SqlParameter("@itemName", itemname));
+                parameters.Add(new SqlParameter("@seq", seq));
+                */
+                int nDelete=sqlHelper.ExecuteNonQuery(sql, parameters.ToArray());
+                if (nDelete > 0)
+                    return Ok("OK");
+                else
+                    return Ok("Nothing delete");
+            }
+            catch(Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        private bool ItemExists(int id)
+        {
+            return true;// _context.Items.Any(e => e.Id == id);
+        }
+    }
+    // Models/Form.cs
+
+    public class ExtraItemEdit
+    {
+        public string? sequence { get; set; }
+        public string? ItemName { get; set; }
+        public string? FieldName { get; set; }
+        public string? Seq { get; set; }
+    }
+
+    public class FormDef
+    {
+        public int Id { get; set; }
+        public string? Name { get; set; }
+        public string? Definition { get; set; }
+        public DateTime Date { get; set; }
+        public List<ExtraItem> lstExtraItem { get; set; } = new List<ExtraItem>();
+        public List<FormData> lstFormData { get; set; } = new List<FormData>();
+
+        public List<ImageData> lstImageData { get; set; } = new List<ImageData>();
+        public List<Manager> lstManager { get; set; }=new List<Manager>() { };
+        public List<Maintainer> lstMaintainer { get; set; } = new List<Maintainer>() { };
+    }
+
+    public class Manager
+    {
+        public string? Id { get; set; }
+        public string? Name { get; set; }
+    }
+
+    public class Maintainer
+    {
+        public string? Id { get; set; }
+        public string? Name { get; set; }
+    }
+    public class ImageData
+    {
+        public string? Id { get; set; }
+        public byte[] Image { get; set; }
+    }
+    public class ListData
+    {
+        List<SaveDataFormat> lstSaveFormats { get; set; } = new List<SaveDataFormat>();
+    }
+    public class SaveDataFormat
+    {
+        public string? fieldName { get; set; }
+        public string? fieldValue { get; set; }
+    }
+
+    public class ExtraItem
+    {
+        public ExtraItem(string? _itemName, string? _fieldName)
+        {
+            itemName = _itemName;
+            fieldName = _fieldName;
+        }
+        public string? itemName { get; set; }
+        public string? fieldName { get; set; }
+    }
+
+    public class FormDataModel
+    {
+        //public DateTime FormDate { get; set; }
+        public Dictionary<string, string> datas { get; set; } = new Dictionary<string, string>();
+        //public string datas { get; set; }
+    }
+
+    public class DataModel
+    {
+        //public FormDataModel FormData { get; set; }
+        public string? FormData { get; set; }
+        public string? Category { get; set; }
+        public DateTime Date { get; set; }
+        public string? Station { get; set; }
+        public string? guid { get; set; } = "";
+        public List<Manager> manager { get; set; }=new List<Manager>() { };
+        public List<Maintainer> maintainer { get; set; }=new List<Maintainer>() { };   
+    }
+
+    public class ScheduleForm
+    {
+        public string scheduleFormData { get; set; }
+    }
+
+    public class ScheduleFormData
+    {
+        public List<string> selectedDates { get; set; } = new List<string>();
+        public string? yearMonth { get; set; }
+        public string? maintainType { get; set; }
+        public string? startYearMonth { get; set; }
+        
+    }
+
+    public class FormData
+    {
+        public FormData(string _fieldName, string _fieldValue)
+        {
+            fieldName = _fieldName;
+            fieldValue = _fieldValue;
+        }
+        public string? fieldName { get; set; }
+        public string? fieldValue { get; set; }
+    }
+
+    public class ComboData
+    {
+        public ComboData(string _text, string _value)
+        {
+            text = _text;
+            value = _value;
+        }
+        public string? text { get; set; }
+        public string? value { get; set; }
+    }
+
+    public class StationCategory
+    {
+        public List<ComboData> lstStations { get; set; } = new List<ComboData>();
+        public List<ComboData> lstCategories { get; set; } = new List<ComboData>();
+
+    }
+
+}
+
