@@ -1,11 +1,9 @@
-import Vue from 'vue';
-import App from './App.vue';
 import jQuery from 'jquery';
+import App from './App.vue';
 //import versionUpdate from '@/libs/versionUpdate';
 import router from './router';
-import store from './store';
 
-import ElementPlus from 'element-plus' //11308
+import ElementPlus from 'element-plus'; //11308
 app.use(ElementPlus)
 //版控 1130717
 //versionUpdate.isNewVersion();

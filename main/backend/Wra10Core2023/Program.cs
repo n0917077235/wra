@@ -256,9 +256,13 @@ namespace Wra10Core2023
                     RequestPath = "/WebPage",
                     EnableDefaultFiles = true
                 });
-                
 
-                app.UseHttpsRedirection();
+                #if !DEBUG
+                    // Do not use https redirection during debugging.
+                    // It would lead to request errors in the browsers 
+                    // due to untrusted TLS certificates
+                    app.UseHttpsRedirection();
+                #endif
 
                 app.UseRouting();
 

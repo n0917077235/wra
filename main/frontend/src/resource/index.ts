@@ -3,7 +3,9 @@ import store from '@/store';
 import axios from 'axios';
 
 export const apiClient = axios.create({
-  baseURL: process.env.VUE_APP_API_URL,
+  baseURL: process.env.VUE_APP_DEBUG == 1
+    ?  process.env.VUE_APP_API_URL_DEBUG
+    :  process.env.VUE_APP_API_URL
 });
 
 apiClient.interceptors.request.use(
