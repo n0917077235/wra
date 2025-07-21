@@ -1,7 +1,6 @@
+import store from '@/store';
 import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router';
 import identity from './identity';
-import versionTood from '@/libs/versionUpdate';
-import store from '@/store';
 const routes: Array<RouteRecordRaw> = [
   {
     path: '/',
@@ -27,10 +26,21 @@ const routes: Array<RouteRecordRaw> = [
         path: 'gis',
         name: 'gis',
         component: () =>
-          import(/* webpackChunkName: "gis" */ '@/views/GIS/index.vue'),
+          import(/* webpackChunkName: "gis" */ '@/views/GIS/tgosMap.vue'),
         meta: {
           clearMainPadding: 1,
-            routerName: '監測站總覽',
+            routerName: '監測站總覽 (TGOS)',
+            requiresAuth: true
+        },
+      },
+      {
+        path: 'gmap',
+        name: 'gmap',
+        component: () =>
+          import(/* webpackChunkName: "gmap" */ '@/views/GIS/gmap.vue'),
+        meta: {
+          clearMainPadding: 1,
+            routerName: '監測站總覽 (Google)',
             requiresAuth: true
         },
       },

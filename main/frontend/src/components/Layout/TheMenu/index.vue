@@ -52,7 +52,8 @@ interface ChildItem {
 const menus = reactive<MainItem[]>([
   { index: '/cctv', iconName: 'icon_cctv', pageName: '監視站總覽' },
   { index: '/search', iconName: 'icon_search', pageName: '監控資料查詢' },
-  { index: '/gis', iconName: 'icon_zones', pageName: '監測站總覽' },
+  { index: '/gis', iconName: 'icon_zones', pageName: '監測站總覽 (TGOS)' },
+  { index: '/gmap', iconName: 'icon_zones', pageName: '監測站總覽 (Google)' },
   { index: '/test1', iconName: '', pageName: '員山子總覽' },
   { index: '/test2', iconName: '', pageName: '龍壽總覽' },
   { index: '/test3', iconName: '', pageName: '地圖總覽' },

@@ -20,6 +20,7 @@ eform: 維護電子表單
 ## Then, run frontend
 - `cd main\frontend`
 - Open file `.env`, set `VUE_APP_DEBUG=1`
+  If you want to connect to the backend at WRA, set `VUE_APP_DEBUG=0`
 - Run `npm run serve`
 - Open browser, go to `http://localhost:8080`
 
