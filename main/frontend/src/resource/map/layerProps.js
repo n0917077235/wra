@@ -3,6 +3,7 @@ export default class LayerProps {
     unit;
     strokew;
     strokecolor;
+    zIndex;
     urls;
     images;
 };

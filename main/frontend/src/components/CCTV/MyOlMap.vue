@@ -787,7 +787,6 @@ async function addLayer(layerId, funcName) {
     try {
         let activeLayer = myLayers[0];
         let layerProps = await MapUtil.getLayerProps(layerId);
-        let { unit, strokew, strokecolor } = layerProps;
         var id;
         var graphic;
 
@@ -800,6 +799,7 @@ async function addLayer(layerId, funcName) {
 
         const vectorLayer = new ol.layer.Vector({
             source: vectorSource,
+            zIndex: layerProps.zIndex,
             style: MapUtil.styleFunction(layerProps, activeLayer),
         });
 
@@ -807,12 +807,6 @@ async function addLayer(layerId, funcName) {
         layers.set(layerId, vectorLayer);
         infows.set(layerId, infowmap);
         return;
-
-        //換圖片"./images/Station_CCTV.png"
-        const roundTo = function (num, decimal) {
-            let y = Math.pow(10, decimal);
-            return Math.round((num + Number.EPSILON) * y) / y;
-        }
 
         for (var i = 0; i < graphic.length; i++) {
             zi = zi + 1; //設定zindex
@@ -834,11 +828,9 @@ async function addLayer(layerId, funcName) {
             }
 
             var style1 = {
-                strokeColor: strokecolor,
-                strokeWeight: strokew,
                 title: titleset,
                 clickable: true,
-                zIndex: zi,
+                // zIndex: zi,
             };
 
             pData.overrideStyle(graphic[i], style1);

@@ -2,6 +2,8 @@ import FeatureProps from './featureProps';
 import LayerProps from './layerProps';
 
 export default class MapUtil {
+    static _eqIntensities = ['1', '2', '3', '4', '5.1', '5.9', '6.1', '6.9', '7'];
+
     static _roundTo(num, decimal) {
         let y = Math.pow(10, decimal);
         return Math.round((num + Number.EPSILON) * y) / y;
@@ -19,12 +21,8 @@ export default class MapUtil {
         let lastValue2 = MapUtil._getNumber(feature, "lastValue2");
         let value = "";
         let imageIndex = 0;
-        let zi = 50;
 
-        if (layerId == 'layer21') {
-            imageIndex = lastValue <= 5 ? 0 : 1;
-            value = lastValue.toString() + unit;
-        } else if (layerId == 'layer5') {
+        if (layerId == 'layer5') {
             value = lastValue1 + unit;
         } else if (layerId == 'layer6') {
             value = lastValue1 + unit;
@@ -46,25 +44,22 @@ export default class MapUtil {
             } else value = "0" + unit;
 
             imageIndex = lastValue1 <= 5 ? 0 : 1;
-        } else if (layerId == 'layer24') {
-            zi = 2;
-        } else if (layerId == 'layer25') {
-            zi = 1;
-        } else if (layerId == 'layer26') {
-            zi = 0;
         } else if (layerId == 'layer12') {
-            // TODO: fix this
-            // url = require("@/assets/image/intensity" + graphic[i].getProperty("intensity") + ".png")
-        }
+            let intensity = feature.get('intensity');
+            let index = MapUtil._eqIntensities.indexOf(intensity);
+            if (index >= 0) imageIndex = index;
+        } else if (layerId == 'layer21') {
+            imageIndex = lastValue <= 5 ? 0 : 1;
+            value = lastValue.toString() + unit;
+        } 
 
         let f = new FeatureProps();
         f.imageIndex = imageIndex;
         f.value = value;
-        f.zIndex = zi;
         return f;
     }
 
-    static selectIcon(layerProps, feature) {
+    static _selectIcon(layerProps, feature) {
         let f = MapUtil._getFeatureProps(layerProps, feature);
         let index = f.imageIndex;
 
@@ -74,9 +69,9 @@ export default class MapUtil {
         };
     }
 
-    static getIcon(layerProps, feature) {
+    static _getIcon(layerProps, feature) {
         if (layerProps.urls.length === 0) return undefined;
-        let { image, url } = MapUtil.selectIcon(layerProps, feature);
+        let { image, url } = MapUtil._selectIcon(layerProps, feature);
         let scale = 35.0 / Math.max(image.width, image.height);
 
         return new ol.style.Icon({
@@ -90,7 +85,7 @@ export default class MapUtil {
 
     static styleFunction(layerProps) {
         return feature => {
-            let image = MapUtil.getIcon(layerProps, feature);
+            let image = MapUtil._getIcon(layerProps, feature);
 
             const styles = {
                 'Point': new ol.style.Style({
@@ -98,14 +93,14 @@ export default class MapUtil {
                 }),
                 'LineString': new ol.style.Style({
                     stroke: new ol.style.Stroke({
-                        color: 'green',
-                        width: 1,
+                        color: layerProps.strokecolor,
+                        width: layerProps.strokew,
                     }),
                 }),
                 'MultiLineString': new ol.style.Style({
                     stroke: new ol.style.Stroke({
-                        color: 'green',
-                        width: 1,
+                        color: layerProps.strokecolor,
+                        width: layerProps.strokew,
                     }),
                 }),
                 'MultiPoint': new ol.style.Style({
@@ -113,8 +108,8 @@ export default class MapUtil {
                 }),
                 'MultiPolygon': new ol.style.Style({
                     stroke: new ol.style.Stroke({
-                        color: 'yellow',
-                        width: 1,
+                        color: layerProps.strokecolor,
+                        width: layerProps.strokew,
                     }),
                     fill: new ol.style.Fill({
                         color: 'rgba(255, 255, 0, 0.1)',
@@ -122,34 +117,18 @@ export default class MapUtil {
                 }),
                 'Polygon': new ol.style.Style({
                     stroke: new ol.style.Stroke({
-                        color: 'blue',
+                        color: layerProps.strokecolor,
                         lineDash: [4],
-                        width: 3,
+                        width: layerProps.strokew,
                     }),
                     fill: new ol.style.Fill({
                         color: 'rgba(0, 0, 255, 0.1)',
                     }),
                 }),
-                'GeometryCollection': new ol.style.Style({
-                    stroke: new ol.style.Stroke({
-                        color: 'magenta',
-                        width: 2,
-                    }),
-                    fill: new ol.style.Fill({
-                        color: 'magenta',
-                    }),
-                    image: new ol.style.Circle({
-                        radius: 10,
-                        fill: null,
-                        stroke: new ol.style.Stroke({
-                            color: 'magenta',
-                        }),
-                    }),
-                }),
                 'Circle': new ol.style.Style({
                     stroke: new ol.style.Stroke({
-                        color: 'red',
-                        width: 2,
+                        color: layerProps.strokecolor,
+                        width: layerProps.strokew,
                     }),
                     fill: new ol.style.Fill({
                         color: 'rgba(255,0,0,0.2)',
@@ -166,6 +145,7 @@ export default class MapUtil {
         let strokew = 3;
         let strokecolor = "#BB0000";
         let urls = [];
+        let zi =50;
 
         switch (layerId) {
             case 'layer1':
@@ -179,32 +159,6 @@ export default class MapUtil {
                 break;
             case 'layer4':
                 urls.push(require('@/assets/image/Station_CCTV_.png'));
-                break;
-            case 'layer14':
-                urls.push(require('@/assets/image/ADSL.png'));
-                break;
-            case 'layer15':
-                urls.push(require('@/assets/image/4G_.png'));
-                break;
-            case 'layer18': //河川排水水道
-                strokecolor = "#666600";
-                break;
-            case 'layer17': //109
-                strokecolor = "#009900"
-                break;
-            case 'layer19': //堤防管理里程
-                urls.push(require('@/assets/image/green-dot_.png'));
-                break;
-            case 'layer13':
-                strokecolor = "#663300"
-                break;
-            case 'layer16':
-                strokecolor = "#660000"
-                break;
-            case 'layer21':
-                unit = " %"
-                urls.push(require('@/assets/image/blackdoorclose.png'));
-                urls.push(require('@/assets/image/blackdooropen.png'));
                 break;
             case 'layer5'://沉陷計
                 urls.push(require('@/assets/image/pink-dot_.png'));
@@ -234,8 +188,35 @@ export default class MapUtil {
                 urls.push(require('@/assets/image/reddooropen.png'));
                 unit = " %";
                 break;
-            case 'layer2':
-                urls.push(require('@/assets/image/Station_FloodDiversion_.png'));
+            case 'layer12':
+                let imgs = MapUtil._eqIntensities.map(x => require(`@/assets/image/intensity${x}.png`));
+                urls.push(...imgs);
+                break;
+            case 'layer13':
+                strokecolor = "#663300"
+                break;
+            case 'layer14':
+                urls.push(require('@/assets/image/ADSL.png'));
+                break;
+            case 'layer15':
+                urls.push(require('@/assets/image/4G_.png'));
+                break;
+            case 'layer16':
+                strokecolor = "#660000"
+                break;
+            case 'layer17': //109
+                strokecolor = "#009900"
+                break;
+            case 'layer18': //河川排水水道
+                strokecolor = "#666600";
+                break;
+            case 'layer19': //堤防管理里程
+                urls.push(require('@/assets/image/green-dot_.png'));
+                break;
+            case 'layer21':
+                unit = " %"
+                urls.push(require('@/assets/image/blackdoorclose.png'));
+                urls.push(require('@/assets/image/blackdooropen.png'));
                 break;
             case 'layer24':
                 strokecolor = "#FFFF00"
@@ -259,6 +240,7 @@ export default class MapUtil {
         p.unit = unit;
         p.strokew = strokew;
         p.strokecolor = strokecolor;
+        p.zIndex = zi;
         p.urls = urls;
         p.images = [];
 
