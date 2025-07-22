@@ -1,4 +1,3 @@
-// @ts-nocheck
 export function styleFunction(feature) {
     const image = new ol.style.Circle({
         radius: 5,
