@@ -28,14 +28,9 @@ export async function apiGetTansuiGps(): Promise<string> {
 export async function apiGetGps(url: string): Promise<string> {
     let response;
     if (url.includes("/GeoJson/GetGeoJsonDataByFileName?fileName=")) {
-        response = await apiClient.post<string>(
-            url,
-            {});
+        response = await apiClient.post<string>(url,{});
     } else {
-        response = await apiClient.get<string>(
-            url,
-            {},
-        );
+        response = await apiClient.get<string>(url,{});
     }
     return response.data;
 }

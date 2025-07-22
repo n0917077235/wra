@@ -145,6 +145,7 @@
 /* eslint-disable */
 
 import { apiGetGps, apiGetIsoseismal, GetIsoseismalResponse } from '@/resource/geojson';
+import { styleFunction } from '@/resource/mapUtil';
 import { apiGetSensorMoreDataByStationName } from '@/resource/sensor';
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { useStore } from 'vuex';
@@ -307,62 +308,7 @@ const changeMapType = (tp: string) => {
         }
     }
 };
-//visiablemarker & 2
-/* 
-    async function visibleMarker(): Promise<void> {
-        const data: string = await apiGetGeoJsonFileNmae();
-        //GeoJson列表
-        lists = data.toString().split(",", 1000);
-        for (let i = 0; i < lists.length; i++) {
-            try {
-                if (i == 2) continue;
-                alert(lists[i]);
-                const data2: string = await apiGetGeoJsonDataByFileName(lists[i]);
-                //alert(data2);
-                const jj: JSON = JSON.parse(JSON.stringify(data2));
-                //newPoint(x, y, n);
-                jj['features'].forEach(fea => {
-                    
-                   
-                    if (fea['geometry']['type'].toLowerCase().valueOf() == ("point").valueOf()) {
-                        var x = fea['geometry']['coordinates'][0];
-                        var y = fea['geometry']['coordinates'][1];
-                        var n = fea['properties']['NAME'];
-                        //alert(fea['geometry']['type'].toLowerCase());
-                        //alert(x + "," + y + "," + n);
-                        newPoint(x, y, n);
-                    } else {
-                        var ar = new Array<any>();
-                        fea['geometry']['coordinates'].forEach(xy => {
-                            ar.push(new TGOS.TGPoint(xy[0], xy[1]));
-                        })
-                        newLine(ar, n);
-                    }
-                })
-            } catch (e) { alert(e.toString()); continue;}
-        };
-    }
-    async function visibleMarker2(): Promise<void> {
-        const data: string = await apiGetTansuiGps();
-        const jj: JSON = JSON.parse(JSON.stringify(data));
-        jj['features'].forEach(fea => {
-            if (fea['geometry']['type'].toLowerCase().valueOf() == ("point").valueOf()) {
-                var x = fea['geometry']['coordinates'][0];
-                var y = fea['geometry']['coordinates'][1];
-                var n = fea['properties']['NAME'];
-                //alert(fea['geometry']['type'].toLowerCase());
-                //alert(x + "," + y + "," + n);
-                newPoint(x, y, n);
-            } else {
-                var ar = new Array < any > ();
-                fea['geometry']['coordinates'].forEach(xy => {
-                    ar.push(new TGOS.TGPoint(xy[0], xy[1]));
-                })
-                newLine(ar, n);
-            }
-        })
-    }
- */
+
 async function init(): Promise<void> {
     let elem = document.getElementById('olmap');
 
@@ -391,8 +337,8 @@ async function init(): Promise<void> {
     map.getView().setCenter(ol.proj.transform(center, 'EPSG:4326', 'EPSG:3857'));
     pMap.value = map;
     getLocation();
-
 }
+
 function getLocation() {
     if (navigator.geolocation) {
         // navigator.geolocation.getCurrentPosition(showPosition);
@@ -663,33 +609,28 @@ function toggleLayerGroup(groupId: any) {
 }
 var mCluster = ref();
 const markers = Array<TGOS.TGMarker>();
+
 // 切換圖層
 async function toggleLayer(layerId: string) {
     var el = document.getElementById(layerId) as HTMLInputElement;
     var sv = document.getElementById('showValues') as HTMLInputElement;
     ls2.forEach(function (v, k) { v.close(); });
-    if (layers.has(layerId)) {
-        var tdata = layers.get(layerId) as TGOS.TGData;
-        //alert(el.checked);
-        //已有資料，切換顯示
-        if (tdata) {
-            if (el.checked) tdata.setMap(pMap.value);
-            else {
+    let map = pMap.value;
 
-                tdata.setMap(null);
-            }
-        }
+    if (layers.has(layerId)) {
+        // Layer already exists. Toggle visibility.
+        var vectorLayer = layers.get(layerId);
+        vectorLayer.setVisible(el.checked);
     } else if (layerId == 'layer13' && layers.has(layerId + '_1')) {
         for (var i = 1; i < 6; i++) {
-            var tdata = layers.get(layerId + '_' + i) as TGOS.TGData;
-            if (tdata) {
-                if (el.checked) tdata.setMap(pMap.value);
-                else tdata.setMap(null);
+            var vectorLayer = layers.get(layerId + '_' + i) as TGOS.TGData;
+            if (vectorLayer) {
+                if (el.checked) vectorLayer.setMap(pMap.value);
+                else vectorLayer.setMap(null);
             }
         }
-    }
-    else if (el.checked) {//無資料則新增
-        //var data = ref();
+    } else if (el.checked) {
+        //無資料則新增
         switch (layerId) {
             case 'layer1':
                 await addLayer(layerId, "/GeoJson/GetTansuiGps");
@@ -776,35 +717,34 @@ async function toggleLayer(layerId: string) {
                 break;
         }
     }
+
     if (infows.has(layerId)) {
         var infowmap1 = infows.get(layerId) as Map<TGOS.TGPoint, TGOS.TGInfoWindow>;
         if (el.checked && sv.checked) {
             infowmap1.forEach((i, p) => {
                 i.open(pMap.value, p);
-                //alert(p);
             });
         } else {
             infowmap1.forEach((i, p) => {
                 i.close();
-                //alert(p);
             });
         }
     }
 }
+
 var zi = 0;
 // 獲取並添加圖層
 var layers = new Map();
+
 const addLayer = async (layerId: string, funcName: string) => {
     console.log('adding layer')
-    //const layer = TGOS.TGLayer()
-    //建立TGData 並綁定到地圖上
     const pData = new TGOS.TGData({ map: pMap.value });
     //建立Map存放TGInfoWindow 給特定點顯示數值用 
     var infowmap = new Map<TGOS.TGPoint, TGOS.TGInfoWindow>();
     let data, data2;
+
     if (layerId == "layer12") {
         let infos = { userId: userId.value, eventTime: "" };
-        //let infos = { userId: "kris", eventTime: "" };
         const rtn: GetIsoseismalResponse | null = await apiGetIsoseismal(infos);
         if (rtn == null) {
             //提示未找到等震度圖
@@ -833,13 +773,10 @@ const addLayer = async (layerId: string, funcName: string) => {
                 };
             }),
         };
-
     }
     else {
         data = await apiGetGps(funcName);
     }
-
-    const jj: object = JSON.parse(JSON.stringify(data));
 
     try {
         var unit = "";
@@ -935,37 +872,52 @@ const addLayer = async (layerId: string, funcName: string) => {
                 zi = 0;
                 strokew = 9;
                 break;
-
-            //url = "";
         }
-        //alert(pStation);
-        graphic = pData.addGeoJson(jj, { idPropertyName: "GEOJSON" }) as Array<TGOS.TGGraphic>;
+
+        const vectorSource = new ol.source.Vector({
+            features: new ol.format.GeoJSON().readFeatures(data, {
+                dataProjection: 'EPSG:4326',
+                featureProjection: 'EPSG:3857'
+            }),
+        });
+
+        const vectorLayer = new ol.layer.Vector({
+            source: vectorSource,
+            style: styleFunction,
+        });
+
+        pMap.value.addLayer(vectorLayer);
+        layers.set(layerId, vectorLayer);
+        infows.set(layerId, infowmap);
+        return;
+
+        graphic = pData.addGeoJson(data, { idPropertyName: "GEOJSON" }) as Array<TGOS.TGGraphic>;
+
         //等震度圖
         if (data2) {
             graphic = pData.addGeoJson(data2, { idPropertyName: "GEOJSON" }) as Array<TGOS.TGGraphic>;
         }
+
         //換圖片"./images/Station_CCTV.png"
-        //alert(graphic.length);
-        const roundTo = function (num, decimal) { return Math.round((num + Number.EPSILON) * Math.pow(10, decimal)) / Math.pow(10, decimal); }
+        const roundTo = function (num, decimal) {
+            let y = Math.pow(10, decimal);
+            return Math.round((num + Number.EPSILON) * y) / y;
+        }
+
         for (var i = 0; i < graphic.length; i++) {
             zi = zi + 1; //設定zindex
             id = layerId + "_" + graphic[i].getProperty("id");
             var x = graphic[i]['geometry']['x'];
             var y = graphic[i]['geometry']['y'];
             var name = graphic[i].getProperty("name");
-            if (name == null) {
-                name = graphic[i].getProperty("NAME");
-                //alert(name);
-            }
+            if (name == null) name = graphic[i].getProperty("NAME");
             var type = graphic[i]['geometry']["type"];
-            if (type == "TGLineString")
-                id = layerId + "_" + name + "_" + i;
+            if (type == "TGLineString") id = layerId + "_" + name + "_" + i;
             var tgpoint = new TGOS.TGPoint(0, 0);
             var lastValue = roundTo(Number(graphic[i].getProperty("lastValue")), 2);
             var lastValue1 = roundTo(Number(graphic[i].getProperty("lastValue1")), 2);
             var lastValue2 = roundTo(Number(graphic[i].getProperty("lastValue2")), 2);
 
-            //if (graphic[i].getProperty("unit")) unit = graphic[i].getProperty("unit");
             var value = ""; //infowindow顯示用
             var names;
             var titleset = name; //hover顯示
@@ -974,33 +926,31 @@ const addLayer = async (layerId: string, funcName: string) => {
                 names = name.split(';');
                 titleset = names[0];
             }
-            //alert(type + " " + titleset);
+
             if (layerId == 'layer21') {
-                if (lastValue.toString() == "0") {
-                    //alert("000");
-                    url = require('@/assets/image/blackdoorclose.png');
-                } else url = require('@/assets/image/blackdooropen.png');;
+                let image = lastValue.toString() == "0"
+                    ? '@/assets/image/blackdoorclose.png'
+                    : '@/assets/image/blackdooropen.png';
+
+                url = require(image);
                 value = lastValue.toString() + unit;
             } else if (layerId == 'layer5') {
-                value = lastValue1 + unit;//titleset = titleset + " lastValue1:" + lastValue1;
+                value = lastValue1 + unit;
             } else if (layerId == 'layer6') {
-                value = lastValue1 + unit;//titleset = titleset + " lastValue1:" + lastValue1;
+                value = lastValue1 + unit;
             } else if (layerId == 'layer7') {
-                value = lastValue1 + unit;//titleset = titleset + " lastValue1:" + lastValue1;
+                value = lastValue1 + unit;
             } else if (layerId == 'layer10') { //水位計
-                value = lastValue1 + unit; //titleset = titleset + " lastValue1:" + lastValue1;
+                value = lastValue1 + unit;
             } else if (layerId == 'layer9') {
-                //if (lastValue1 >= 0) value = lastValue1 + unit;//titleset = titleset + " lastValue1:" + lastValue1;
-                //if (lastValue2 >= 0) value = value+", " + lastValue2 + unit;//titleset = titleset + " lastValue2:" + lastValue2;
                 value = lastValue1 + unit + ", " + lastValue2 + unit;
             } else if (layerId == 'layer11') {
                 if (lastValue1 != 0) {
-                    if (lastValue1 == -888) value = " 無此設備 ";//titleset = titleset + " 沒設備 "
-                    else if (lastValue1 == -999) value = " 異常 "; //titleset = titleset + " 異常 "
+                    if (lastValue1 == -888) value = " 無此設備 ";
+                    else if (lastValue1 == -999) value = " 異常 ";
                     else {
                         if (lastValue1 > 100) lastValue1 = 100;
                         else if (lastValue1 < 0) lastValue1 = 0;
-                        //titleset = titleset + " lastValue1:" + lastValue1;
                         value = lastValue1 + unit;
                     };
                 } else value = "0" + unit;
@@ -1013,11 +963,11 @@ const addLayer = async (layerId: string, funcName: string) => {
             } else if (layerId == 'layer26') {
                 zi = 0;
             } else if (layerId == 'layer12') {
-
                 url = require("@/assets/image/intensity" + graphic[i].getProperty("intensity") + ".png")
             }
             markerImg = new TGOS.TGImage(url, new TGOS.TGSize(35, 35),
                 new TGOS.TGPoint(0, 0), new TGOS.TGPoint(10, 33));
+
             var style1 = {
                 strokeColor: strokecolor,
                 strokeWeight: strokew,
@@ -1026,29 +976,16 @@ const addLayer = async (layerId: string, funcName: string) => {
                 clickable: true,
                 zIndex: zi,
             };
-            var style2 = {
-                strokeColor: strokecolor,
-                strokeWeight: strokew + 2,
-                title: titleset,
-                clickable: true,
-                zIndex: zi,
-            }
 
-            //if (type === "TGLineString") alert(titleset);
             pData.overrideStyle(graphic[i], style1);
             //線段事件處理
             if (type === "TGLineString") {
-                //alert(type);
-                //alert(titleset);
                 var infowindow = new TGOS.TGInfoWindow(titleset, tgpoint, { pixelOffset: new TGOS.TGSize(0, 0) });
-                //graphic[i].setProperty('zIndex', zi);
-                //alert(graphic[i].getProperty('zIndex'));
-
                 if (!ls2.has(titleset)) ls2.set(titleset, infowindow);
                 if (!ls3.has(titleset)) ls3.set(titleset, graphic[i]);
                 if (!ls4.has(zi.toString())) ls4.set(zi.toString(), titleset);
+
                 TGOS.TGEvent.addListener(graphic[i], 'mouseover', function (e) {
-                    //alert(e.target);
                     lastcol.forEach(function (v, k) {
                         if (k.getStrokeWeight() == 5.5) {
                             k.setStrokeWeight(3);
@@ -1059,23 +996,17 @@ const addLayer = async (layerId: string, funcName: string) => {
                         }
                         k.setStrokeColor(v);
                     });
-                    //if (! ls3.includes(e.target)) ls3.push(e.target);
+
                     e.target.setStrokeWeight(e.target.getStrokeWeight() + 2.5);
                     //儲存高亮前,再進行亮度上升40%
                     if (!lastcol.has(e.target))
                         lastcol.set(e.target, e.target.getStrokeColor());
                     e.target.setStrokeColor(LightenDarkenColor(e.target.getStrokeColor(), 40));
-                    //pData.overrideStyle(e.target, style2);
                     var tgpoint = e.point;
 
-                    //alert(e.target.getId());
                     ls2.forEach(
                         function (v, k) {
-                            //if (k == titleset) { alert(k); };
-                            //alert(k);
-                            if (v instanceof TGOS.TGInfoWindow)
-                                v.close();
-
+                            if (v instanceof TGOS.TGInfoWindow) v.close();
                         });
                     ls3.forEach(
                         function (v, k) {
@@ -1089,8 +1020,8 @@ const addLayer = async (layerId: string, funcName: string) => {
                         }
                     )
                 });
+
                 TGOS.TGEvent.addListener(graphic[i], 'click', function (e) {
-                    //alert(e.target);
                     lastcol.forEach(function (v, k) {
                         if (k.getStrokeWeight() == 5.5) {
                             k.setStrokeWeight(3);
@@ -1101,13 +1032,12 @@ const addLayer = async (layerId: string, funcName: string) => {
                         }
                         k.setStrokeColor(v);
                     });
-                    //if (! ls3.includes(e.target)) ls3.push(e.target);
+
                     e.target.setStrokeWeight(e.target.getStrokeWeight() + 2.5);
                     //儲存高亮前,再進行亮度上升40%
                     if (!lastcol.has(e.target))
                         lastcol.set(e.target, e.target.getStrokeColor());
                     e.target.setStrokeColor(LightenDarkenColor(e.target.getStrokeColor(), 40));
-                    //pData.overrideStyle(e.target, style2);
                     var tgpoint = e.point;
 
                     //alert(e.target.getId());
@@ -1132,6 +1062,7 @@ const addLayer = async (layerId: string, funcName: string) => {
                     )
                 });
             }
+
             //處理訊息視窗
             if (sensorLayers.includes(layerId) && x != null && y != null) {
                 tgpoint = new TGOS.TGPoint(x, y);
@@ -1141,7 +1072,8 @@ const addLayer = async (layerId: string, funcName: string) => {
                 if (!infowmap.has(tgpoint))
                     infowmap.set(tgpoint, infowindow);
             }
-            //點擊查詢 1131111
+
+            //點擊查詢 
             if (layerId == 'layer1' || layerId == 'layer2' || layerId == 'layer3') {
                 TGOS.TGEvent.addListener(graphic[i], 'click', async function (e) {
                     //alert(e.target.getTitle());
@@ -1223,26 +1155,21 @@ const addLayer = async (layerId: string, funcName: string) => {
                 })
             }
         }
-        //type  TGPoint TGLinString
+
         layers.set(layerId, pData);
         infows.set(layerId, infowmap);
         if (pData) {
             pData.setMap(pMap.value);  //設定呈現幾何圖層物件的地圖物件
-
         }
         var infowmap1 = infows.get(layerId) as Map<TGOS.TGPoint, TGOS.TGInfoWindow>;
         infowmap1.forEach((i, p) => {
             i.open(pMap.value, p);
-            //alert(p);
         });
-
     }
     catch (e) {
-        alert(e);
+        console.log(e);
     }
-    //const geoJsonLayer = new TGOS.TGGeoJSON(pMap.value, data, { id: layerId });
-    //layers[layerId] = geoJsonLayer;
-    //geoJsonLayer.setVisible(false); // 初始狀態設置為不可見
+
     getLocation();
 };
 
