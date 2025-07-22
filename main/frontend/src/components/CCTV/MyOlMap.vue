@@ -142,10 +142,9 @@
     </div>
 </template>
 <script lang="ts" setup>
-/* eslint-disable */
 
-import { apiGetGps, apiGetIsoseismal, GetIsoseismalResponse } from '@/resource/geojson';
-import { styleFunction } from '@/resource/mapUtil';
+import { apiGetGps, apiGetIsoseismal } from '@/resource/geojson';
+import MapUtil from '@/resource/map/mapUtil';
 import { apiGetSensorMoreDataByStationName } from '@/resource/sensor';
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { useStore } from 'vuex';
@@ -736,27 +735,23 @@ var zi = 0;
 // 獲取並添加圖層
 var layers = new Map();
 
-const addLayer = async (layerId: string, funcName: string) => {
-    console.log('adding layer')
-    const pData = new TGOS.TGData({ map: pMap.value });
-    //建立Map存放TGInfoWindow 給特定點顯示數值用 
-    var infowmap = new Map<TGOS.TGPoint, TGOS.TGInfoWindow>();
-    let data, data2;
-
+// Returns null if data is not available.
+async function getLayers(layerId, funcName) {
     if (layerId == "layer12") {
         let infos = { userId: userId.value, eventTime: "" };
-        const rtn: GetIsoseismalResponse | null = await apiGetIsoseismal(infos);
-        if (rtn == null) {
+        let v = await apiGetIsoseismal(infos);
+        let layers = [];
+
+        if (v == null) {
             //提示未找到等震度圖
-            var el = document.getElementById(layerId) as HTMLInputElement;
+            let el = document.getElementById(layerId);
             el.checked = false;
-            return;
+            return null;
         }
-        data = rtn.geoJson;
-        // 轉換成 GeoJSON 格式
-        data2 = {
+
+        let layer2 = {
             type: "FeatureCollection",
-            features: rtn.infoList.slice(2).map((info) => {
+            features: v.infoList.slice(2).map((info) => {
                 const [id, name, latitude, longitude, intensity] = info.split(";");
                 return {
                     type: "Feature",
@@ -773,109 +768,31 @@ const addLayer = async (layerId: string, funcName: string) => {
                 };
             }),
         };
+
+        return [v.geoJson, layer2];
     }
-    else {
-        data = await apiGetGps(funcName);
-    }
+
+    return [await apiGetGps(funcName)];
+}
+
+async function addLayer(layerId, funcName) {
+    console.log('adding layer');
+    let map = pMap.value;
+    const pData = new TGOS.TGData({ map: pMap.value });
+
+    // 建立Map存放TGInfoWindow 給特定點顯示數值用 
+    var infowmap = new Map<TGOS.TGPoint, TGOS.TGInfoWindow>();
+    let myLayers = await getLayers(layerId, funcName);
 
     try {
-        var unit = "";
+        let activeLayer = myLayers[0];
+        let layerProps = await MapUtil.getLayerProps(layerId);
+        let { unit, strokew, strokecolor } = layerProps;
         var id;
         var graphic;
-        var markerImg;
-        var strokew = 3;
-        var strokecolor = "#BB0000";
-        var url = "https://api.tgos.tw/TGOS_API/images/marker.png";
-        var url2 = "https://api.tgos.tw/TGOS_API/images/marker.png"; //特殊時換圖 開門
-        switch (layerId) { //指定圖示  //GeoJson/GetTansuiGps
-            case 'layer1':
-                url = require('@/assets/image/Station_WaterGate_.png');
-                break;
-            case 'layer2':
-                url = require('@/assets/image/Station_FloodDiversion_.png');
-                break;
-            case 'layer3':
-                url = require('@/assets/image/Station_BankSafty_.png');
-                break;
-            case 'layer4':
-                url = require('@/assets/image/Station_CCTV_.png');
-                break;
-            case 'layer14':
-                url = require('@/assets/image/ADSL.png');
-                break;
-            case 'layer15':
-                url = require('@/assets/image/4G_.png');
-                break;
-            case 'layer18': //河川排水水道
-                strokecolor = "#666600";
-                break;
-            case 'layer17': //109
-                strokecolor = "#009900"
-                break;
-            case 'layer19': //堤防管理里程
-                url = require('@/assets/image/green-dot_.png');
-                break;
-            case 'layer13':
-                strokecolor = "#663300"
-                break;
-            case 'layer16':
-                strokecolor = "#660000"
-                break;
-            case 'layer21':
-                unit = " %"
-                url = require('@/assets/image/blackdoorclose.png');
-                url2 = require('@/assets/image/blackdooropen.png');
-                break;
-            case 'layer5'://沉陷計
-                url = require('@/assets/image/pink-dot_.png');
-                unit = " mm";
-                break;
-            case 'layer6': //高水位
-                url = require('@/assets/image/yellow-dot_.png');
-                unit = " M";
-                break;
-            case 'layer7': //裂縫
-                url = require('@/assets/image/purple-dot_.png');
-                unit = " mm";
-                break;
-            case 'layer8':
-                url = require('@/assets/image/green-dot_.png');
-                break;
-            case 'layer9': //傾斜
-                url = require('@/assets/image/orange-dot_.png');
-                unit = " °";
-                break;
-            case 'layer10'://水位
-                url = require('@/assets/image/red-dot_.png');
-                unit = " M";
-                break;
-            case 'layer11':
-                url = require('@/assets/image/reddoorclose.png');
-                url2 = require('@/assets/image/reddooropen.png');
-                unit = " %";
-                break;
-            case 'layer2':
-                url = require('@/assets/image/Station_FloodDiversion_.png');
-                break;
-            case 'layer24':
-                strokecolor = "#FFFF00"
-                zi = 2;
-                strokew = 3;
-                break;
-            case 'layer25':
-                strokecolor = "#CC0000"
-                zi = 1;
-                strokew = 6;
-                break;
-            case 'layer26':
-                strokecolor = "#00CC00"
-                zi = 0;
-                strokew = 9;
-                break;
-        }
 
         const vectorSource = new ol.source.Vector({
-            features: new ol.format.GeoJSON().readFeatures(data, {
+            features: new ol.format.GeoJSON().readFeatures(activeLayer, {
                 dataProjection: 'EPSG:4326',
                 featureProjection: 'EPSG:3857'
             }),
@@ -883,20 +800,13 @@ const addLayer = async (layerId: string, funcName: string) => {
 
         const vectorLayer = new ol.layer.Vector({
             source: vectorSource,
-            style: styleFunction,
+            style: MapUtil.styleFunction(layerProps, activeLayer),
         });
 
-        pMap.value.addLayer(vectorLayer);
+        map.addLayer(vectorLayer);
         layers.set(layerId, vectorLayer);
         infows.set(layerId, infowmap);
         return;
-
-        graphic = pData.addGeoJson(data, { idPropertyName: "GEOJSON" }) as Array<TGOS.TGGraphic>;
-
-        //等震度圖
-        if (data2) {
-            graphic = pData.addGeoJson(data2, { idPropertyName: "GEOJSON" }) as Array<TGOS.TGGraphic>;
-        }
 
         //換圖片"./images/Station_CCTV.png"
         const roundTo = function (num, decimal) {
@@ -914,10 +824,6 @@ const addLayer = async (layerId: string, funcName: string) => {
             var type = graphic[i]['geometry']["type"];
             if (type == "TGLineString") id = layerId + "_" + name + "_" + i;
             var tgpoint = new TGOS.TGPoint(0, 0);
-            var lastValue = roundTo(Number(graphic[i].getProperty("lastValue")), 2);
-            var lastValue1 = roundTo(Number(graphic[i].getProperty("lastValue1")), 2);
-            var lastValue2 = roundTo(Number(graphic[i].getProperty("lastValue2")), 2);
-
             var value = ""; //infowindow顯示用
             var names;
             var titleset = name; //hover顯示
@@ -927,52 +833,10 @@ const addLayer = async (layerId: string, funcName: string) => {
                 titleset = names[0];
             }
 
-            if (layerId == 'layer21') {
-                let image = lastValue.toString() == "0"
-                    ? '@/assets/image/blackdoorclose.png'
-                    : '@/assets/image/blackdooropen.png';
-
-                url = require(image);
-                value = lastValue.toString() + unit;
-            } else if (layerId == 'layer5') {
-                value = lastValue1 + unit;
-            } else if (layerId == 'layer6') {
-                value = lastValue1 + unit;
-            } else if (layerId == 'layer7') {
-                value = lastValue1 + unit;
-            } else if (layerId == 'layer10') { //水位計
-                value = lastValue1 + unit;
-            } else if (layerId == 'layer9') {
-                value = lastValue1 + unit + ", " + lastValue2 + unit;
-            } else if (layerId == 'layer11') {
-                if (lastValue1 != 0) {
-                    if (lastValue1 == -888) value = " 無此設備 ";
-                    else if (lastValue1 == -999) value = " 異常 ";
-                    else {
-                        if (lastValue1 > 100) lastValue1 = 100;
-                        else if (lastValue1 < 0) lastValue1 = 0;
-                        value = lastValue1 + unit;
-                    };
-                } else value = "0" + unit;
-                if (lastValue1 > 0) url = require('@/assets/image/reddooropen.png');
-                else url = require('@/assets/image/reddoorclose.png');
-            } else if (layerId == 'layer24') {
-                zi = 2;
-            } else if (layerId == 'layer25') {
-                zi = 1;
-            } else if (layerId == 'layer26') {
-                zi = 0;
-            } else if (layerId == 'layer12') {
-                url = require("@/assets/image/intensity" + graphic[i].getProperty("intensity") + ".png")
-            }
-            markerImg = new TGOS.TGImage(url, new TGOS.TGSize(35, 35),
-                new TGOS.TGPoint(0, 0), new TGOS.TGPoint(10, 33));
-
             var style1 = {
                 strokeColor: strokecolor,
                 strokeWeight: strokew,
                 title: titleset,
-                icon: markerImg,
                 clickable: true,
                 zIndex: zi,
             };
@@ -1171,7 +1035,7 @@ const addLayer = async (layerId: string, funcName: string) => {
     }
 
     getLocation();
-};
+}
 
 const lst2 = ref(Array<string>());
 // 定義事件處理函數
@@ -1223,6 +1087,7 @@ function newLine(TGPs: Array<any>, title?: undefined): void {
     }
     );
 }
+
 function updateWnd(x: number, y: number, title?: string): void {
     pMap.value.setCenter(new TGOS.TGPoint(x, y));
     if (title) {
@@ -1241,6 +1106,7 @@ function updateWnd(x: number, y: number, title?: string): void {
     pTGMarker.value.setPosition(markerPoint.value);
     pTGMarker.value.setIcon(markerImg);
 }
+
 //原始顏色
 var lastcol = new Map<TGOS.TGLine, string>();
 //亮度增加
@@ -1263,7 +1129,6 @@ function LightenDarkenColor(col: string, amt: number) {
     else if (g < 0) g = 0;
     return (usePound ? "#" : "") + (g | (b << 8) | (r << 16)).toString(16);
 }
-/* eslint-disable */
 </script>
 
 <style lang="scss" scoped>
