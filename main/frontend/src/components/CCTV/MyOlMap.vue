@@ -321,8 +321,6 @@ async function init(): Promise<void> {
     let layerGroupMap = new ol.layer.Group({ title: 'map', layers });
 
     let myOptions = {
-        // interactions: ol.interaction.defaults({ mouseWheelZoom: base.options.mouseWheelZoom }),
-        // controls: ol.control.defaults().extend(controls),
         layers: [gmapLayer],
         view: new ol.View({
             center: [0, 0],
@@ -332,64 +330,38 @@ async function init(): Promise<void> {
     }
 
     let map = new ol.Map(myOptions);
-    let center = [121.44678969866742, 24.99384208911512];
-    map.getView().setCenter(ol.proj.transform(center, 'EPSG:4326', 'EPSG:3857'));
+    MapUtil.setCenter(map, 24.99384208911512, 121.44678969866742);
     pMap.value = map;
     getLocation();
 }
 
 function getLocation() {
-    if (navigator.geolocation) {
-        // navigator.geolocation.getCurrentPosition(showPosition);
-        navigator.geolocation.getCurrentPosition(showPosition, handleError, {
-            enableHighAccuracy: true,
-            timeout: 10000,
-            maximumAge: 0
-        });
-    } else {
-        //alert( "Geolocation is not supported by this browser.");
+    if (!navigator.geolocation) {
+        console.log("Cannot get geolocation from the browser.");
+        return;
     }
+
+    navigator.geolocation.getCurrentPosition(showPosition, handleError, {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0
+    });
 }
-function handleError(error: any): void {
-    switch (error.code) {
-        case error.PERMISSION_DENIED:
-            //alert("User denied the request for Geolocation.");
-            break;
-        case error.POSITION_UNAVAILABLE:
-            //alert("Location information is unavailable.");
-            //retryGetLocation();
-            break;
-        case error.TIMEOUT:
-            //alert("The request to get user location timed out.");
-            //retryGetLocation();
-            break;
-        case error.UNKNOWN_ERROR:
-            //alert("An unknown error occurred.");
-            //retryGetLocation();
-            break;
-    }
+
+function handleError(error) {
+    console.log(err);
 }
-function retryGetLocation(): void {
-    setTimeout(() => {
-        getLocation();
-    }, 5000); // 5秒後重試
-}
-let initin = true;
-function showPosition(position: any) {
-    //alert( "你的位置 Latitude: " + position.coords.latitude +
-    //    "<br>Longitude: " + position.coords.longitude);
+
+function showPosition(position) {
     var mey = position.coords.latitude;
     var mex = position.coords.longitude;
-    newPoint(mex, mey, "me");
-    if (initin) {
-        pMap.value.setCenter(new TGOS.TGPoint(mex, mey));
-        initin = false;
-    }
-    //return new Array({mex, mey});
-    //updateWnd(position.coords.latitude, position.coords.longitude);
+    addUserLocationMarker(mex, mey);
+    MapUtil.setCenter(pMap.value, mey, mex);
 }
+
 var dm: TGOS.TGDrawing;
-function drawmap(): void {
+
+function drawmap() {
     var el = document.getElementById('layer22') as HTMLInputElement;
     if (el.checked) {
         if (dm == null) {
@@ -529,48 +501,28 @@ function drawmap(): void {
     }
 }
 
-var ls = Array<TGOS.TGMarker>();
 var ls2 = new Map<string, TGOS.TGInfoWindow>();
 var ls3 = new Map<string, TGOS.TGGraphic>();
 var ls4 = new Map<string, string>();
-function newPoint(x: string, y: string, title: string): void {
-    var markerlink = 'https://api.tgos.tw/TGOS_API/images/marker.png';
-    if (title == "me") {
-        markerlink = require('@/assets/image/me4.png');
-    }
 
-    const markerImg = new TGOS.TGImage(
-        markerlink,
-        new TGOS.TGSize(35, 35),
-        new TGOS.TGPoint(0, 0),
-        new TGOS.TGPoint(20, 50),
-    );
-    const markerPoint = new TGOS.TGPoint(x, y);
-    pTGMarker2 = null;
-    pTGMarker2 = new TGOS.TGMarker(
-        pMap.value,
-        markerPoint,
-        title,
-        markerImg,
-    );
-    pTGMarker2.setClickable(true);
-    pTGMarker2.setZIndex(3000);
-    var infoContent = title;
+function addUserLocationMarker(x: Number, y: Number) {
+    let map = pMap.value;
 
-    var infoWindowOptions = { pixelOffset: new TGOS.TGSize(5, 5) };
-    var infowindow = new TGOS.TGInfoWindow(infoContent, markerPoint, infoWindowOptions);
-    //ls2.set(title, infowindow);
-    //TGOS.TGEvent.addListener(pTGMarker2, 'click', function () {
-    //    ls2.forEach(
-    //        function (v, k) {
-    //            v.close();
-    //        }
-    //    )
-    //    infowindow.open(pMap.value, markerPoint);
-    //});
-    ls.push(pTGMarker2);
+    let markers = new ol.layer.Vector({
+        source: new ol.source.Vector(),
+        style: new ol.style.Style({
+            image: new ol.style.Icon({
+                anchor: [0.5, 1],
+                src: require('@/assets/image/me4.png'),
+            })
+        })
+    });
 
+    map.addLayer(markers);
+    let marker = new ol.Feature(new ol.geom.Point(ol.proj.fromLonLat([x, y])));
+    markers.getSource().addFeature(marker);
 }
+
 //The ColorCode() will give the code every time.
 function ColorCode() {
     var makingColorCode = '0123456789ABCDEF';
@@ -580,7 +532,7 @@ function ColorCode() {
     }
     return finalCode;
 }
-function toggleLayerGroup(groupId: any) {
+function toggleLayerGroup(groupId) {
     const content = document.getElementById(groupId);
     if (content == null) return;
     if (content.style.display === "none" || content.style.display === "") {
@@ -606,7 +558,7 @@ function toggleLayerGroup(groupId: any) {
             break;
     }
 }
-var mCluster = ref();
+
 const markers = Array<TGOS.TGMarker>();
 
 // 切換圖層
@@ -618,7 +570,7 @@ async function toggleLayer(layerId: string) {
 
     if (layers.has(layerId)) {
         // Layer already exists. Toggle visibility.
-        var vectorLayer = layers.get(layerId);
+        let vectorLayer = layers.get(layerId);
         vectorLayer.setVisible(el.checked);
     } else if (layerId == 'layer13' && layers.has(layerId + '_1')) {
         for (var i = 1; i < 6; i++) {
@@ -776,9 +728,8 @@ async function getLayers(layerId, funcName) {
 }
 
 async function addLayer(layerId, funcName) {
-    console.log('adding layer');
+    console.log(`adding layer ${layerId}`);
     let map = pMap.value;
-    const pData = new TGOS.TGData({ map: pMap.value });
 
     // 建立Map存放TGInfoWindow 給特定點顯示數值用 
     var infowmap = new Map<TGOS.TGPoint, TGOS.TGInfoWindow>();
@@ -787,17 +738,15 @@ async function addLayer(layerId, funcName) {
     try {
         let activeLayer = myLayers[0];
         let layerProps = await MapUtil.getLayerProps(layerId);
-        var id;
-        var graphic;
 
-        const vectorSource = new ol.source.Vector({
+        let vectorSource = new ol.source.Vector({
             features: new ol.format.GeoJSON().readFeatures(activeLayer, {
                 dataProjection: 'EPSG:4326',
                 featureProjection: 'EPSG:3857'
             }),
         });
 
-        const vectorLayer = new ol.layer.Vector({
+        let vectorLayer = new ol.layer.Vector({
             source: vectorSource,
             zIndex: layerProps.zIndex,
             style: MapUtil.styleFunction(layerProps, activeLayer),
@@ -807,6 +756,10 @@ async function addLayer(layerId, funcName) {
         layers.set(layerId, vectorLayer);
         infows.set(layerId, infowmap);
         return;
+
+        var id;
+        var graphic;
+        const pData = new TGOS.TGData({ map: pMap.value });
 
         for (var i = 0; i < graphic.length; i++) {
             zi = zi + 1; //設定zindex
@@ -834,6 +787,7 @@ async function addLayer(layerId, funcName) {
             };
 
             pData.overrideStyle(graphic[i], style1);
+
             //線段事件處理
             if (type === "TGLineString") {
                 var infowindow = new TGOS.TGInfoWindow(titleset, tgpoint, { pixelOffset: new TGOS.TGSize(0, 0) });
@@ -841,7 +795,7 @@ async function addLayer(layerId, funcName) {
                 if (!ls3.has(titleset)) ls3.set(titleset, graphic[i]);
                 if (!ls4.has(zi.toString())) ls4.set(zi.toString(), titleset);
 
-                TGOS.TGEvent.addListener(graphic[i], 'mouseover', function (e) {
+                function highlightLine(e) {
                     lastcol.forEach(function (v, k) {
                         if (k.getStrokeWeight() == 5.5) {
                             k.setStrokeWeight(3);
@@ -857,66 +811,25 @@ async function addLayer(layerId, funcName) {
                     //儲存高亮前,再進行亮度上升40%
                     if (!lastcol.has(e.target))
                         lastcol.set(e.target, e.target.getStrokeColor());
-                    e.target.setStrokeColor(LightenDarkenColor(e.target.getStrokeColor(), 40));
+                    e.target.setStrokeColor(lightenColor(e.target.getStrokeColor(), 40));
                     var tgpoint = e.point;
 
-                    ls2.forEach(
-                        function (v, k) {
-                            if (v instanceof TGOS.TGInfoWindow) v.close();
-                        });
-                    ls3.forEach(
-                        function (v, k) {
-                            var ok = v['geometry'].getPath();
-                            var ok1 = e.target.getPath().getPath();
-                            if (ok == ok1) {
-                                var tgw = new TGOS.TGInfoWindow(k, e.point, { pixelOffset: new TGOS.TGSize(0, 0) });
-                                tgw.open(pMap.value, e.point);
-                                ls2.set(k, tgw);
-                            }
-                        }
-                    )
-                });
-
-                TGOS.TGEvent.addListener(graphic[i], 'click', function (e) {
-                    lastcol.forEach(function (v, k) {
-                        if (k.getStrokeWeight() == 5.5) {
-                            k.setStrokeWeight(3);
-                        } else if (k.getStrokeWeight() == 8.5)
-                            k.setStrokeWeight(6);
-                        else if (k.getStrokeWeight() == 11.5) {
-                            k.setStrokeWeight(9);
-                        }
-                        k.setStrokeColor(v);
+                    ls2.forEach((v, k) => {
+                        if (v instanceof TGOS.TGInfoWindow) v.close();
                     });
 
-                    e.target.setStrokeWeight(e.target.getStrokeWeight() + 2.5);
-                    //儲存高亮前,再進行亮度上升40%
-                    if (!lastcol.has(e.target))
-                        lastcol.set(e.target, e.target.getStrokeColor());
-                    e.target.setStrokeColor(LightenDarkenColor(e.target.getStrokeColor(), 40));
-                    var tgpoint = e.point;
+                    ls3.forEach((v, k) => {
+                        var ok = v['geometry'].getPath();
+                        var ok1 = e.target.getPath().getPath();
+                        if (ok != ok1) return;
+                        var tgw = new TGOS.TGInfoWindow(k, e.point, { pixelOffset: new TGOS.TGSize(0, 0) });
+                        tgw.open(pMap.value, e.point);
+                        ls2.set(k, tgw);
+                    });
+                }
 
-                    //alert(e.target.getId());
-                    ls2.forEach(
-                        function (v, k) {
-                            //if (k == titleset) { alert(k); };
-                            //alert(k);
-                            if (v instanceof TGOS.TGInfoWindow)
-                                v.close();
-
-                        });
-                    ls3.forEach(
-                        function (v, k) {
-                            var ok = v['geometry'].getPath();
-                            var ok1 = e.target.getPath().getPath();
-                            if (ok == ok1) {
-                                var tgw = new TGOS.TGInfoWindow(k, e.point, { pixelOffset: new TGOS.TGSize(0, 0) });
-                                tgw.open(pMap.value, e.point);
-                                ls2.set(k, tgw);
-                            }
-                        }
-                    )
-                });
+                TGOS.TGEvent.addListener(graphic[i], 'mouseover', e => highlightLine(e));
+                TGOS.TGEvent.addListener(graphic[i], 'click', e => highlightLine(e));
             }
 
             //處理訊息視窗
@@ -938,10 +851,6 @@ async function addLayer(layerId, funcName) {
                     setTimeout(() => {
                         const box = document.getElementById('alarmbox3') as HTMLElement;
                         const Canvas = document.getElementById('AlarmCanvas3');
-                        //if (Canvas) {
-                        //if (alarmrtn.value)
-                        //Canvas.height = 100 + alarmrtn.value.length * 30;
-                        //}
 
                         const ctx = Canvas?.getContext('2d');
                         if (box && ctx) {
@@ -1046,18 +955,15 @@ const handleCanvasClick = (event) => {
         }
     });
 };
-//function aa() { alert("aa");}
-//線段的訊息
-var infows2 = new Map<string, Map<TGOS.TGPoint, TGOS.TGInfoWindow>>(); // 指定infowindows Map()
 
 //感測器圖層顯示數值?
 var infows = new Map<string, Map<TGOS.TGPoint, TGOS.TGInfoWindow>>(); // 指定infowindows Map()
 let sensorLayers = ['layer5', 'layer6', 'layer7', 'layer9', 'layer10', 'layer11', 'layer21'];
-
 const showValues = ref(false);
-function toggleShowValues(): void {
+
+function toggleShowValues() {
     showValues.value = !showValues.value;
-    //alert(showValues.value);
+
     infows.forEach((infowmap, layerId) => {
         var infowmap1 = infows.get(layerId) as Map<TGOS.TGPoint, TGOS.TGInfoWindow>;
         var el = document.getElementById(layerId) as HTMLInputElement;
@@ -1069,19 +975,10 @@ function toggleShowValues(): void {
     });
 }
 
-function newLine(TGPs: Array<any>, title?: undefined): void {
-    pTGLine.value = new TGOS.TGLine(
-        pMap.value,
-        new TGOS.TGLineString(TGPs), {
-        strokeColor: ColorCode(),
-        strokeWeight: 4,
-        clickable: true
-    }
-    );
-}
-
 function updateWnd(x: number, y: number, title?: string): void {
-    pMap.value.setCenter(new TGOS.TGPoint(x, y));
+    let map = pMap.value;
+    MapUtil.setCenter(map, y, x);
+
     if (title) {
         pTGMarker.value.setTitle(title);
     }
@@ -1101,10 +998,10 @@ function updateWnd(x: number, y: number, title?: string): void {
 
 //原始顏色
 var lastcol = new Map<TGOS.TGLine, string>();
-//亮度增加
-function LightenDarkenColor(col: string, amt: number) {
+
+function lightenColor(col: string, amt: number) {
     var usePound = false;
-    //alert(col);
+
     if (col.charAt(0) == '#') {
         col = col.slice(1);
         usePound = true;
@@ -1178,8 +1075,6 @@ function LightenDarkenColor(col: string, amt: number) {
     z-index: 1001;
     /* 確保圖示在選單上方 */
 }
-
-
 
 .modal {
     display: none;

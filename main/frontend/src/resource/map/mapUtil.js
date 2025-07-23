@@ -257,4 +257,8 @@ export default class MapUtil {
         await img.decode();
         return img;
     }
+
+    static setCenter(map, lat, lon){
+        map.getView().setCenter(ol.proj.fromLonLat([lon, lat]));
+    }
 }
