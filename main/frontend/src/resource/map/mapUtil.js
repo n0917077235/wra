@@ -1,5 +1,6 @@
 import FeatureProps from './featureProps';
 import LayerProps from './layerProps';
+import MathUtil from '../mathUtil';
 
 export default class MapUtil {
     static _eqIntensities = ['1', '2', '3', '4', '5.1', '5.9', '6.1', '6.9', '7'];
@@ -28,21 +29,14 @@ export default class MapUtil {
             value = lastValue1 + unit;
         } else if (layerId == 'layer7') {
             value = lastValue1 + unit;
-        } else if (layerId == 'layer10') { //水位計
+        } else if (layerId == 'layer10') {
+            // 水位計
             value = lastValue1 + unit;
         } else if (layerId == 'layer9') {
             value = lastValue1 + unit + ", " + lastValue2 + unit;
         } else if (layerId == 'layer11') {
-            if (lastValue1 != 0) {
-                if (lastValue1 == -888) value = " 無此設備 ";
-                else if (lastValue1 == -999) value = " 異常 ";
-                else {
-                    if (lastValue1 > 100) lastValue1 = 100;
-                    else if (lastValue1 < 0) lastValue1 = 0;
-                    value = lastValue1 + unit;
-                };
-            } else value = "0" + unit;
-
+            // Gate opening
+            value = MapUtil._mapGateOpening(lastValue1);
             imageIndex = lastValue1 <= 5 ? 0 : 1;
         } else if (layerId == 'layer12') {
             let intensity = feature.get('intensity');
@@ -51,12 +45,19 @@ export default class MapUtil {
         } else if (layerId == 'layer21') {
             imageIndex = lastValue <= 5 ? 0 : 1;
             value = lastValue.toString() + unit;
-        } 
+        }
 
         let f = new FeatureProps();
         f.imageIndex = imageIndex;
         f.value = value;
         return f;
+    }
+
+    static _mapGateOpening(val, unit) {
+        if (val == -888) return " 無此設備 ";
+        if (val == -999) return " 異常 ";
+        let v = MathUtil.bound(val, 0, 100);
+        return `${v}${unit}`;
     }
 
     static _selectIcon(layerProps, feature) {
@@ -145,7 +146,7 @@ export default class MapUtil {
         let strokew = 3;
         let strokecolor = "#BB0000";
         let urls = [];
-        let zi =50;
+        let zi = 50;
 
         switch (layerId) {
             case 'layer1':
@@ -258,7 +259,8 @@ export default class MapUtil {
         return img;
     }
 
-    static setCenter(map, lat, lon){
+    static setCenter(map, lat, lon) {
         map.getView().setCenter(ol.proj.fromLonLat([lon, lat]));
     }
+
 }

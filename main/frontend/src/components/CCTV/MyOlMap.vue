@@ -145,6 +145,7 @@
 
 import { apiGetGps, apiGetIsoseismal } from '@/resource/geojson';
 import MapUtil from '@/resource/map/mapUtil';
+import LineHighlight from '@/resource/map/lineHighlight';
 import { apiGetSensorMoreDataByStationName } from '@/resource/sensor';
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { useStore } from 'vuex';
@@ -239,20 +240,9 @@ function drawSavedDrawings() {
                     }
                 }
                 )
-
-                //dm.setGeoJsonProperties((r) => { alert(r); },JSON.stringify(drawing));
-                //alert(JSON.stringify(drawing));
             });
         }
     } catch (e) { alert(e); }
-    //alert(savedDrawings.length);
-    //const pData = new TGOS.TGData({ map: pMap.value });
-    //savedDrawings.forEach(drawing => {
-    //    let graphics= pData.addGeoJson(drawing, { idPropertyName: "GEOJSON" });
-    //alert(dm.graphic);
-    //alert(drawing);
-    //});
-    //pData.setMap(pMap.value);
 }
 
 watch(CameraArea.value, () => {
@@ -341,15 +331,11 @@ function getLocation() {
         return;
     }
 
-    navigator.geolocation.getCurrentPosition(showPosition, handleError, {
+    navigator.geolocation.getCurrentPosition(showPosition, console.log, {
         enableHighAccuracy: true,
         timeout: 10000,
         maximumAge: 0
     });
-}
-
-function handleError(error) {
-    console.log(err);
 }
 
 function showPosition(position) {
@@ -503,7 +489,6 @@ function drawmap() {
 
 var ls2 = new Map<string, TGOS.TGInfoWindow>();
 var ls3 = new Map<string, TGOS.TGGraphic>();
-var ls4 = new Map<string, string>();
 
 function addUserLocationMarker(x: Number, y: Number) {
     let map = pMap.value;
@@ -755,26 +740,23 @@ async function addLayer(layerId, funcName) {
         map.addLayer(vectorLayer);
         layers.set(layerId, vectorLayer);
         infows.set(layerId, infowmap);
+        LineHighlight.enable(layerProps, map);
         return;
 
-        var id;
         var graphic;
         const pData = new TGOS.TGData({ map: pMap.value });
 
         for (var i = 0; i < graphic.length; i++) {
             zi = zi + 1; //設定zindex
-            id = layerId + "_" + graphic[i].getProperty("id");
             var x = graphic[i]['geometry']['x'];
             var y = graphic[i]['geometry']['y'];
             var name = graphic[i].getProperty("name");
             if (name == null) name = graphic[i].getProperty("NAME");
             var type = graphic[i]['geometry']["type"];
-            if (type == "TGLineString") id = layerId + "_" + name + "_" + i;
             var tgpoint = new TGOS.TGPoint(0, 0);
             var value = ""; //infowindow顯示用
             var names;
             var titleset = name; //hover顯示
-            graphic[i].setProperty('id', id);
             if (name != null) {
                 names = name.split(';');
                 titleset = names[0];
@@ -793,7 +775,6 @@ async function addLayer(layerId, funcName) {
                 var infowindow = new TGOS.TGInfoWindow(titleset, tgpoint, { pixelOffset: new TGOS.TGSize(0, 0) });
                 if (!ls2.has(titleset)) ls2.set(titleset, infowindow);
                 if (!ls3.has(titleset)) ls3.set(titleset, graphic[i]);
-                if (!ls4.has(zi.toString())) ls4.set(zi.toString(), titleset);
 
                 function highlightLine(e) {
                     lastcol.forEach(function (v, k) {
@@ -994,29 +975,6 @@ function updateWnd(x: number, y: number, title?: string): void {
     alert(title);
     pTGMarker.value.setPosition(markerPoint.value);
     pTGMarker.value.setIcon(markerImg);
-}
-
-//原始顏色
-var lastcol = new Map<TGOS.TGLine, string>();
-
-function lightenColor(col: string, amt: number) {
-    var usePound = false;
-
-    if (col.charAt(0) == '#') {
-        col = col.slice(1);
-        usePound = true;
-    }
-    var num = parseInt(col, 16);
-    var r = (num >> 16) + amt;
-    if (r > 255) r = 255;
-    else if (r < 0) r = 0;
-    var b = ((num >> 8) & 0x00FF) + amt;
-    if (b > 255) b = 255;
-    else if (b < 0) b = 0;
-    var g = (num & 0x0000FF) + amt;
-    if (g > 255) g = 255;
-    else if (g < 0) g = 0;
-    return (usePound ? "#" : "") + (g | (b << 8) | (r << 16)).toString(16);
 }
 </script>
 
