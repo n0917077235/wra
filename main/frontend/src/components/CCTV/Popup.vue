@@ -1,7 +1,7 @@
 <template>
     <div id="popup" class="ol-popup">
         <a href="#" id="popup-closer" class="ol-popup-closer"></a>
-        <div id="popup-content"></div>
+        <div id="popup-content" class="ol-popup-content"></div>
     </div>
 </template>
 
@@ -37,7 +37,7 @@ onMounted(() => {
     border: 1px solid #cccccc;
     bottom: 12px;
     left: -50px;
-    min-width: 225px;
+    min-width: 125px;
 }
 
 .ol-popup:after,
@@ -74,5 +74,9 @@ onMounted(() => {
 
 .ol-popup-closer:after {
     content: "✖";
+}
+
+.ol-popup-content{
+    margin-top: 5px;
 }
 </style>

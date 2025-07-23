@@ -151,6 +151,7 @@ import { apiGetSensorMoreDataByStationName } from '@/resource/sensor';
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { useStore } from 'vuex';
 import Popup from './Popup.vue';
+import LayerMap from '@/resource/map/layerMap';
 
 interface Props {
     title?: string;
@@ -499,9 +500,6 @@ function drawmap() {
     }
 }
 
-var ls2 = new Map<string, TGOS.TGInfoWindow>();
-var ls3 = new Map<string, TGOS.TGGraphic>();
-
 function addUserLocationMarker(x: Number, y: Number) {
     let map = pMap.value;
 
@@ -559,115 +557,107 @@ function toggleLayerGroup(groupId) {
 const markers = Array<TGOS.TGMarker>();
 
 // 切換圖層
-async function toggleLayer(layerId: string) {
-    var el = document.getElementById(layerId) as HTMLInputElement;
-    var sv = document.getElementById('showValues') as HTMLInputElement;
-    ls2.forEach(function (v, k) { v.close(); });
+async function toggleLayer(layerGroup) {
+    var el = document.getElementById(layerGroup);
+    var sv = document.getElementById('showValues');
     let map = pMap.value;
+    let myLayers = layers.get(layerGroup);
 
-    if (layers.has(layerId)) {
+    if (myLayers !== undefined) {
         // Layer already exists. Toggle visibility.
-        let vectorLayer = layers.get(layerId);
-        vectorLayer.setVisible(el.checked);
-    } else if (layerId == 'layer13' && layers.has(layerId + '_1')) {
-        for (var i = 1; i < 6; i++) {
-            var vectorLayer = layers.get(layerId + '_' + i) as TGOS.TGData;
-            if (vectorLayer) {
-                if (el.checked) vectorLayer.setMap(pMap.value);
-                else vectorLayer.setMap(null);
-            }
-        }
+        myLayers.forEach(x => x.setVisible(el.checked));
     } else if (el.checked) {
         //無資料則新增
-        switch (layerId) {
+        switch (layerGroup) {
             case 'layer1':
-                await addLayer(layerId, "/GeoJson/GetTansuiGps");
+                await addLayer(layerGroup, "/GeoJson/GetTansuiGps");
                 break;
             case 'layer2':
-                await addLayer(layerId, "/GeoJson/GetYansantziGps");
+                await addLayer(layerGroup, "/GeoJson/GetYansantziGps");
                 break;
             case 'layer3':
-                await addLayer(layerId, "/GeoJson/GetBankGps");
+                await addLayer(layerGroup, "/GeoJson/GetBankGps");
                 break;
             case 'layer4':
-                await addLayer(layerId, "/GeoJson/GetCCTVGps");
+                await addLayer(layerGroup, "/GeoJson/GetCCTVGps");
                 break;
             case 'layer5':
-                await addLayer(layerId, "/GeoJson/GetSensorGps?sensorType=sink");
+                await addLayer(layerGroup, "/GeoJson/GetSensorGps?sensorType=sink");
                 break;
             case 'layer6':
-                await addLayer(layerId, "/GeoJson/GetSensorGps?sensorType=waterlevel2");
+                await addLayer(layerGroup, "/GeoJson/GetSensorGps?sensorType=waterlevel2");
                 break;
             case 'layer7':
-                await addLayer(layerId, "/GeoJson/GetSensorGps?sensorType=crack");
+                await addLayer(layerGroup, "/GeoJson/GetSensorGps?sensorType=crack");
                 break;
             case 'layer8':
-                await addLayer(layerId, "/GeoJson/GetSensorGps?sensorType=earthquake");
+                await addLayer(layerGroup, "/GeoJson/GetSensorGps?sensorType=earthquake");
                 break;
             case 'layer9':
-                await addLayer(layerId, "/GeoJson/GetSensorGps?sensorType=slope");
+                await addLayer(layerGroup, "/GeoJson/GetSensorGps?sensorType=slope");
                 break;
             case 'layer10':
-                await addLayer(layerId, "/GeoJson/GetSensorGps?sensorType=waterlevel");
+                await addLayer(layerGroup, "/GeoJson/GetSensorGps?sensorType=waterlevel");
                 break;
             case 'layer11':
-                await addLayer(layerId, "/GeoJson/GetSensorGps?sensorType=gate");
+                await addLayer(layerGroup, "/GeoJson/GetSensorGps?sensorType=gate");
                 break;
             case 'layer12':
-                await addLayer(layerId, "/Earthquake/GetEQEventRangeIntensity")
+                await addLayer(layerGroup, "/Earthquake/GetEQEventRangeIntensity")
                 // 等震度圖 await addLayer(layerId, "等震度圖");
                 break;
             case 'layer13':
-                await addLayer(layerId + '_1', "/GeoJson/GetGeoJsonDataByFileName?fileName=三重.json");
-                await addLayer(layerId + '_2', "/GeoJson/GetGeoJsonDataByFileName?fileName=基隆.json");
-                await addLayer(layerId + '_3', "/GeoJson/GetGeoJsonDataByFileName?fileName=新店.json");
-                await addLayer(layerId + '_4', "/GeoJson/GetGeoJsonDataByFileName?fileName=板橋.json");
-                await addLayer(layerId + '_5', "/GeoJson/GetGeoJsonDataByFileName?fileName=汐止.json");
+                let baseUrl = '/GeoJson/GetGeoJsonDataByFileName?fileName=';
+                await addLayer(layerGroup + '_1', `${baseUrl}三重.json`, layerGroup);
+                await addLayer(layerGroup + '_2', `${baseUrl}基隆.json`, layerGroup);
+                await addLayer(layerGroup + '_3', `${baseUrl}新店.json`, layerGroup);
+                await addLayer(layerGroup + '_4', `${baseUrl}板橋.json`, layerGroup);
+                await addLayer(layerGroup + '_5', `${baseUrl}汐止.json`, layerGroup);
                 break;
             case 'layer14':
-                await addLayer(layerId, "/GeoJson/GetAdslGps");
+                await addLayer(layerGroup, "/GeoJson/GetAdslGps");
                 break;
             case 'layer15':
-                await addLayer(layerId, "/GeoJson/Get4GGps");
+                await addLayer(layerGroup, "/GeoJson/Get4GGps");
                 break;
             case 'layer16':
-                await addLayer(layerId, "/GeoJson/GetGeoJsonDataByFileName?fileName=GPS08.json");
+                await addLayer(layerGroup, "/GeoJson/GetGeoJsonDataByFileName?fileName=GPS08.json");
                 break;
             case 'layer17':
-                await addLayer(layerId, "/GeoJson/GetGeoJsonDataByFileName?fileName=GPS01.json");
+                await addLayer(layerGroup, "/GeoJson/GetGeoJsonDataByFileName?fileName=GPS01.json");
                 break;
             case 'layer18':
-                await addLayer(layerId, "/GeoJson/GetGeoJsonDataByFileName?fileName=GPS02.json");
+                await addLayer(layerGroup, "/GeoJson/GetGeoJsonDataByFileName?fileName=GPS02.json");
                 break;
             case 'layer19':
-                await addLayer(layerId, "/GeoJson/GetDamPointGps");
+                await addLayer(layerGroup, "/GeoJson/GetDamPointGps");
                 break;
             case 'layer20':
-                await addLayer(layerId, "/GeoJson/GetGeoJsonDataByFileName?fileName=GPS04.json");
+                await addLayer(layerGroup, "/GeoJson/GetGeoJsonDataByFileName?fileName=GPS04.json");
                 break;
             case 'layer21':
-                await addLayer(layerId, "/GeoJson/GetTaipeiGateGps");
+                await addLayer(layerGroup, "/GeoJson/GetTaipeiGateGps");
                 break;
             case 'layer22':
                 //自訂圖層 await addLayer(layerId, "/GeoJson/GetAdslGps");
                 break;
             case 'layer23':
-                await addLayer(layerId, "/GeoJson/GetGeoJsonDataByFileName?fileName=GPS05.json");
+                await addLayer(layerGroup, "/GeoJson/GetGeoJsonDataByFileName?fileName=GPS05.json");
                 break;
             case 'layer26':
-                await addLayer(layerId, "/GeoJson/GetGeoJsonDataByFileName?fileName=a河川區域線.geojson");
+                await addLayer(layerGroup, "/GeoJson/GetGeoJsonDataByFileName?fileName=a河川區域線.geojson");
                 break;
             case 'layer25':
-                await addLayer(layerId, "/GeoJson/GetGeoJsonDataByFileName?fileName=b用地範圍線.geojson");
+                await addLayer(layerGroup, "/GeoJson/GetGeoJsonDataByFileName?fileName=b用地範圍線.geojson");
                 break;
             case 'layer24':
-                await addLayer(layerId, "/GeoJson/GetGeoJsonDataByFileName?fileName=c治理計畫線.geojson");
+                await addLayer(layerGroup, "/GeoJson/GetGeoJsonDataByFileName?fileName=c治理計畫線.geojson");
                 break;
         }
     }
 
-    if (infows.has(layerId)) {
-        var infowmap1 = infows.get(layerId) as Map<TGOS.TGPoint, TGOS.TGInfoWindow>;
+    if (infows.has(layerGroup)) {
+        var infowmap1 = infows.get(layerGroup) as Map<TGOS.TGPoint, TGOS.TGInfoWindow>;
         if (el.checked && sv.checked) {
             infowmap1.forEach((i, p) => {
                 i.open(pMap.value, p);
@@ -681,8 +671,7 @@ async function toggleLayer(layerId: string) {
 }
 
 var zi = 0;
-// 獲取並添加圖層
-var layers = new Map();
+let layers = new LayerMap();
 
 // Returns null if data is not available.
 async function getLayers(layerId, funcName) {
@@ -724,7 +713,8 @@ async function getLayers(layerId, funcName) {
     return [await apiGetGps(funcName)];
 }
 
-async function addLayer(layerId, funcName) {
+async function addLayer(layerId, funcName, layerGroup = null) {
+    if (layerGroup === null) layerGroup = layerId;
     console.log(`adding layer ${layerId}`);
     let map = pMap.value;
 
@@ -751,9 +741,9 @@ async function addLayer(layerId, funcName) {
 
         map.addLayer(vectorLayer);
         addPopupOverlay(map);
-        layers.set(layerId, vectorLayer);
+        layers.add(layerGroup, vectorLayer);
         infows.set(layerId, infowmap);
-        LineHighlight.enable({ layerProps, map, popup: popup.value });
+        LineHighlight.enable({ layerProps, map, popup: popup.value, vectorLayer });
         return;
 
         var graphic;

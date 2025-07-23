@@ -9,14 +9,14 @@ export default class LineHighlight {
 
     static _handle(event, layerItems, changedItems) {
         let map = layerItems.map;
-        let layerProps = layerItems.layerProps;
         let first = null;
+        let layerFilter = layer => ol.util.getUid(layer) === ol.util.getUid(layerItems.vectorLayer);
 
         map.forEachFeatureAtPixel(event.pixel, f => {
             if (first !== null) return;
             let type = f.getGeometry().getType();
             if (type == "LineString") first = f;
-        });
+        }, { layerFilter });
 
         if (first === null) return;
         LineHighlight._highlight(layerItems, changedItems, first, event)
@@ -40,12 +40,12 @@ export default class LineHighlight {
 
         // Show feature name popup
         let name = LineHighlight._getFeatureName(layerProps.layerId, f);
-        
+
         if (name) {
             let coordinate = event.coordinate;
             let popup = layerItems.popup;
             let content = popup.obj.content;
-            content.innerHTML = `<p>${name}</p>`;
+            content.innerHTML = `<div style="white-space: nowrap">${name}</div>`;
             popup.overlay.setPosition(coordinate);
         }
     }
