@@ -330,8 +330,6 @@ function onPopupInit(e) {
 
 async function init() {
     let elem = document.getElementById('olmap');
-    let layers = [gmapLayer];
-    let layerGroupMap = new ol.layer.Group({ title: 'map', layers });
 
     let myOptions = {
         layers: [gmapLayer],
@@ -569,7 +567,6 @@ const markers = Array<TGOS.TGMarker>();
 // 切換圖層
 async function toggleLayer(layerGroup) {
     var el = document.getElementById(layerGroup);
-    var sv = document.getElementById('showValues');
     let map = pMap.value;
     let myLayers = layers.get(layerGroup);
 
@@ -665,19 +662,6 @@ async function toggleLayer(layerGroup) {
                 break;
         }
     }
-
-    if (infows.has(layerGroup)) {
-        var infowmap1 = infows.get(layerGroup) as Map<TGOS.TGPoint, TGOS.TGInfoWindow>;
-        if (el.checked && sv.checked) {
-            infowmap1.forEach((i, p) => {
-                i.open(pMap.value, p);
-            });
-        } else {
-            infowmap1.forEach((i, p) => {
-                i.close();
-            });
-        }
-    }
 }
 
 var zi = 0;
@@ -727,9 +711,6 @@ async function addLayer(layerId, funcName, layerGroup = null) {
     if (layerGroup === null) layerGroup = layerId;
     console.log(`adding layer ${layerId}`);
     let map = pMap.value;
-
-    // 建立Map存放TGInfoWindow 給特定點顯示數值用 
-    var infowmap = new Map<TGOS.TGPoint, TGOS.TGInfoWindow>();
     let myLayers = await getLayers(layerId, funcName);
 
     try {
@@ -746,7 +727,7 @@ async function addLayer(layerId, funcName, layerGroup = null) {
         let vectorLayer = new ol.layer.Vector({
             source: vectorSource,
             zIndex: layerProps.zIndex,
-            style: MapUtil.styleFunction(layerProps, activeLayer),
+            style: MapUtil.styleFunction(layerProps, () => showValues.value, activeLayer),
         });
 
         map.addLayer(vectorLayer);
@@ -756,6 +737,8 @@ async function addLayer(layerId, funcName, layerGroup = null) {
         LineHighlight.enable({ layerProps, map, popup: popup.value, vectorLayer });
         return;
 
+        // 建立Map存放TGInfoWindow 給特定點顯示數值用 
+        var infowmap = new Map<TGOS.TGPoint, TGOS.TGInfoWindow>();
         var graphic;
         const pData = new TGOS.TGData({ map: pMap.value });
 
@@ -912,21 +895,21 @@ const handleCanvasClick = (event) => {
 
 //感測器圖層顯示數值?
 var infows = new Map<string, Map<TGOS.TGPoint, TGOS.TGInfoWindow>>(); // 指定infowindows Map()
-let sensorLayers = ['layer5', 'layer6', 'layer7', 'layer9', 'layer10', 'layer11', 'layer21'];
 const showValues = ref(false);
 
 function toggleShowValues() {
     showValues.value = !showValues.value;
+    refreshSensorLayers();
+}
 
-    infows.forEach((infowmap, layerId) => {
-        var infowmap1 = infows.get(layerId) as Map<TGOS.TGPoint, TGOS.TGInfoWindow>;
-        var el = document.getElementById(layerId) as HTMLInputElement;
-        infowmap1.forEach((i, p) => {
-            if (showValues.value && el.checked) i.open(pMap.value, p);
-            else i.close();
-        });
-
-    });
+function refreshSensorLayers() {
+    for (let k of layers.keys()) {
+        if (MapUtil.sensorLayers.includes(k)) {
+            for (let x of layers.get(k)) {
+                x.getSource().changed();
+            }
+        }
+    }
 }
 
 function updateWnd(x: number, y: number, title?: string): void {

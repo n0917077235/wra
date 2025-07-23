@@ -1,9 +1,9 @@
-import FeatureProps from './featureProps';
 import LayerProps from './layerProps';
 import MathUtil from '../mathUtil';
 
 export default class MapUtil {
     static _eqIntensities = ['1', '2', '3', '4', '5.1', '5.9', '6.1', '6.9', '7'];
+    static sensorLayers = ['layer5', 'layer6', 'layer7', 'layer9', 'layer10', 'layer11', 'layer21'];
 
     static _roundTo(num, decimal) {
         let y = Math.pow(10, decimal);
@@ -47,10 +47,7 @@ export default class MapUtil {
             value = lastValue.toString() + unit;
         }
 
-        let f = new FeatureProps();
-        f.imageIndex = imageIndex;
-        f.value = value;
-        return f;
+        return { imageIndex, value };
     }
 
     static _mapGateOpening(val, unit) {
@@ -60,9 +57,8 @@ export default class MapUtil {
         return `${v}${unit}`;
     }
 
-    static _selectIcon(layerProps, feature) {
-        let f = MapUtil._getFeatureProps(layerProps, feature);
-        let index = f.imageIndex;
+    static _selectIcon(layerProps, fp) {
+        let index = fp.imageIndex;
 
         return {
             image: layerProps.images[index],
@@ -70,9 +66,9 @@ export default class MapUtil {
         };
     }
 
-    static _getIcon(layerProps, feature) {
+    static _getIcon(layerProps, fp) {
         if (layerProps.urls.length === 0) return undefined;
-        let { image, url } = MapUtil._selectIcon(layerProps, feature);
+        let { image, url } = MapUtil._selectIcon(layerProps, fp);
         let scale = 35.0 / Math.max(image.width, image.height);
 
         return new ol.style.Icon({
@@ -84,13 +80,34 @@ export default class MapUtil {
         });
     }
 
-    static styleFunction(layerProps) {
+    static _getFeatureItem(layerProps, feature) {
+        let fp = MapUtil._getFeatureProps(layerProps, feature);
+        let icon = MapUtil._getIcon(layerProps, fp);
+        return { icon, fp };
+    }
+
+    static _getText(layerProps, fp) {
+        if (!MapUtil.sensorLayers.includes(layerProps.layerId)) return undefined;
+        return fp.value;
+    }
+
+    static styleFunction(layerProps, getShowValue) {
         return feature => {
-            let image = MapUtil._getIcon(layerProps, feature);
+            let fi = MapUtil._getFeatureItem(layerProps, feature);
+            let image = fi.icon;
+            let text = getShowValue() ? MapUtil._getText(layerProps, fi.fp) : undefined;
 
             const styles = {
                 'Point': new ol.style.Style({
-                    image: image,
+                    image,
+                    text: new ol.style.Text({
+                        font: '18px Calibri,sans-serif',
+                        fill: new ol.style.Fill({ color: '#000' }),
+                        stroke: new ol.style.Stroke({
+                            color: '#fff', width: 6
+                        }),
+                        text
+                    }),
                 }),
                 'LineString': new ol.style.Style({
                     stroke: new ol.style.Stroke({

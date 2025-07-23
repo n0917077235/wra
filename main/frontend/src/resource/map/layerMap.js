@@ -15,4 +15,8 @@ export default class LayerMap {
             v.push(layer);
         }
     }
+
+    keys() {
+        return this.layers.keys();
+    }
 }
