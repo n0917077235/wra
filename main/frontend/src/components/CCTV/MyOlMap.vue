@@ -287,7 +287,24 @@ function toggleMenu() {
         layerControl.style.display = 'none';
     }
 }
+
 // 地圖模式類型
+let mapSources = [
+    // roadmap
+    new ol.source.XYZ({
+        url: 'https://mt1.google.com/vt/lyrs=m&hl=zh-TW&x={x}&y={y}&z={z}'
+    }),
+
+    // satellite
+    new ol.source.XYZ({
+        url: 'https://mt1.google.com/vt/lyrs=y&hl=zh-TW&x={x}&y={y}&z={z}'
+    })
+];
+
+let gmapLayer = new ol.layer.Tile({
+    source: mapSources[0]
+});
+
 const mapType = ref('2');
 const changeMapType = (tp: string) => {
     if (mapType.value == tp) {
@@ -298,11 +315,11 @@ const changeMapType = (tp: string) => {
         mapType.value = tp;
         if (tp == '1') {
             // 切換為衛星圖
-            pMap.value.setMapTypeId('ROADMAP'); // 確保 'ROADMAP' 是正確的 ID
+            gmapLayer.setSource(mapSources[1]);
         }
         else if (tp == '2') {
             // 切換為電子地圖
-            pMap.value.setMapTypeId('TGOSMAP'); // 確保 'TGOSIMAGE' 是正確的 ID
+            gmapLayer.setSource(mapSources[0]);
         }
     }
 };
@@ -311,15 +328,8 @@ function onPopupInit(e) {
     popup.value.obj = e;
 }
 
-async function init(): Promise<void> {
+async function init() {
     let elem = document.getElementById('olmap');
-
-    let gmapLayer = new ol.layer.Tile({
-        source: new ol.source.XYZ({
-            url: 'https://mt1.google.com/vt/lyrs=m&hl=zh-TW&x={x}&y={y}&z={z}'
-        }), name: 'roadmap', title: "地圖"
-    });
-
     let layers = [gmapLayer];
     let layerGroupMap = new ol.layer.Group({ title: 'map', layers });
 
