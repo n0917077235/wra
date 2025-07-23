@@ -1,13 +1,12 @@
 export default class LineHighlight {
     // layerItems: { layerProps, map, popup }
     static enable(layerItems) {
-        let changedItems = [];
         let map = layerItems.map;
-        map.on('pointermove', e => LineHighlight._handle(e, layerItems, changedItems));
-        map.on('click', e => LineHighlight._handle(e, layerItems, changedItems));
+        map.on('pointermove', e => LineHighlight._handle(e, layerItems));
+        map.on('click', e => LineHighlight._handle(e, layerItems));
     }
 
-    static _handle(event, layerItems, changedItems) {
+    static _handle(event, layerItems) {
         let map = layerItems.map;
         let first = null;
         let layerFilter = layer => ol.util.getUid(layer) === ol.util.getUid(layerItems.vectorLayer);
@@ -19,12 +18,13 @@ export default class LineHighlight {
         }, { layerFilter });
 
         if (first === null) return;
-        LineHighlight._highlight(layerItems, changedItems, first, event)
+        LineHighlight._highlight(layerItems, first, event)
     }
 
-    static _highlight(layerItems, changedItems, f, event) {
+    static _highlight(layerItems, f, event) {
         let layerProps = layerItems.layerProps;
-        LineHighlight._resetOtherLineStyles(changedItems);
+        let changed = layerItems.changedItems;
+        LineHighlight._resetOtherLineStyles(changed);
 
         // Highlight current one. Increse brightness by 40%
         let color = LineHighlight._lightenColor(layerProps.strokecolor, 40);
@@ -36,7 +36,7 @@ export default class LineHighlight {
 
         let style = new ol.style.Style({ stroke: stroke });
         f.setStyle(style);
-        changedItems.push({ feature: f, layerProps });
+        changed.value.push({ feature: f, layerProps });
 
         // Show feature name popup
         let name = LineHighlight._getFeatureName(layerProps.layerId, f);
@@ -51,7 +51,7 @@ export default class LineHighlight {
     }
 
     static _resetOtherLineStyles(changedItems) {
-        for (let x of changedItems) {
+        for (let x of changedItems.value) {
             let stroke = new ol.style.Stroke({
                 color: x.layerProps.strokecolor,
                 width: x.layerProps.strokew,
@@ -61,8 +61,7 @@ export default class LineHighlight {
             x.feature.setStyle(style);
         }
 
-        // Clear the array
-        changedItems.length = 0;
+        changedItems.value = [];
     }
 
     static _getFeatureName(layerId, f) {

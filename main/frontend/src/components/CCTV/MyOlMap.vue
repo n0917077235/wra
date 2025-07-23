@@ -188,6 +188,8 @@ const popup = ref({
     overlay: undefined,
 });
 
+const changedItems = ref([]);
+
 onMounted(() => {
     //if (typeof TGOS !== 'undefined') {
     store2.dispatch('drawings/loadDrawings'); // 使用命名空間調用 action
@@ -733,12 +735,17 @@ async function addLayer(layerId, funcName, layerGroup = null) {
         map.addLayer(vectorLayer);
         addPopupOverlay(map);
         layers.add(layerGroup, vectorLayer);
-        infows.set(layerId, infowmap);
-        LineHighlight.enable({ layerProps, map, popup: popup.value, vectorLayer });
+        
+        LineHighlight.enable({
+            layerProps,
+            map,
+            popup: popup.value,
+            vectorLayer,
+            changedItems
+        });
+
         return;
 
-        // 建立Map存放TGInfoWindow 給特定點顯示數值用 
-        var infowmap = new Map<TGOS.TGPoint, TGOS.TGInfoWindow>();
         var graphic;
         const pData = new TGOS.TGData({ map: pMap.value });
 
@@ -758,20 +765,9 @@ async function addLayer(layerId, funcName, layerGroup = null) {
                 titleset = names[0];
             }
 
-            //處理訊息視窗
-            if (sensorLayers.includes(layerId) && x != null && y != null) {
-                let tgpoint = new TGOS.TGPoint(x, y);
-                var infoContent = value;
-                var infoWindowOptions = { pixelOffset: new TGOS.TGSize(5, 5), zIndex: 1001, opacity: 0.8, maxWidth: 125 };
-                var infowindow = new TGOS.TGInfoWindow(infoContent, tgpoint, infoWindowOptions);
-                if (!infowmap.has(tgpoint))
-                    infowmap.set(tgpoint, infowindow);
-            }
-
             //點擊查詢 
             if (layerId == 'layer1' || layerId == 'layer2' || layerId == 'layer3') {
                 TGOS.TGEvent.addListener(graphic[i], 'click', async function (e) {
-                    //alert(e.target.getTitle());
                     const infos: string = await apiGetSensorMoreDataByStationName(e.target.getTitle());
                     alarmrtn2.value = infos;
                     setTimeout(() => {
@@ -848,14 +844,6 @@ async function addLayer(layerId, funcName, layerGroup = null) {
         }
 
         layers.set(layerId, pData);
-        infows.set(layerId, infowmap);
-        if (pData) {
-            pData.setMap(pMap.value);  //設定呈現幾何圖層物件的地圖物件
-        }
-        var infowmap1 = infows.get(layerId) as Map<TGOS.TGPoint, TGOS.TGInfoWindow>;
-        infowmap1.forEach((i, p) => {
-            i.open(pMap.value, p);
-        });
     }
     catch (e) {
         console.log(e);
@@ -893,8 +881,7 @@ const handleCanvasClick = (event) => {
     });
 };
 
-//感測器圖層顯示數值?
-var infows = new Map<string, Map<TGOS.TGPoint, TGOS.TGInfoWindow>>(); // 指定infowindows Map()
+//感測器圖層顯示數值
 const showValues = ref(false);
 
 function toggleShowValues() {
