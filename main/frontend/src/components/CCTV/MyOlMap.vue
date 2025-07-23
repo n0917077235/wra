@@ -139,6 +139,7 @@
                 </el-dialog>
             </div>
         </div>
+        <Popup :overlay="popup.overlay" @initialized="onPopupInit"></Popup>
     </div>
 </template>
 <script lang="ts" setup>
@@ -149,6 +150,7 @@ import LineHighlight from '@/resource/map/lineHighlight';
 import { apiGetSensorMoreDataByStationName } from '@/resource/sensor';
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { useStore } from 'vuex';
+import Popup from './Popup.vue';
 
 interface Props {
     title?: string;
@@ -178,10 +180,14 @@ const RiverThreeMapsExpanded = ref(false);
 // 1131111控制警告對話框的顯示
 const showAlarmMsg2 = ref(false);
 const alarmrtn2 = ref("");
-// 1131205 canvas evnetlisten
 const canvasevent = ref(false);
 
-onMounted((): void => {
+const popup = ref({
+    obj: undefined,
+    overlay: undefined,
+});
+
+onMounted(() => {
     //if (typeof TGOS !== 'undefined') {
     store2.dispatch('drawings/loadDrawings'); // 使用命名空間調用 action
     //} else {
@@ -209,6 +215,7 @@ onMounted((): void => {
         }
     });
 });
+
 function cleardrawed() {
     const savedDrawings = store2.state.drawings.drawings;
     if (savedDrawings) {
@@ -218,6 +225,7 @@ function cleardrawed() {
     pDatadrawed.setMap(null);
     //drawSavedDrawings();
 }
+
 var pDatadrawed = new TGOS.TGData({ map: pMap.value });
 function drawSavedDrawings() {
     pDatadrawed.setMap(null);
@@ -297,6 +305,10 @@ const changeMapType = (tp: string) => {
         }
     }
 };
+
+function onPopupInit(e) {
+    popup.value.obj = e;
+}
 
 async function init(): Promise<void> {
     let elem = document.getElementById('olmap');
@@ -738,9 +750,10 @@ async function addLayer(layerId, funcName) {
         });
 
         map.addLayer(vectorLayer);
+        addPopupOverlay(map);
         layers.set(layerId, vectorLayer);
         infows.set(layerId, infowmap);
-        LineHighlight.enable(layerProps, map);
+        LineHighlight.enable({ layerProps, map, popup: popup.value });
         return;
 
         var graphic;
@@ -762,60 +775,9 @@ async function addLayer(layerId, funcName) {
                 titleset = names[0];
             }
 
-            var style1 = {
-                title: titleset,
-                clickable: true,
-                // zIndex: zi,
-            };
-
-            pData.overrideStyle(graphic[i], style1);
-
-            //線段事件處理
-            if (type === "TGLineString") {
-                var infowindow = new TGOS.TGInfoWindow(titleset, tgpoint, { pixelOffset: new TGOS.TGSize(0, 0) });
-                if (!ls2.has(titleset)) ls2.set(titleset, infowindow);
-                if (!ls3.has(titleset)) ls3.set(titleset, graphic[i]);
-
-                function highlightLine(e) {
-                    lastcol.forEach(function (v, k) {
-                        if (k.getStrokeWeight() == 5.5) {
-                            k.setStrokeWeight(3);
-                        } else if (k.getStrokeWeight() == 8.5)
-                            k.setStrokeWeight(6);
-                        else if (k.getStrokeWeight() == 11.5) {
-                            k.setStrokeWeight(9);
-                        }
-                        k.setStrokeColor(v);
-                    });
-
-                    e.target.setStrokeWeight(e.target.getStrokeWeight() + 2.5);
-                    //儲存高亮前,再進行亮度上升40%
-                    if (!lastcol.has(e.target))
-                        lastcol.set(e.target, e.target.getStrokeColor());
-                    e.target.setStrokeColor(lightenColor(e.target.getStrokeColor(), 40));
-                    var tgpoint = e.point;
-
-                    ls2.forEach((v, k) => {
-                        if (v instanceof TGOS.TGInfoWindow) v.close();
-                    });
-
-                    ls3.forEach((v, k) => {
-                        var ok = v['geometry'].getPath();
-                        var ok1 = e.target.getPath().getPath();
-                        if (ok != ok1) return;
-                        var tgw = new TGOS.TGInfoWindow(k, e.point, { pixelOffset: new TGOS.TGSize(0, 0) });
-                        tgw.open(pMap.value, e.point);
-                        ls2.set(k, tgw);
-                    });
-                }
-
-                TGOS.TGEvent.addListener(graphic[i], 'mouseover', e => highlightLine(e));
-                TGOS.TGEvent.addListener(graphic[i], 'click', e => highlightLine(e));
-            }
-
             //處理訊息視窗
             if (sensorLayers.includes(layerId) && x != null && y != null) {
-                tgpoint = new TGOS.TGPoint(x, y);
+                let tgpoint = new TGOS.TGPoint(x, y);
                 var infoContent = value;
                 var infoWindowOptions = { pixelOffset: new TGOS.TGSize(5, 5), zIndex: 1001, opacity: 0.8, maxWidth: 125 };
                 var infowindow = new TGOS.TGInfoWindow(infoContent, tgpoint, infoWindowOptions);
@@ -917,6 +879,17 @@ async function addLayer(layerId, funcName) {
     }
 
     getLocation();
+}
+
+function addPopupOverlay(map) {
+    let p = popup.value.obj;
+
+    const overlay = new ol.Overlay({
+        element: p.container,
+    });
+
+    map.addOverlay(overlay);
+    popup.value.overlay = overlay;
 }
 
 const lst2 = ref(Array<string>());

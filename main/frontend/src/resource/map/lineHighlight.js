@@ -1,11 +1,15 @@
 export default class LineHighlight {
-    static enable(layerProps, map) {
+    // layerItems: { layerProps, map, popup }
+    static enable(layerItems) {
         let changedItems = [];
-        map.on('pointermove', e => LineHighlight._handle(e, map, layerProps, changedItems));
-        map.on('click', e => LineHighlight._handle(e, map, layerProps, changedItems));
+        let map = layerItems.map;
+        map.on('pointermove', e => LineHighlight._handle(e, layerItems, changedItems));
+        map.on('click', e => LineHighlight._handle(e, layerItems, changedItems));
     }
 
-    static _handle(event, map, layerProps, changedItems) {
+    static _handle(event, layerItems, changedItems) {
+        let map = layerItems.map;
+        let layerProps = layerItems.layerProps;
         let first = null;
 
         map.forEachFeatureAtPixel(event.pixel, f => {
@@ -15,24 +19,12 @@ export default class LineHighlight {
         });
 
         if (first === null) return;
-        LineHighlight._getFeatureName(layerProps.layerId, first);
-        LineHighlight._highlight(changedItems, layerProps, first)
+        LineHighlight._highlight(layerItems, changedItems, first, event)
     }
 
-    static _highlight(changedItems, layerProps, f) {
-        // Reset other line styles
-        for (let x of changedItems) {
-            let stroke = new ol.style.Stroke({
-                color: x.layerProps.strokecolor,
-                width: x.layerProps.strokew,
-            });
-
-            let style = new ol.style.Style({ stroke: stroke });
-            x.feature.setStyle(style);
-        }
-
-        // Clear the array
-        changedItems.length = 0;
+    static _highlight(layerItems, changedItems, f, event) {
+        let layerProps = layerItems.layerProps;
+        LineHighlight._resetOtherLineStyles(changedItems);
 
         // Highlight current one. Increse brightness by 40%
         let color = LineHighlight._lightenColor(layerProps.strokecolor, 40);
@@ -45,20 +37,32 @@ export default class LineHighlight {
         let style = new ol.style.Style({ stroke: stroke });
         f.setStyle(style);
         changedItems.push({ feature: f, layerProps });
-        // var tgpoint = e.point;
 
-        // ls2.forEach((v, k) => {
-        //     if (v instanceof TGOS.TGInfoWindow) v.close();
-        // });
+        // Show feature name popup
+        let name = LineHighlight._getFeatureName(layerProps.layerId, f);
+        
+        if (name) {
+            let coordinate = event.coordinate;
+            let popup = layerItems.popup;
+            let content = popup.obj.content;
+            content.innerHTML = `<p>${name}</p>`;
+            popup.overlay.setPosition(coordinate);
+        }
+    }
 
-        // ls3.forEach((v, k) => {
-        //     var ok = v['geometry'].getPath();
-        //     var ok1 = e.target.getPath().getPath();
-        //     if (ok != ok1) return;
-        //     var tgw = new TGOS.TGInfoWindow(k, e.point, { pixelOffset: new TGOS.TGSize(0, 0) });
-        //     tgw.open(pMap.value, e.point);
-        //     ls2.set(k, tgw);
-        // });
+    static _resetOtherLineStyles(changedItems) {
+        for (let x of changedItems) {
+            let stroke = new ol.style.Stroke({
+                color: x.layerProps.strokecolor,
+                width: x.layerProps.strokew,
+            });
+
+            let style = new ol.style.Style({ stroke: stroke });
+            x.feature.setStyle(style);
+        }
+
+        // Clear the array
+        changedItems.length = 0;
     }
 
     static _getFeatureName(layerId, f) {
@@ -66,13 +70,6 @@ export default class LineHighlight {
         if (name == null) name = f.get("NAME");
         if (name) name = name.split(';')[0];
         return name;
-        let type = f.getGeometry().getType();
-
-        let id = type == "LineString"
-            ? layerId + "_" + name + "_" + i
-            : layerId + "_" + f.get("id");
-
-        return { name, id };
     }
 
     static _lightenColor(col, amt) {
