@@ -36,7 +36,7 @@ export default class MapUtil {
             value = lastValue1 + unit + ", " + lastValue2 + unit;
         } else if (layerId == 'layer11') {
             // Gate opening
-            value = MapUtil._mapGateOpening(lastValue1);
+            value = MapUtil._mapGateOpening(lastValue1, unit);
             imageIndex = lastValue1 <= 5 ? 0 : 1;
         } else if (layerId == 'layer12') {
             let intensity = feature.get('intensity');
