@@ -39,7 +39,7 @@ export default class LineHighlight {
         changed.value.push({ feature: f, layerProps });
 
         // Show feature name popup
-        let name = LineHighlight.getFeatureName(f);
+        let name = LineHighlight.getFeatureName(f)?.name;
 
         if (name) {
             let coordinate = event.coordinate;
@@ -72,8 +72,13 @@ export default class LineHighlight {
     static getFeatureName(f) {
         let name = f.get("name");
         if (name == null) name = f.get("NAME");
-        if (name) name = name.split(';')[0];
-        return name;
+        if (!name) return name;
+        let words = name.split(';');
+
+        return {
+            name: words[0],
+            url: words.length >= 2 ? words[1] : null
+        };
     }
 
     static _lightenColor(col, amt) {

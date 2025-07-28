@@ -5,7 +5,7 @@
             <div v-if="isSimpleContent" :style="props.content?.style">
                 {{ props.content.text }}
             </div>
-            <div v-else-if="isSensorContent" class="sensor-content" :style="props.content?.style">
+            <div v-else-if="isSensorContent" class="sensor-content">
                 <div class="station-name">{{ props.content.name }}</div>
                 <div v-if="props.content.areaName">
                     所屬流域: {{ props.content.areaName }}
@@ -24,6 +24,12 @@
                     </a>
                     <hr class="camera-line">
                 </div>
+            </div>
+            <div v-else-if="isCameraContent" class="sensor-content">
+                <div class="station-name">{{ props.content.name }}</div>
+                <a :href="props.content.url" target="_blank">
+                    <img :src="props.content.url">
+                </a>
             </div>
         </div>
     </div>
@@ -53,8 +59,11 @@ let isSimpleContent = computed(() => {
 });
 
 let isSensorContent = computed(() => {
-    console.log(props.content)
     return props.content?.mode === 'sensor';
+});
+
+let isCameraContent = computed(() => {
+    return props.content?.mode === 'camera';
 });
 </script>
 

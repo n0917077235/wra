@@ -2,7 +2,7 @@ import LineHighlight from "./lineHighlight";
 import { apiGetSensorMoreDataByStationName } from '@/resource/sensor';
 
 export default class InfoWindowUtil {
-    static _supportedlayers = ['layer1', 'layer2', 'layer3'];
+    static _supportedlayers = ['layer1', 'layer2', 'layer3', 'layer4'];
 
     // layerItems: { layerProps, map, popup }
     static enable(layerItems) {
@@ -26,26 +26,42 @@ export default class InfoWindowUtil {
     }
 
     static async _setProps(layerItems, f, event) {
-        let name = LineHighlight.getFeatureName(f);
+        let n = LineHighlight.getFeatureName(f);
+        if (!n) return;
+        let c = await InfoWindowUtil._getContent(layerItems, n);
+
+        if (n) {
+            let coordinate = event.coordinate;
+            let popup = layerItems.popup;
+            popup.content = c;
+            popup.overlay.setPosition(coordinate);
+        }
+    }
+
+    static async _getContent(layerItems, n) {
+        let name = n.name;
+
+        if (layerItems.layerProps.layerId === 'layer4') {
+            //  cctv
+            return {
+                mode: 'camera',
+                name,
+                url: n.url,
+            }
+        }
+
         let data = await apiGetSensorMoreDataByStationName(name);
 
         // string | undefined
         let areaName = data.map(x => x.areaName).find(x => x !== undefined);
 
-        if (name) {
-            let coordinate = event.coordinate;
-            let popup = layerItems.popup;
-
-            popup.content = {
-                mode: 'sensor',
-                name,     // string | null | undefined
-                areaName, // string | undefined
-                sensors: InfoWindowUtil._getSensors(data),
-                cameras: InfoWindowUtil._getCctvs(data),
-            };
-
-            popup.overlay.setPosition(coordinate);
-        }
+        return {
+            mode: 'sensor',
+            name,     // string | null | undefined
+            areaName, // string | undefined
+            sensors: InfoWindowUtil._getSensors(data),
+            cameras: InfoWindowUtil._getCctvs(data),
+        };
     }
 
     static _getSensors(data) {
