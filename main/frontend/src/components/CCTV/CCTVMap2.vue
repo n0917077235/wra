@@ -1148,7 +1148,8 @@ const addLayer = async (layerId: string, funcName: string) => {
             if (layerId == 'layer1' || layerId == 'layer2' || layerId == 'layer3') {
                 TGOS.TGEvent.addListener(graphic[i], 'click', async function (e) {
                     //alert(e.target.getTitle());
-                    const infos: string = await apiGetSensorMoreDataByStationName(e.target.getTitle());
+                    let obj = await apiGetSensorMoreDataByStationName(e.target.getTitle());
+                    const infos: string = JSON.stringify(obj);                    
                     alarmrtn2.value = infos;
                     setTimeout(() => {
                         const box = document.getElementById('alarmbox3') as HTMLElement;

@@ -39,13 +39,18 @@ export default class LineHighlight {
         changed.value.push({ feature: f, layerProps });
 
         // Show feature name popup
-        let name = LineHighlight._getFeatureName(layerProps.layerId, f);
+        let name = LineHighlight.getFeatureName(f);
 
         if (name) {
             let coordinate = event.coordinate;
             let popup = layerItems.popup;
-            let content = popup.obj.content;
-            content.innerHTML = `<div style="white-space: nowrap">${name}</div>`;
+
+            popup.content = {
+                mode: 'simple',
+                text: name,
+                style: { whiteSpace: 'nowrap' },
+            };
+
             popup.overlay.setPosition(coordinate);
         }
     }
@@ -64,7 +69,7 @@ export default class LineHighlight {
         changedItems.value = [];
     }
 
-    static _getFeatureName(layerId, f) {
+    static getFeatureName(f) {
         let name = f.get("name");
         if (name == null) name = f.get("NAME");
         if (name) name = name.split(';')[0];

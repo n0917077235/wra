@@ -1,19 +1,42 @@
 <template>
     <div id="popup" class="ol-popup">
         <a href="#" id="popup-closer" class="ol-popup-closer"></a>
-        <div id="popup-content" class="ol-popup-content"></div>
+        <div id="popup-content" class="ol-popup-content">
+            <div v-if="isSimpleContent" :style="props.content?.style">
+                {{ props.content.text }}
+            </div>
+            <div v-else-if="isSensorContent" class="sensor-content" :style="props.content?.style">
+                <div class="station-name">{{ props.content.name }}</div>
+                <div v-if="props.content.areaName">
+                    所屬流域: {{ props.content.areaName }}
+                </div>
+                <hr>
+                <div v-for="sensor in props.content.sensors">
+                    <div>感測器: {{ sensor.name }}</div>
+                    <div>監測時間: {{ sensor.lastDataTime }}</div>
+                    <div>數值: {{ sensor.value1 }}</div>
+                    <hr>
+                </div>
+                <div v-for="camera in props.content.cameras">
+                    <div>監視器: {{ camera.name }}</div>
+                    <a :href="camera.url" target="_blank">
+                        <img :src="camera.url">
+                    </a>
+                    <hr class="camera-line">
+                </div>
+            </div>
+        </div>
     </div>
 </template>
 
 <script setup lang="ts">
-import { onMounted, } from 'vue';
+import { onMounted, computed } from 'vue';
 
-const props = defineProps(['overlay']);
+const props = defineProps(['overlay', 'content']);
 const emit = defineEmits(['initialized']);
 
 onMounted(() => {
     const container = document.getElementById('popup');
-    const content = document.getElementById('popup-content');
     const closer = document.getElementById('popup-closer');
 
     closer.onclick = () => {
@@ -22,9 +45,17 @@ onMounted(() => {
         return false;
     };
 
-    emit('initialized', { container, content });
+    emit('initialized', { container });
 });
 
+let isSimpleContent = computed(() => {
+    return props.content?.mode === 'simple';
+});
+
+let isSensorContent = computed(() => {
+    console.log(props.content)
+    return props.content?.mode === 'sensor';
+});
 </script>
 
 <style lang="scss" scoped>
@@ -76,7 +107,22 @@ onMounted(() => {
     content: "✖";
 }
 
-.ol-popup-content{
+.ol-popup-content {
     margin-top: 5px;
+    max-height: 400px;
+    overflow-y: scroll;
+}
+
+.station-name {
+    font-weight: bold;
+}
+
+.sensor-content {
+    width: 260px;
+    font-size: 15px;
+}
+
+.camera-line {
+    margin-top: 3px;
 }
 </style>

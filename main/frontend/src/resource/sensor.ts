@@ -202,14 +202,11 @@ export async function apiGetSensorChartData(
 export async function apiGetSensorMoreDataByStationName(
     payload: string,
 ): Promise<string> {
-    // alert(payload);
     const encodedText = encodeURIComponent(payload);
     const response = await apiClient.post<string>(
         `/Sensor/GetSensorMoreDataByStationName?stationName=${encodedText}`,
         {},
     );
-    //return response.data
-    // 將 object 轉換成 string
-    const jsonString = JSON.stringify(response.data);
-    return jsonString;
+
+    return response.data;
 }

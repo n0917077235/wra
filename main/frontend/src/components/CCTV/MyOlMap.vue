@@ -130,16 +130,7 @@
 
             <!-- 可新增更多圖層組 -->
         </div>
-        <div id="alarmbox3" class="modal">
-            <div class="modal-content" style="width: 800px; height: 500px; overflow-y: auto; border: 1px solid #ccc;">
-                <el-dialog v-model="showAlarmMsg3" title="Alarm Message"
-                    style="width: 800px; height: 500px; overflow-y: auto; border: 1px solid #ccc;">
-                    <span class="closeBtn3">&times;</span>
-                    <canvas id="AlarmCanvas3" width="800" height="1680"></canvas>
-                </el-dialog>
-            </div>
-        </div>
-        <Popup :overlay="popup.overlay" @initialized="onPopupInit"></Popup>
+        <Popup :overlay="popup.overlay" :content="popup.content" @initialized="onPopupInit"></Popup>
     </div>
 </template>
 <script lang="ts" setup>
@@ -147,6 +138,7 @@
 import { apiGetGps, apiGetIsoseismal } from '@/resource/geojson';
 import MapUtil from '@/resource/map/mapUtil';
 import LineHighlight from '@/resource/map/lineHighlight';
+import InfoWindowUtil from '@/resource/map/infoWindowUtil';
 import { apiGetSensorMoreDataByStationName } from '@/resource/sensor';
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { useStore } from 'vuex';
@@ -178,14 +170,11 @@ const SenserMapsExpanded = ref(false);
 const NetworkMapsExpanded = ref(false);
 const SafeManageMapsExpanded = ref(false);
 const RiverThreeMapsExpanded = ref(false);
-// 1131111控制警告對話框的顯示
-const showAlarmMsg2 = ref(false);
-const alarmrtn2 = ref("");
-const canvasevent = ref(false);
 
 const popup = ref({
-    obj: undefined,
-    overlay: undefined,
+    content: {},
+    container: undefined, // HtmlElement
+    overlay: undefined,   // ol.Overlay
 });
 
 const changedItems = ref([]);
@@ -202,21 +191,6 @@ onMounted(() => {
     toggleLayer("layer3");
     toggleLayer("layer18");
     toggleLayer("layer19");
-    //updateWnd('121.44678969866742', '24.99384208911512');
-    document.getElementsByClassName("closeBtn3")[0]?.addEventListener('click', function () {
-        const modal = document.getElementById("alarmbox3");
-        if (modal) {
-            modal.style.display = "none";
-        }
-        const canvas = document.getElementById('AlarmCanvas3');
-
-        if (canvas) {
-            const originalWidth = canvas.width;  // 儲存原始寬度
-            const originalHeight = canvas.height; // 儲存原始高度
-            canvas.width = originalWidth;        // 重新設定寬度（自動清空）
-            canvas.height = originalHeight;      // 重新設定高度（自動清空）
-        }
-    });
 });
 
 function cleardrawed() {
@@ -327,7 +301,7 @@ const changeMapType = (tp: string) => {
 };
 
 function onPopupInit(e) {
-    popup.value.obj = e;
+    popup.value.container = e.container;
 }
 
 async function init() {
@@ -736,114 +710,16 @@ async function addLayer(layerId, funcName, layerGroup = null) {
         addPopupOverlay(map);
         layers.add(layerGroup, vectorLayer);
         
-        LineHighlight.enable({
+        let layerItems = {
             layerProps,
             map,
             popup: popup.value,
             vectorLayer,
-            changedItems
-        });
+            changedItems,
+        };
 
-        return;
-
-        var graphic;
-        const pData = new TGOS.TGData({ map: pMap.value });
-
-        for (var i = 0; i < graphic.length; i++) {
-            zi = zi + 1; //設定zindex
-            var x = graphic[i]['geometry']['x'];
-            var y = graphic[i]['geometry']['y'];
-            var name = graphic[i].getProperty("name");
-            if (name == null) name = graphic[i].getProperty("NAME");
-            var type = graphic[i]['geometry']["type"];
-            var tgpoint = new TGOS.TGPoint(0, 0);
-            var value = ""; //infowindow顯示用
-            var names;
-            var titleset = name; //hover顯示
-            if (name != null) {
-                names = name.split(';');
-                titleset = names[0];
-            }
-
-            //點擊查詢 
-            if (layerId == 'layer1' || layerId == 'layer2' || layerId == 'layer3') {
-                TGOS.TGEvent.addListener(graphic[i], 'click', async function (e) {
-                    const infos: string = await apiGetSensorMoreDataByStationName(e.target.getTitle());
-                    alarmrtn2.value = infos;
-                    setTimeout(() => {
-                        const box = document.getElementById('alarmbox3') as HTMLElement;
-                        const Canvas = document.getElementById('AlarmCanvas3');
-
-                        const ctx = Canvas?.getContext('2d');
-                        if (box && ctx) {
-                            //ctx.clearRect(0, 0, Canvas.clientWidth, Canvas.clientHeight);
-                            box.style.display = "block";
-                            ctx.font = '20px Arial';
-
-                            ctx.fillStyle = 'black';
-                            //var l = alarmrtn2.value.length / 30;
-                            var lst = infos.toString().split(",");
-                            var cou = 0;
-                            ctx.fillText(e.target.getTitle(), 20, 50 + cou++ * 30);
-                            var iscctv = false;
-                            var hadarea = false;
-                            while (lst2.value.length > 0) {
-                                lst2.value.pop(); // 每次移除最後一個元素
-                            }
-
-                            for (i = 0; i < lst.length; i++) {
-                                if (!hadarea && !iscctv && lst[i].includes("areaName")) {
-                                    var a = lst[i].split(":")[1].replace("\"", "").replace("\"", "");
-                                    if (a == "") continue;
-                                    ctx.fillText("所屬流域:" + a, 20, 50 + cou++ * 30);
-                                    hadarea = true;
-                                } else if (lst[i].includes("sensorNameA")) {
-                                    // 繪製一條分隔線
-                                    ctx.beginPath();          // 開始繪圖
-                                    ctx.moveTo(20, 50 + cou * 30); // 起點 (x: 0, y: 畫布高度的中點)
-                                    ctx.lineTo(Canvas?.width, 50 + cou++ * 30); // 終點 (x: 畫布寬度, y: 畫布高度的中點)
-                                    ctx.stroke();
-                                    var a = lst[i].split(":")[1].replace("\"", "").replace("\"", "");
-                                    if (a == "") continue;
-                                    ctx.fillText("" + a, 20, 50 + cou++ * 30);
-                                } else if (!iscctv && lst[i].includes("lastDataTime\"")) {
-                                    //ctx.fillText(lst[i], 20, 50 + cou++ * 30);
-                                    var a = lst[i].substring(lst[i].indexOf(":")).replace("\"", "").replace("\"", "");
-                                    if (a == "") continue;
-                                    ctx.fillText("即時監測時間" + a, 20, 50 + cou++ * 30);
-                                } else if (!iscctv && lst[i].includes("value1")) {
-                                    var a = lst[i].split(":")[1].replace("\"", "").replace("\"", "");
-                                    if (a == "") continue;
-                                    ctx.fillText("數值:" + a, 20, 50 + cou++ * 30);
-                                } else if (lst[i].includes("sensorTypeName\":\"CCTV")) {
-                                    iscctv = true;
-                                } else if (lst[i].includes("stream") && iscctv) {
-                                    var link = lst[i].substring(lst[i].indexOf(":") + 1).replace("\"", "").replace("\"", "");
-                                    if (link == "null") continue;
-                                    ctx.fillStyle = 'blue';
-                                    ctx.fillText("影像:" + link, 20, 50 + cou++ * 30);
-                                    ctx.fillStyle = 'black';
-                                    lst2.value.unshift(link + "|" + cou * 30);
-                                }
-                            }
-
-                            if (!canvasevent.value && Canvas) {
-                                canvasevent.value = true;
-                                //Canvas.removeEventListener('click', handleCanvasClick); // 移除舊的監聽器
-                                Canvas.addEventListener('click', handleCanvasClick);    // 添加新的監聽器
-                            }
-
-                        }
-                    }, 100);
-                    // 彈出視窗
-                    if (alarmrtn2.value)
-                        showAlarmMsg2.value = true;
-
-                })
-            }
-        }
-
-        layers.set(layerId, pData);
+        LineHighlight.enable(layerItems);
+        InfoWindowUtil.enable(layerItems);
     }
     catch (e) {
         console.log(e);
@@ -853,33 +729,13 @@ async function addLayer(layerId, funcName, layerGroup = null) {
 }
 
 function addPopupOverlay(map) {
-    let p = popup.value.obj;
-
     const overlay = new ol.Overlay({
-        element: p.container,
+        element: popup.value.container,
     });
 
     map.addOverlay(overlay);
     popup.value.overlay = overlay;
 }
-
-const lst2 = ref(Array<string>());
-// 定義事件處理函數
-const handleCanvasClick = (event) => {
-    const Canvas = document.getElementById('AlarmCanvas3');
-    const rect = Canvas?.getBoundingClientRect();
-    const x = event.clientX - rect.left;
-    const y = event.clientY - rect.top;
-
-    // 檢查點擊是否在連結區域內
-    lst2.value.forEach((l) => {
-        const link = l.split("|")[0];
-        const xy = parseInt(l.split("|")[1], 10);
-        if (y >= xy && y <= 30 + xy) {
-            window.open(link, '_blank'); // 在新分頁打開連結
-        }
-    });
-};
 
 //感測器圖層顯示數值
 const showValues = ref(false);
