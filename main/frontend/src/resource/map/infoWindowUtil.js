@@ -1,5 +1,6 @@
 import LineHighlight from "./lineHighlight";
 import { apiGetSensorMoreDataByStationName } from '@/resource/sensor';
+import SensorItem from "./sensorItem";
 
 export default class InfoWindowUtil {
     static _supportedlayers = ['layer1', 'layer2', 'layer3', 'layer4'];
@@ -69,12 +70,14 @@ export default class InfoWindowUtil {
             let name = x.sensorNameA;
             let lastDataTime = x.lastDataTime;
             if (!name || !lastDataTime) return null;
-
-            return {
-                name,
-                lastDataTime,
-                value1: x.value1,
-            };
+            let s = new SensorItem();
+            s.name = name;
+            s.lastDataTime = lastDataTime;
+            s.value1 = x.value1;
+            s.areaID = x.areaID;
+            s.sensorType = x.sensorType;
+            s.sensorId = x.sensorId;
+            return s;
         }).filter(x => x !== null);
     }
 

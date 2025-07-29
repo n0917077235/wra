@@ -3,25 +3,14 @@
     <el-popover placement="bottom-start" :width="450" trigger="click">
       <template #default>
         <div class="text-xs">
-          <FormItem
-            class="mb-4"
-            name="組別"
-            :options="groupList"
-            @check-all="checkAllGroup"
-          ></FormItem>
+          <FormItem class="mb-4" name="組別" :options="groupList" @check-all="checkAllGroup"></FormItem>
 
-          <FormItem
-            class="mb-4"
-            name="感測器"
-            :options="sensorList"
-            @check-all="checkAllSensor"
-          ></FormItem>
+          <FormItem class="mb-4" name="感測器" :options="sensorList" @check-all="checkAllSensor"></FormItem>
         </div>
       </template>
       <template #reference>
         <div
-          class="flex h-[35px] w-full cursor-pointer items-center justify-between rounded border border-line p-[8px] text-sm text-black sm:w-[450px]"
-        >
+          class="flex h-[35px] w-full cursor-pointer items-center justify-between rounded border border-line p-[8px] text-sm text-black sm:w-[450px]">
           <div>
             {{ groupText }},
             {{ sensorText }}
@@ -33,12 +22,8 @@
       </template>
     </el-popover>
 
-    <el-button
-      type="primary"
-      class="icon-button ml-0 mt-4 w-full sm:ml-4 sm:mt-0 sm:w-fit"
-      :disabled="props.loading"
-      @click="submit"
-    >
+    <el-button type="primary" class="icon-button ml-0 mt-4 w-full sm:ml-4 sm:mt-0 sm:w-fit" @click="submit"
+      :disabled="props.loading">
       <el-icon :size="32" class="cursor-pointer">
         <app-icon icon-name="icon_search_button"></app-icon>
       </el-icon>
@@ -56,16 +41,8 @@ import { computed, ref } from 'vue';
 import { useStore } from 'vuex';
 import FormItem from './FormItem.vue';
 
-interface Props {
-  loading?: boolean;
-}
-
-const props = withDefaults(defineProps<Props>(), {
-  loading: false,
-});
-
-const emits = defineEmits(['submit']);
-
+const props = defineProps(['loading', 'areaIDs', 'sensorTypes']);
+const emits = defineEmits(['submit', 'initialized']);
 const store = useStore();
 
 interface CheckboxList {
@@ -124,7 +101,7 @@ const getWaterSensorArea = async (): Promise<void> => {
       return {
         id: m.areaId,
         name: m.areaName,
-        check: false,
+        check: props.areaIDs?.includes(m.areaId),
       };
     });
   }
@@ -140,7 +117,7 @@ const getWaterSensorType = async (): Promise<void> => {
       return {
         id: m.sensorType,
         name: m.sensorTypeName,
-        check: false,
+        check: props.sensorTypes?.includes(m.sensorType),
       };
     });
   }
@@ -158,6 +135,6 @@ const submit = (): void => {
   }
 };
 
-getWaterSensorArea();
-getWaterSensorType();
+let tasks = [getWaterSensorArea(), getWaterSensorType()];
+Promise.all(tasks).then(_ => emits('initialized'));
 </script>

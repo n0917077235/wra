@@ -3,7 +3,9 @@
     <the-detail :detail="detail" @hideDetail="hideDetail"></the-detail>
   </div>
   <div v-show="!showDetail">
-    <the-form :loading="loading" @submit="submit"></the-form>
+    <the-form :loading="loading" :areaIDs="[areaID]" :sensorTypes="[sensorType]" @submit="submit"
+      @initialized="onFormInitialized">
+    </the-form>
     <el-divider class="my-6" />
 
     <div v-show="tableData.length > 0">
@@ -12,13 +14,8 @@
       </div>
 
       <div class="block sm:hidden">
-        <mobile-card
-          v-for="(item, index) in tableData"
-          :key="index + 1"
-          :index="index"
-          :data="item"
-          @showDetail="getDetail"
-        ></mobile-card>
+        <mobile-card v-for="(item, index) in tableData" :key="index + 1" :index="index" :data="item"
+          @showDetail="getDetail"></mobile-card>
       </div>
     </div>
 
@@ -38,6 +35,7 @@ import {
 } from '@/resource/sensor';
 import { ref } from 'vue';
 import TheDetail from './TheDetail.vue';
+import MyUtil from '@/resource/myUtil.js';
 
 const loading = ref<boolean>(false);
 const tableData = ref<SensorGeneralQueryDataResponse[]>([]);
@@ -56,7 +54,6 @@ const submit = async (data: {
   try {
     let payload = getPayload(data.groups, data.sensors);
     const response = await apiGetSensorGeneralQueryData(payload);
-    console.log('aaab', data, response)
     if (!response) return;
     tableData.value = response;
   } catch (error) {
@@ -70,6 +67,8 @@ const showDetail = ref<boolean>(false);
 const detail = ref<SensorGeneralQueryDataResponse>();
 
 const getDetail = (row: SensorGeneralQueryDataResponse): void => {
+  console.log('td', tableData.value)
+  console.log('row', row);
   detail.value = row;
   showDetail.value = true;
 };
@@ -78,4 +77,17 @@ const hideDetail = () => {
   detail.value = undefined;
   showDetail.value = false;
 };
+
+let areaID = MyUtil.getUrlParam('areaID');
+let sensorType = MyUtil.getUrlParam('sensorType');
+let sensorId = MyUtil.getUrlParam('sensorId');
+
+async function onFormInitialized() {
+  if (areaID && sensorType) {
+    await submit({ sensors: [sensorType], groups: [areaID] });
+    let match = tableData.value.find(x => x.sensorId === sensorId);
+    if (!match) return;
+    getDetail(match);
+  }
+}
 </script>
