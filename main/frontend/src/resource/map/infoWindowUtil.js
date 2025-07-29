@@ -1,14 +1,19 @@
 import LineHighlight from "./lineHighlight";
 import { apiGetSensorMoreDataByStationName } from '@/resource/sensor';
 import SensorItem from "./sensorItem";
+import MapUtil from './mapUtil';
 
 export default class InfoWindowUtil {
-    static _supportedlayers = ['layer1', 'layer2', 'layer3', 'layer4'];
+    static _stationLayers = ['layer1', 'layer2', 'layer3', 'layer4'];
+
+    static _supportedlayers() {
+        return InfoWindowUtil._stationLayers.concat(MapUtil.sensorLayers);
+    }
 
     // layerItems: { layerProps, map, popup }
     static enable(layerItems) {
         let layerId = layerItems.layerProps.layerId;
-        if (!InfoWindowUtil._supportedlayers.includes(layerId)) return;
+        if (!InfoWindowUtil._supportedlayers().includes(layerId)) return;
         let map = layerItems.map;
         map.on('click', e => InfoWindowUtil._handle(e, layerItems));
     }
@@ -29,7 +34,7 @@ export default class InfoWindowUtil {
     static async _setProps(layerItems, f, event) {
         let n = LineHighlight.getFeatureName(f);
         if (!n) return;
-        let c = await InfoWindowUtil._getContent(layerItems, n);
+        let c = await InfoWindowUtil._getContent(layerItems, n, f);
 
         if (n) {
             let coordinate = event.coordinate;
@@ -39,10 +44,15 @@ export default class InfoWindowUtil {
         }
     }
 
-    static async _getContent(layerItems, n) {
+    static async _getContent(layerItems, n, f) {
         let name = n.name;
+        let layerId = layerItems.layerProps.layerId;
 
-        if (layerItems.layerProps.layerId === 'layer4') {
+        if (MapUtil.sensorLayers.includes(layerId)) {
+            return InfoWindowUtil._getSingleSensor(name, f);
+        }
+
+        if (layerId === 'layer4') {
             //  cctv
             return {
                 mode: 'camera',
@@ -79,6 +89,23 @@ export default class InfoWindowUtil {
             s.sensorId = x.sensorId;
             return s;
         }).filter(x => x !== null);
+    }
+
+    static _getSingleSensor(name, f) {
+        let s = new SensorItem();
+        s.name = name;
+        s.lastDataTime = f.get('lastDataTime');
+        s.value1 = parseFloat(f.get('lastValue1'));
+        s.areaID = ''; // TODO:
+        s.sensorType = ''; //TODO:
+        s.sensorId = f.get('id');
+
+        return {
+            mode: 'sensor',
+            name,     // string | null | undefined
+            sensors: [s],
+            cameras: [],
+        };
     }
 
     static _getCctvs(data) {

@@ -67,8 +67,6 @@ const showDetail = ref<boolean>(false);
 const detail = ref<SensorGeneralQueryDataResponse>();
 
 const getDetail = (row: SensorGeneralQueryDataResponse): void => {
-  console.log('td', tableData.value)
-  console.log('row', row);
   detail.value = row;
   showDetail.value = true;
 };
