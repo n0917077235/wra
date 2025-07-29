@@ -45,7 +45,6 @@ const tableData = ref<SensorGeneralQueryDataResponse[]>([]);
 const getPayload = (groups: string[], sensors: string[]) => {
   const groupString = groups.map((group) => `0;${group}`).join(',');
   const sensorString = sensors.map((sensor) => `1;${sensor}`).join(',');
-
   return `${sensorString},${groupString}`;
 };
 
@@ -55,19 +54,21 @@ const submit = async (data: {
 }): Promise<void> => {
   loading.value = true;
   try {
-    const response = await apiGetSensorGeneralQueryData(
-      getPayload(data.groups, data.sensors),
-    );
+    let payload = getPayload(data.groups, data.sensors);
+    const response = await apiGetSensorGeneralQueryData(payload);
+    console.log('aaab', data, response)
     if (!response) return;
     tableData.value = response;
   } catch (error) {
     console.error(error);
   }
+
   loading.value = false;
 };
 
 const showDetail = ref<boolean>(false);
 const detail = ref<SensorGeneralQueryDataResponse>();
+
 const getDetail = (row: SensorGeneralQueryDataResponse): void => {
   detail.value = row;
   showDetail.value = true;

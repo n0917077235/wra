@@ -76,10 +76,10 @@ const hideDetail = (): void => {
   emits('hideDetail');
 };
 
-    interface RuleForm {
-        dateTime: [string, string] ;
-        range: number;
-        idateTime: [string, string] ;
+interface RuleForm {
+  dateTime: [string, string];
+  range: number;
+  idateTime: [string, string];
 }
 
 const submit = (ruleForm: RuleForm) => {
@@ -99,62 +99,57 @@ watch(
     }, 1000);
   },
 );
-    const formatDate2 = (date: Date): string => {
-        let add =0;//-8 * 60 * 60 * 1000;
-        
-    // 複製原始日期物件，避免直接修改原始日期
-    const adjustedDate = new Date(date.getTime() + add);
+const formatDate2 = (date: Date): string => {
+  // 複製原始日期物件，避免直接修改原始日期
+  const adjustedDate = new Date(date.getTime());
 
-    const year = String(adjustedDate.getFullYear()).slice(-4);
-    const month = String(adjustedDate.getMonth() + 1).padStart(2, '0');
-    const day = String(adjustedDate.getDate()).padStart(2, '0');
-    const hours = String(adjustedDate.getHours()).padStart(2, '0');
-    const minutes = String(adjustedDate.getMinutes()).padStart(2, '0');
+  const year = String(adjustedDate.getFullYear()).slice(-4);
+  const month = String(adjustedDate.getMonth() + 1).padStart(2, '0');
+  const day = String(adjustedDate.getDate()).padStart(2, '0');
+  const hours = String(adjustedDate.getHours()).padStart(2, '0');
+  const minutes = String(adjustedDate.getMinutes()).padStart(2, '0');
   return `${year}-${month}-${day} ${hours}:${minutes}`;
-    };
+};
+
 const getData = async (ruleForm: RuleForm): Promise<void> => {
-    try {
-        loaded.value = false;
-        let time1 = "";
-        let time2 = "";
-        if(ruleForm.dateTime[0] instanceof Date){
-            time1 = formatDate2(ruleForm.dateTime[0]);
-            time2 = formatDate2(ruleForm.dateTime[1]);
-        }else {
-            time1 = ruleForm.idateTime[0];
-            time2 = ruleForm.idateTime[1];
-        }
-    
-    //alert(time1);
-      let payl = {
-          sensorId: props.detail.sensorId,
-          begin: time1,
-          end: time2,
-          duration: ruleForm.range,
-          backgroundColorValue1: '#2A78B6',
-          borderColorValue1: '#2A78B6',
-          borderWidthValue1: 1,
-          backgroundColorValue2: '#123C57',
-          borderColorValue2: '#123C57',
-          borderWidthValue2: 1,
-          backgroundColorLevel1: '#F22A2A',
-          borderColorLevel1: '#F22A2A',
-          borderWidthLevel1: 1,
-          backgroundColorLevel2: '#FFB341',
-          borderColorLevel2: '#FFB341',
-          borderWidthLevel2: 1,
-          backgroundColorLevel3: '#80BD34',
-          borderColorLevel3: '#80BD34',
-          borderWidthLevel3: 1,
-      };
-      
-      console.log(JSON.stringify(payl));
-      //alert(JSON.stringify(payl));
+  try {
+    loaded.value = false;
+    let time1 = "";
+    let time2 = "";
+    if (ruleForm.dateTime[0] instanceof Date) {
+      time1 = formatDate2(ruleForm.dateTime[0]);
+      time2 = formatDate2(ruleForm.dateTime[1]);
+    } else {
+      time1 = ruleForm.idateTime[0];
+      time2 = ruleForm.idateTime[1];
+    }
+
+    let payl = {
+      sensorId: props.detail.sensorId,
+      begin: time1,
+      end: time2,
+      duration: ruleForm.range,
+      backgroundColorValue1: '#2A78B6',
+      borderColorValue1: '#2A78B6',
+      borderWidthValue1: 1,
+      backgroundColorValue2: '#123C57',
+      borderColorValue2: '#123C57',
+      borderWidthValue2: 1,
+      backgroundColorLevel1: '#F22A2A',
+      borderColorLevel1: '#F22A2A',
+      borderWidthLevel1: 1,
+      backgroundColorLevel2: '#FFB341',
+      borderColorLevel2: '#FFB341',
+      borderWidthLevel2: 1,
+      backgroundColorLevel3: '#80BD34',
+      borderColorLevel3: '#80BD34',
+      borderWidthLevel3: 1,
+    };
+
     const response = await apiGetSensorChartData(payl);
+    
     if (response) {
-        data.value = response;
-        //alert(data.value.lstData.length+","+data.value.lstData[0].data.length);
-        console.log(data.value);
+      data.value = response;
     }
   } catch (error) {
     console.error(error);

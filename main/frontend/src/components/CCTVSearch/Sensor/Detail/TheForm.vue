@@ -40,9 +40,9 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref ,watch} from 'vue';
+import { reactive, ref, watch } from 'vue';
 
-    const emits = defineEmits(['submit']);
+const emits = defineEmits(['submit']);
     
 interface Option {
   value: number;
@@ -77,19 +77,21 @@ const options = ref<Option[]>([
 ]);
 
 interface RuleForm {
-  dateTime: [string, string] ;
-    range: number;
-    idateTime: [string, string] ;
+  dateTime: [string, string];
+  range: number;
+  idateTime: [string, string];
 }
 
 const ruleForm = reactive<RuleForm>({
-  dateTime: ["",""],
-    range: 10,
-    idateTime:["",""],
+  dateTime: ["", ""],
+  range: 10,
+  idateTime: ["", ""],
 });
-    watch(ruleForm.dateTime, () => {
-        alert(ruleForm.dateTime);
-    });
+
+watch(ruleForm.dateTime, () => {
+  alert(ruleForm.dateTime);
+});
+
 const adjustToPreviousTenMinutes = (currentTime: Date): Date => {
   const adjustedMinute =
     currentTime.getMinutes() - (currentTime.getMinutes() % 10);
@@ -97,7 +99,7 @@ const adjustToPreviousTenMinutes = (currentTime: Date): Date => {
   adjustedTime.setMinutes(adjustedMinute, 0, 0);
   return adjustedTime;
 };
-let first = true;
+
 const getInitDateTime = (): void => {
   const currentDateTime = new Date();
   const adjustedTime = adjustToPreviousTenMinutes(currentDateTime);
@@ -105,8 +107,8 @@ const getInitDateTime = (): void => {
   const startTime = new Date(adjustedTime.getTime() - 24 * 60 * 60 * 1000);
   const endTime = new Date(adjustedTime);
 
-    ruleForm.dateTime = [formatDate(startTime), formatDate(endTime)];
-    ruleForm.idateTime = [formatDate2(startTime), formatDate2(endTime)];
+  ruleForm.dateTime = [formatDate(startTime), formatDate(endTime)];
+  ruleForm.idateTime = [formatDate2(startTime), formatDate2(endTime)];
 };
 
 const formatDate = (date: Date): string => {
@@ -116,26 +118,22 @@ const formatDate = (date: Date): string => {
   const hours = String(date.getHours()).padStart(2, '0');
   const minutes = String(date.getMinutes()).padStart(2, '0');
   const seconds = String(date.getSeconds()).padStart(2, '0');
-
   return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 };
-    const formatDate2 = (date: Date): string => {
-        let add =0;// -8 * 60 * 60 * 1000;
-        
-    // 複製原始日期物件，避免直接修改原始日期
-    const adjustedDate = new Date(date.getTime() + add);
+
+const formatDate2 = (date: Date): string => {
+  // 複製原始日期物件，避免直接修改原始日期
+  const adjustedDate = new Date(date.getTime());
   const year = adjustedDate.getFullYear();
   const month = String(adjustedDate.getMonth() + 1).padStart(2, '0');
   const day = String(adjustedDate.getDate()).padStart(2, '0');
   const hours = String(adjustedDate.getHours()).padStart(2, '0');
   const minutes = String(adjustedDate.getMinutes()).padStart(2, '0');
   const seconds = String(adjustedDate.getSeconds()).padStart(2, '0');
-
   return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 };
 
-    const submit = (): void => {
-       //alert(ruleForm.dateTime);
+const submit = (): void => {
   emits('submit', ruleForm);
 };
 

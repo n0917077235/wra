@@ -114,6 +114,7 @@ const sensorCount = computed<number>(
 );
 
 const groupList = ref<CheckboxList[]>([]);
+
 const getWaterSensorArea = async (): Promise<void> => {
   const response = await store.dispatch(
     `sensor/${actionTypes.GET_WATER_SENSOR_AREA_LIST2}`,
