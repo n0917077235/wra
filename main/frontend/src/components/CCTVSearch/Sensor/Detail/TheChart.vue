@@ -38,20 +38,20 @@ ChartJS.register(
     const data = computed<any>(() => {
         //const title = props.chartData.chartTitle.split('_')[1].trim().normalize('NFKC');
         //let a = props.chartData.chartTitle;
-        //const regex = /¥ª/u;
+        //const regex = /å·¦/u;
         //alert(props.chartData.chartTitle + regex.test(title)) ;
-        //(props.chartData?.lstData || []).filter((dataSet) => dataSet.label.includes('Äµ§Ù')).every((dataset) => alert(dataset.label));
+        //(props.chartData?.lstData || []).filter((dataSet) => dataSet.label.includes('è­¦æˆ’')).every((dataset) => alert(dataset.label));
             return {
                 type: 'line',
                 datasets:
                     (props.chartData?.lstData || [])
                         .map((dataset, index) => {
-                            // ¥Î alert ¨Ó°£¿ù
+                            // ç”¨ alert ä¾†é™¤éŒ¯
                              //alert('Dataset label length: ' + dataset.label.length);
-                            if (dataset.label.toString().trim().includes("ªì©l­È")) {
+                            if (dataset.label.toString().trim().includes("åˆå§‹å€¼")) {
                                 alert('Dataset label: ' + dataset.label);
                             }
-                            if (dataset.label === "ªì©l­È") {
+                            if (dataset.label === "åˆå§‹å€¼") {
                                 alert('Exact match found: ' + dataset.label);
                             }
                             for (let i = 0; i < dataset.label.length; i++) {
@@ -67,9 +67,9 @@ ChartJS.register(
                         x: formatDate(new Date(point.x)),
                     })),
                     borderWidth: 1,
-                    pointRadius: 0, // ²¾°£¸ê®ÆºİÂIªº¶ê°é
-                    ...props.chartData.sensorId.includes("EQ") ? { borderColor: getBorderColor(index) } : {}, // °ÊºA³]©w½u¬qÃC¦â
-                    ...props.chartData.sensorId.includes("EQ") ? { backgroundColor: getBorderColor(index) } : {}, // °ÊºA³]©w­I´ºÃC¦â
+                    pointRadius: 0, // ç§»é™¤è³‡æ–™ç«¯é»çš„åœ“åœˆ
+                    ...props.chartData.sensorId.includes("EQ") ? { borderColor: getBorderColor(index) } : {}, // å‹•æ…‹è¨­å®šç·šæ®µé¡è‰²
+                    ...props.chartData.sensorId.includes("EQ") ? { backgroundColor: getBorderColor(index) } : {}, // å‹•æ…‹è¨­å®šèƒŒæ™¯é¡è‰²
                     ...dataset.label.charCodeAt(1) == 22987 ? { borderColor: 'rgb(160,160,160)' } : {},
                     ...dataset.label.charCodeAt(1) == 22987 ? { backgroundColor: 'rgb(160,160,160)' } : {},
                 }}) ?? [],
@@ -77,7 +77,7 @@ ChartJS.register(
 });
     function getBorderColor(index: number): string {
         const colors = ['rgb(192, 0, 0)', 'rgb(192, 192, 0)', 'rgb(0, 192, 0)'];
-        return colors[index % colors.length]; // ®Ú¾Ú¯Á¤Ş¿ï¾ÜÃC¦â
+        return colors[index % colors.length]; // æ ¹æ“šç´¢å¼•é¸æ“‡é¡è‰²
     }
 const options = computed(() => {
   return {
@@ -88,7 +88,7 @@ const options = computed(() => {
     const formatDate = (date: Date): string => {
         let add =0;// 8 * 60 * 60 * 1000;
         
-    // ½Æ»s­ì©l¤é´Áª«¥ó¡AÁ×§Kª½±µ­×§ï­ì©l¤é´Á
+    // è¤‡è£½åŸå§‹æ—¥æœŸç‰©ä»¶ï¼Œé¿å…ç›´æ¥ä¿®æ”¹åŸå§‹æ—¥æœŸ
     const adjustedDate = new Date(date.getTime() + add);
 
     const year = String(adjustedDate.getFullYear()).slice(-4);
