@@ -1,7 +1,7 @@
 export default class SensorItem {
     name;
     lastDataTime;
-    value1;
+    valueText;
     areaID;
     sensorType;
     sensorId;

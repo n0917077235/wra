@@ -1,9 +1,11 @@
 import LayerProps from './layerProps';
 import MathUtil from '../mathUtil';
+import SensorDef from '../sensorDef';
 
 export default class MapUtil {
     static _eqIntensities = ['1', '2', '3', '4', '5.1', '5.9', '6.1', '6.9', '7'];
-    static sensorLayers = ['layer5', 'layer6', 'layer7', 'layer9', 'layer10', 'layer11', 'layer21'];
+    static sensorLayers = ['layer5', 'layer6', 'layer7', SensorDef.SLOPE,
+        'layer10', 'layer11', 'layer21'];
 
     static _roundTo(num, decimal) {
         let y = Math.pow(10, decimal);
@@ -32,7 +34,7 @@ export default class MapUtil {
         } else if (layerId == 'layer10') {
             // 水位計
             value = lastValue1 + unit;
-        } else if (layerId == 'layer9') {
+        } else if (layerId == SensorDef.SLOPE) {
             value = lastValue1 + unit + ", " + lastValue2 + unit;
         } else if (layerId == 'layer11') {
             // Gate opening
@@ -193,7 +195,7 @@ export default class MapUtil {
             case 'layer8':
                 urls.push(require('@/assets/image/green-dot_.png'));
                 break;
-            case 'layer9': //傾斜
+            case SensorDef.SLOPE: 
                 urls.push(require('@/assets/image/orange-dot_.png'));
                 unit = " °";
                 break;

@@ -185,6 +185,7 @@ import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { useStore } from 'vuex';
 import Popup from './Popup.vue';
 import LayerMap from '@/resource/map/layerMap';
+import SensorDef from '@/resource/sensorDef';
 
 interface Props {
     title?: string;
@@ -227,9 +228,9 @@ onMounted(() => {
     //    alert('TGOS API 未加載');
     //}
     init();
-    toggleLayer("layer1");
-    toggleLayer("layer2");
-    toggleLayer("layer3");
+    toggleLayer(SensorDef.TANSUI_STATION);
+    toggleLayer(SensorDef.YANSANTZI_STATION);
+    toggleLayer(SensorDef.EMBANKMENT_STATION);
     toggleLayer("layer18");
     toggleLayer("layer19");
 });
@@ -593,16 +594,16 @@ async function toggleLayer(layerGroup) {
     } else if (el.checked) {
         //無資料則新增
         switch (layerGroup) {
-            case 'layer1':
+            case SensorDef.TANSUI_STATION:
                 await addLayer(layerGroup, "/GeoJson/GetTansuiGps");
                 break;
-            case 'layer2':
+            case SensorDef.YANSANTZI_STATION:
                 await addLayer(layerGroup, "/GeoJson/GetYansantziGps");
                 break;
-            case 'layer3':
+            case SensorDef.EMBANKMENT_STATION:
                 await addLayer(layerGroup, "/GeoJson/GetBankGps");
                 break;
-            case 'layer4':
+            case SensorDef.CAMERA_STATION:
                 await addLayer(layerGroup, "/GeoJson/GetCCTVGps");
                 break;
             case 'layer5':
@@ -617,7 +618,7 @@ async function toggleLayer(layerGroup) {
             case 'layer8':
                 await addLayer(layerGroup, "/GeoJson/GetSensorGps?sensorType=earthquake");
                 break;
-            case 'layer9':
+            case SensorDef.SLOPE:
                 await addLayer(layerGroup, "/GeoJson/GetSensorGps?sensorType=slope");
                 break;
             case 'layer10':

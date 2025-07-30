@@ -18,7 +18,7 @@
                         </a>
                     </div>
                     <div>監測時間: {{ sensor.lastDataTime }}</div>
-                    <div>數值: {{ sensor.value1 }}</div>
+                    <div>數值: {{ sensor.valueText }}</div>
                     <hr>
                 </div>
                 <div v-for="camera in props.content.cameras">
@@ -69,6 +69,7 @@ let isSensorContent = computed(() => {
 let isCameraContent = computed(() => {
     return props.content?.mode === 'camera';
 });
+
 </script>
 
 <style lang="scss" scoped>

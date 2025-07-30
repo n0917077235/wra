@@ -49,7 +49,7 @@ export default class InfoWindowUtil {
         let layerId = layerItems.layerProps.layerId;
 
         if (MapUtil.sensorLayers.includes(layerId)) {
-            return InfoWindowUtil._getSingleSensor(name, f);
+            return InfoWindowUtil._getSingleSensor(layerItems, name, f);
         }
 
         if (layerId === 'layer4') {
@@ -77,28 +77,42 @@ export default class InfoWindowUtil {
 
     static _getSensors(data) {
         return data.map(x => {
+            let unit = x.unit ? (' ' + x.unit) : x.unit;
             let name = x.sensorNameA;
             let lastDataTime = x.lastDataTime;
             if (!name || !lastDataTime) return null;
             let s = new SensorItem();
             s.name = name;
             s.lastDataTime = lastDataTime;
-            s.value1 = x.value1;
             s.areaID = x.areaID;
             s.sensorType = x.sensorType;
             s.sensorId = x.sensorId;
+
+            if (s.sensorType === 'Slope') {
+                s.valueText = InfoWindowUtil._createValueText([x.value1, x.value2], unit);
+            } else {
+                s.valueText = InfoWindowUtil._createValueText([x.value1], unit);
+            }
             return s;
         }).filter(x => x !== null);
     }
 
-    static _getSingleSensor(name, f) {
+    static _getSingleSensor(layerItems, name, f) {
+        let unit = layerItems.layerProps.unit;
         let s = new SensorItem();
         s.name = name;
         s.lastDataTime = f.get('lastDataTime');
-        s.value1 = parseFloat(f.get('lastValue1'));
         s.areaID = f.get('areaID');
         s.sensorType = f.get('sensorType');
         s.sensorId = f.get('id');
+        console.log(unit)
+        if (s.sensorType === 'Slope') {
+            let v1 = f.get('lastValue1');
+            let v2 = f.get('lastValue2');
+            s.valueText = InfoWindowUtil._createValueText([v1, v2], unit);
+        } else {
+            s.valueText = InfoWindowUtil._createValueText([f.get('lastValue1')], unit);
+        }
 
         return {
             mode: 'sensor',
@@ -106,6 +120,10 @@ export default class InfoWindowUtil {
             sensors: [s],
             cameras: [],
         };
+    }
+
+    static _createValueText(values, unit) {
+        return values.map(x => parseFloat(x).toFixed(3) + unit).join(', ');
     }
 
     static _getCctvs(data) {
