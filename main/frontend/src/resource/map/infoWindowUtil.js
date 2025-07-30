@@ -99,6 +99,7 @@ export default class InfoWindowUtil {
         s.areaID = ''; // TODO:
         s.sensorType = ''; //TODO:
         s.sensorId = f.get('id');
+        console.log(f);
 
         return {
             mode: 'sensor',

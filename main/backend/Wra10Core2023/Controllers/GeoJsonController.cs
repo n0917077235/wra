@@ -2,14 +2,10 @@
 using GeoJSON.Net.Feature;
 using GeoJSON.Net.Geometry;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
 using Newtonsoft.Json;
 using System.Data;
-using System.Drawing;
-using Windows.AI.MachineLearning;
-using Windows.UI.WebUI;
 using Wra10Core2023.Models;
 using FeatureCollection = GeoJSON.Net.Feature.FeatureCollection;
 using Point = GeoJSON.Net.Geometry.Point;
@@ -24,12 +20,13 @@ namespace Wra10Core2023.Controllers
         private readonly ILogger<GeoJsonController> _logger;
         private readonly IConfiguration _configuration;
         private readonly IWebHostEnvironment _hostingEnvironment;
-        public GeoJsonController(ILogger<GeoJsonController> logger, IConfiguration configuration, IWebHostEnvironment hostingEnvironment)
+
+        public GeoJsonController(ILogger<GeoJsonController> logger,
+            IConfiguration configuration, IWebHostEnvironment hostingEnvironment)
         {
             _logger = logger;
             _configuration = configuration;
             _hostingEnvironment = hostingEnvironment;
-
         }
 
         [Authorize]
@@ -37,7 +34,8 @@ namespace Wra10Core2023.Controllers
         [Route("GetGeoJsonFileName")]
         public IActionResult GetGeoJsonFileName()
         {
-            var fileName = new List<string> {
+            var fileName = new List<string>
+            {
                 "GPS01.json",
                 "GPS02.json",
                 "GPS03.json",
@@ -55,8 +53,9 @@ namespace Wra10Core2023.Controllers
                 "汐止.json",
                 "河川排水水道.json",
                 "a河川區域線.geojson",
-            "b用地範圍線.geojson",
-            "c治理計畫線.geojson"};
+                "b用地範圍線.geojson",
+                "c治理計畫線.geojson"
+            };
 
             return Ok(fileName);
 
@@ -68,16 +67,14 @@ namespace Wra10Core2023.Controllers
         public string GetGeoJsonDataByFileName(string fileName)
         {
             string geoJsonFilePath = _hostingEnvironment.ContentRootPath + _configuration["GeoJsonPath:Path"];
-            //string geoJsonFilePath = Path.Combine(rootPath,);
             geoJsonFilePath = Path.Combine(geoJsonFilePath, fileName);
             if (!System.IO.File.Exists(geoJsonFilePath))
             {
                 return ""; // Return a 404 Not Found if the file doesn't exist
             }
 
-            string geoJsonData = readJsonFile(geoJsonFilePath).Result;// System.IO.File.ReadAllText(geoJsonFilePath);
-
-            return geoJsonData;//, "application/geo+json");
+            var geoJsonData = readJsonFile(geoJsonFilePath).Result;
+            return geoJsonData;
         }
 
         private async Task<string> readJsonFile(string filePath)
@@ -86,22 +83,22 @@ namespace Wra10Core2023.Controllers
             return geoJsonData;
         }
 
-
         [HttpGet]
         [Authorize(AuthenticationSchemes = "Bearer")]
         [Route("GetTaipeiGateGps")]
         //[AllowAnonymous]
         public string GetTaipeiGateGps()
         {
-            
             SqlHelper sqlHelper = new SqlHelper(_configuration.GetConnectionString("Water2022"));
             List<SqlParameter> lstParam = new List<SqlParameter>();
             DataTable dt = sqlHelper.ExecuteStoreProcedureQuery("sp_TaipeiGate", lstParam.ToArray());
-
             var pointList = new List<Feature>();
+
             for (int i = 0; i < dt.Rows.Count; i++)
             {
-                var geometry = new Point(new Position(double.Parse(dt.Rows[i]["y"].ToString()), double.Parse(dt.Rows[i]["x"].ToString())));
+                var x = double.Parse(dt.Rows[i]["x"].ToString());
+                var y = double.Parse(dt.Rows[i]["y"].ToString());
+                var geometry = new Point(new Position(y, x));
                 var properties = new Dictionary<string, object>
                 {
                     { "id", i.ToString() },
@@ -109,11 +106,10 @@ namespace Wra10Core2023.Controllers
                     { "lastDataTime", dt.Rows[i]["lastDataTime"].ToString() },
                     { "lastValue", dt.Rows[i]["lastValue1"].ToString() },
                 };
+
                 var feature = new Feature(geometry, properties);
                 pointList.Add(feature);
-                //collection.Features.Add(feature);
             }
-
 
             string json = JsonConvert.SerializeObject(pointList);
             json = @"{
@@ -122,22 +118,16 @@ namespace Wra10Core2023.Controllers
 
 
             return json;
-
-
-
         }
-
-        
-        
 
         [Authorize]
         [HttpGet]
         [Route("GetSensorGps")]
         public string GetSensorGps(string sensorType)
         {
-            //string value="";
             var collection = new FeatureCollection() { CRS = new NamedCRS("EPSG:31370") };
-            SqlHelper sqlHelper = new SqlHelper(_configuration.GetConnectionString("Water2022"));
+            var sqlHelper = new SqlHelper(_configuration.GetConnectionString("Water2022"));
+
             string cmd = "";
             if (sensorType.ToLower() == "gate")
             {
@@ -157,18 +147,21 @@ namespace Wra10Core2023.Controllers
                            inner join Stations b on a.stationid=b.stationId
                            where sensortype='waterlevel' and isnull(b.x,0)!=0 and isnull(b.y,0)!=0 and disablestate <> 1 and a.importflag  like 'em%' ";
             }
-            else 
+            else
             {
                 cmd = @"Select a.sensorid,sensorNameA,b.x,b.y,lastvalue1,lastvalue2,lastdatatime from sensors a
                            inner join Stations b on a.stationid=b.stationId
                            where sensortype='" + sensorType + "' and isnull(b.x,0)!=0 and disablestate <> 1  and isnull(b.y,0)!=0 ";
             }
+
             DataTable dt = sqlHelper.ExecuteQuery(cmd);
-            //List<CommonGps> lstGps = new List<CommonGps>();
             var pointList = new List<Feature>();
+            
             for (int i = 0; i < dt.Rows.Count; i++)
             {
-                var geometry = new Point(new Position(double.Parse(dt.Rows[i]["y"].ToString()), double.Parse(dt.Rows[i]["x"].ToString())));
+                var x = double.Parse(dt.Rows[i]["x"].ToString());
+                var y = double.Parse(dt.Rows[i]["y"].ToString());
+                var geometry = new Point(new Position(y, x));
                 var properties = new Dictionary<string, object>
                 {
                     { "id", dt.Rows[i]["sensorid"].ToString() },
@@ -178,11 +171,10 @@ namespace Wra10Core2023.Controllers
                     { "lastValue2", dt.Rows[i]["lastValue2"].ToString() },
 
                 };
+             
                 var feature = new Feature(geometry, properties);
                 pointList.Add(feature);
-                //collection.Features.Add(feature);
             }
-
 
             string json = JsonConvert.SerializeObject(pointList);
             json = @"{
@@ -225,7 +217,7 @@ namespace Wra10Core2023.Controllers
   ""type"": ""FeatureCollection"",
   ""features"":" + json + "}";
 
-            
+
             return json;
         }
 
@@ -337,20 +329,17 @@ namespace Wra10Core2023.Controllers
             return json;
         }
 
-
-
         [Authorize]
         [HttpGet]
         [Route("GetBankGps")]
         public string GetBankGps()
         {
-            //string value="";
             var collection = new FeatureCollection() { CRS = new NamedCRS("EPSG:31370") };
-            SqlHelper sqlHelper = new SqlHelper(_configuration.GetConnectionString("Water2022"));
+            var sqlHelper = new SqlHelper(_configuration.GetConnectionString("Water2022"));
             string cmd = @"Select stationid,stationnamea,x,y from Stations where isnull(x,0)!=0 and isnull(y,0)!=0 and importflag like 'EM%'";
             DataTable dt = sqlHelper.ExecuteQuery(cmd);
-            //List<CommonGps> lstGps = new List<CommonGps>();
             var pointList = new List<Feature>();
+
             for (int i = 0; i < dt.Rows.Count; i++)
             {
                 var geometry = new Point(new Position(double.Parse(dt.Rows[i]["y"].ToString()), double.Parse(dt.Rows[i]["x"].ToString())));
@@ -360,9 +349,9 @@ namespace Wra10Core2023.Controllers
                     { "name", dt.Rows[i]["stationnameA"].ToString() },
 
                 };
+             
                 var feature = new Feature(geometry, properties);
                 pointList.Add(feature);
-                //collection.Features.Add(feature);
             }
 
 
@@ -371,7 +360,6 @@ namespace Wra10Core2023.Controllers
   ""type"": ""FeatureCollection"",
   ""features"":" + json + "}";
 
-            
             return json;
         }
 
@@ -380,13 +368,12 @@ namespace Wra10Core2023.Controllers
         [Route("GetStationGps")]
         public string GetStationsGps()
         {
-            //string value="";
             var collection = new FeatureCollection() { CRS = new NamedCRS("EPSG:31370") };
             SqlHelper sqlHelper = new SqlHelper(_configuration.GetConnectionString("Water2022"));
             string cmd = @"Select stationid,stationnamea,x,y from Stations where isnull(x,0)!=0 and isnull(y,0)!=0";
             DataTable dt = sqlHelper.ExecuteQuery(cmd);
-            //List<CommonGps> lstGps = new List<CommonGps>();
             var pointList = new List<Feature>();
+
             for (int i = 0; i < dt.Rows.Count; i++)
             {
                 var geometry = new Point(new Position(double.Parse(dt.Rows[i]["y"].ToString()), double.Parse(dt.Rows[i]["x"].ToString())));
@@ -398,16 +385,14 @@ namespace Wra10Core2023.Controllers
                 };
                 var feature = new Feature(geometry, properties);
                 pointList.Add(feature);
-                //collection.Features.Add(feature);
             }
-
 
             string json = JsonConvert.SerializeObject(pointList);
             json = @"{
   ""type"": ""FeatureCollection"",
   ""features"":" + json + "}";
 
-            
+
             return json;
         }
 
@@ -421,8 +406,8 @@ namespace Wra10Core2023.Controllers
             SqlHelper sqlHelper = new SqlHelper(_configuration.GetConnectionString("Water2022"));
             string cmd = @"Select sequence,objectid, GpsID as stationid,layername as stationname,lng as x,lat as y from gpslayersub where gpsid='" + gpsId + "' and isnull(lat,1)!=0 and isnull(lng,0)!=0 and isnull(mark,1)=1 order by layername,sequence";
             DataTable dt = sqlHelper.ExecuteQuery(cmd);
-            //List<CommonGps> lstGps = new List<CommonGps>();
             var pointList = new List<Feature>();
+
             for (int i = 0; i < dt.Rows.Count; i++)
             {
                 var geometry = new Point(new Position(double.Parse(dt.Rows[i]["y"].ToString()), double.Parse(dt.Rows[i]["x"].ToString())));
@@ -434,16 +419,14 @@ namespace Wra10Core2023.Controllers
                 };
                 var feature = new Feature(geometry, properties);
                 pointList.Add(feature);
-                //collection.Features.Add(feature);
             }
-
 
             string json = JsonConvert.SerializeObject(pointList);
             json = @"{
   ""type"": ""FeatureCollection"",
   ""features"":" + json + "}";
 
-            
+
             return json;
         }
 
@@ -470,8 +453,8 @@ namespace Wra10Core2023.Controllers
 
                 var feature = new Feature(geometry, properties);
                 pointList.Add(feature);
-                //collection.Features.Add(feature);
             }
+
             string json = JsonConvert.SerializeObject(pointList);
             json = @"{
   ""type"": ""FeatureCollection"",
@@ -504,8 +487,8 @@ namespace Wra10Core2023.Controllers
 
                 var feature = new Feature(geometry, properties);
                 pointList.Add(feature);
-                //collection.Features.Add(feature);
             }
+
             string json = JsonConvert.SerializeObject(pointList);
             json = @"{
   ""type"": ""FeatureCollection"",
@@ -524,30 +507,26 @@ namespace Wra10Core2023.Controllers
             foreach (var file in Directory.EnumerateFiles(Path.Combine(_hostingEnvironment.ContentRootPath, "GeoJson"), "*.json"))
             {
                 string fileName = "";
-                int lastIndex=file.LastIndexOf('\\');
-                if (lastIndex!=-1)
+                int lastIndex = file.LastIndexOf('\\');
+                if (lastIndex != -1)
                 {
-                    fileName=file.Substring(lastIndex + 1);
+                    fileName = file.Substring(lastIndex + 1);
                 }
-                if (fileName.Length > 0 && chainFiles.IndexOf(fileName)!=-1)
+                if (fileName.Length > 0 && chainFiles.IndexOf(fileName) != -1)
                 {
                     using (var streamReader = new StreamReader(file))
                     {
                         string json = streamReader.ReadToEnd();
-
                         var data = JsonConvert.DeserializeObject<ChainGPS>(json);
                         files.Add(data);
-
                     }
                 }
-                
+
             }
 
             var combinedData = files;
-
             return Ok(combinedData);
         }
-
 
         public class Feature : Feature<IGeometryObject>
         {
