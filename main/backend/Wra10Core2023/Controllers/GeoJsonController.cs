@@ -133,8 +133,8 @@ public class GeoJsonController : ControllerBase
 
         var pointList = dt.Rows.Cast<DataRow>().Select(row =>
         {
-            var x = double.Parse(row["x"].ToString());
-            var y = double.Parse(row["y"].ToString());
+            var x = (double)(decimal)row["x"];
+            var y = (double)(decimal)row["y"];
             var geometry = new Point(new Position(y, x));
 
             var properties = new Dictionary<string, object>
@@ -144,6 +144,8 @@ public class GeoJsonController : ControllerBase
                 { "lastDataTime", row["lastDataTime"] },
                 { "lastValue1", row["lastValue1"] },
                 { "lastValue2", row["lastValue2"] },
+                { "sensorType", row["SensorType"]},
+                { "areaID", row["AreaID"] }
             };
 
             return new Feature(geometry, properties);
@@ -159,7 +161,7 @@ public class GeoJsonController : ControllerBase
         var sType = type == "waterlevel2" ? "waterlevel" : type;
 
         var common = @"
-                Select a.sensorid, sensorNameA, b.x, b.y, lastvalue1
+                Select a.sensorid, sensorNameA, a.SensorType, a.AreaID, b.x, b.y, lastvalue1
                 , lastvalue2, lastdatatime 
                 from sensors a
                 inner join Stations b 

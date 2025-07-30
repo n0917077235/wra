@@ -96,8 +96,8 @@ export default class InfoWindowUtil {
         s.name = name;
         s.lastDataTime = f.get('lastDataTime');
         s.value1 = parseFloat(f.get('lastValue1'));
-        s.areaID = ''; // TODO:
-        s.sensorType = ''; //TODO:
+        s.areaID = f.get('areaID');
+        s.sensorType = f.get('sensorType');
         s.sensorId = f.get('id');
         console.log(f);
 

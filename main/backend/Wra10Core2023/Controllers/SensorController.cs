@@ -1207,7 +1207,7 @@ namespace Wra10Core2023.Controllers
                     data.value = data.eqGrade;
                 }
 
-                data.more = "¸Ô²Ó¸ê®Æ..";
+                data.more = "è©³ç´°è³‡æ–™..";
                 lstDatas.Add(data);
 
 
@@ -1260,7 +1260,7 @@ namespace Wra10Core2023.Controllers
                     string sensorType= dt.Rows[i]["SensorType"].ToString();
                     st.chart.sensorId = dt.Rows[i]["SensorId"].ToString();
                     st.chart.main = dt.Rows[i]["areaName"].ToString() + " " + dt.Rows[i]["stationNameA"].ToString();
-                    st.chart.xLabel = "®É¶¡";
+                    st.chart.xLabel = "æ™‚é–“";
                     if (sensorType.ToLower()=="earthquake")
                         st.chart.yLabel = st.sensorTypeName + st.unit ;
                     else
@@ -1324,7 +1324,7 @@ namespace Wra10Core2023.Controllers
                         Data wdAlarm = new Data();
                         wdAlarm.x = tFirst;
                         wdAlarm.y = double.Parse(dt.Rows[i]["HiLimit01"].ToString());
-                        st.chart.lstData[st.chart.lstData.Count - 1].label = "¤T¯ÅÄµ§Ù(°ª)";
+                        st.chart.lstData[st.chart.lstData.Count - 1].label = "ä¸‰ç´šè­¦æˆ’(é«˜)";
                         st.chart.lstData[st.chart.lstData.Count - 1].data.Add(wdAlarm);
                         st.chart.lstData[st.chart.lstData.Count - 1].fill=true;
                         st.chart.lstData[st.chart.lstData.Count - 1].backgroundColor = param.backgroundColorLevel3;
@@ -1340,7 +1340,7 @@ namespace Wra10Core2023.Controllers
                         Data wdAlarm = new Data();
                         wdAlarm.x = tFirst;
                         wdAlarm.y = double.Parse(dt.Rows[i]["HiLimit02"].ToString());
-                        st.chart.lstData[st.chart.lstData.Count - 1].label = "¤G¯ÅÄµ§Ù(°ª)";
+                        st.chart.lstData[st.chart.lstData.Count - 1].label = "äºŒç´šè­¦æˆ’(é«˜)";
                         st.chart.lstData[st.chart.lstData.Count - 1].data.Add(wdAlarm);
                         st.chart.lstData[st.chart.lstData.Count - 1].fill = true;
                         st.chart.lstData[st.chart.lstData.Count - 1].backgroundColor = param.backgroundColorLevel2;
@@ -1356,7 +1356,7 @@ namespace Wra10Core2023.Controllers
                         Data wdAlarm = new Data();
                         wdAlarm.x = tFirst;
                         wdAlarm.y = double.Parse(dt.Rows[i]["HiLimit03"].ToString());
-                        st.chart.lstData[st.chart.lstData.Count - 1].label = "¤@¯ÅÄµ§Ù(°ª)";
+                        st.chart.lstData[st.chart.lstData.Count - 1].label = "ä¸€ç´šè­¦æˆ’(é«˜)";
                         st.chart.lstData[st.chart.lstData.Count - 1].data.Add(wdAlarm);
                         st.chart.lstData[st.chart.lstData.Count - 1].fill = true;
                         st.chart.lstData[st.chart.lstData.Count - 1].backgroundColor = param.backgroundColorLevel1;
@@ -1372,7 +1372,7 @@ namespace Wra10Core2023.Controllers
                         Data wdAlarm = new Data();
                         wdAlarm.x = tFirst;
                         wdAlarm.y = double.Parse(dt.Rows[i]["LoLimit01"].ToString());
-                        st.chart.lstData[st.chart.lstData.Count - 1].label = "¤T¯ÅÄµ§Ù(§C)";
+                        st.chart.lstData[st.chart.lstData.Count - 1].label = "ä¸‰ç´šè­¦æˆ’(ä½)";
                         st.chart.lstData[st.chart.lstData.Count - 1].data.Add(wdAlarm);
                         st.chart.lstData[st.chart.lstData.Count - 1].fill = true;
                         st.chart.lstData[st.chart.lstData.Count - 1].backgroundColor = param.backgroundColorLevel3;
@@ -1388,7 +1388,7 @@ namespace Wra10Core2023.Controllers
                         Data wdAlarm = new Data();
                         wdAlarm.x = tFirst;
                         wdAlarm.y = double.Parse(dt.Rows[i]["LoLimit02"].ToString());
-                        st.chart.lstData[st.chart.lstData.Count - 1].label = "¤G¯ÅÄµ§Ù(§C)";
+                        st.chart.lstData[st.chart.lstData.Count - 1].label = "äºŒç´šè­¦æˆ’(ä½)";
                         st.chart.lstData[st.chart.lstData.Count - 1].data.Add(wdAlarm);
                         st.chart.lstData[st.chart.lstData.Count - 1].fill = true;
                         st.chart.lstData[st.chart.lstData.Count - 1].backgroundColor = param.backgroundColorLevel2;
@@ -1404,7 +1404,7 @@ namespace Wra10Core2023.Controllers
                         Data wdAlarm = new Data();
                         wdAlarm.x = tFirst;
                         wdAlarm.y = double.Parse(dt.Rows[i]["LoLimit03"].ToString());
-                        st.chart.lstData[st.chart.lstData.Count - 1].label = "¤@¯ÅÄµ§Ù(§C)";
+                        st.chart.lstData[st.chart.lstData.Count - 1].label = "ä¸€ç´šè­¦æˆ’(ä½)";
                         st.chart.lstData[st.chart.lstData.Count - 1].data.Add(wdAlarm);
                         st.chart.lstData[st.chart.lstData.Count - 1].fill = true;
                         st.chart.lstData[st.chart.lstData.Count - 1].backgroundColor = param.backgroundColorLevel1;
@@ -1420,7 +1420,7 @@ namespace Wra10Core2023.Controllers
                         Data wdInitValue = new Data();
                         wdInitValue.x = tFirst;
                         wdInitValue.y = double.Parse(dt.Rows[i]["InitValue"].ToString());
-                        st.chart.lstData[st.chart.lstData.Count - 1].label = "ªì©l­È";
+                        st.chart.lstData[st.chart.lstData.Count - 1].label = "åˆå§‹å€¼";
                         st.chart.lstData[st.chart.lstData.Count - 1].data.Add(wdInitValue);
                         st.chart.lstData[st.chart.lstData.Count - 1].fill = true;
                         st.chart.lstData[st.chart.lstData.Count - 1].backgroundColor = param.backgroundColorLevel1;
@@ -1442,7 +1442,7 @@ namespace Wra10Core2023.Controllers
                     wd.y = double.Parse(dt.Rows[i]["value2"].ToString());
                     wd.x = DateTime.Parse(dt.Rows[i]["RecordTime"].ToString());
                     st.chart.lstData[1].data.Add(wd);
-                    //st.chart.lstData[1].label = "¤@¯ÅÄµ§Ù(§C)";
+                    //st.chart.lstData[1].label = "ä¸€ç´šè­¦æˆ’(ä½)";
                     st.chart.lstData[1].fill = true;
                 }
                 if (bValue3)
@@ -1451,7 +1451,7 @@ namespace Wra10Core2023.Controllers
                     wd.y = double.Parse(dt.Rows[i]["value3"].ToString());
                     wd.x = DateTime.Parse(dt.Rows[i]["RecordTime"].ToString());
                     st.chart.lstData[2].data.Add(wd);
-                    //st.chart.lstData[1].label = "¤@¯ÅÄµ§Ù(§C)";
+                    //st.chart.lstData[1].label = "ä¸€ç´šè­¦æˆ’(ä½)";
                     st.chart.lstData[2].fill = true;
                 }
             }
@@ -1499,7 +1499,7 @@ namespace Wra10Core2023.Controllers
             var csvBuilder = new StringBuilder();
             try
             {
-                System.Text.Encoding.RegisterProvider(CodePagesEncodingProvider.Instance); // µù¥UBig5µ¥½s½X
+                System.Text.Encoding.RegisterProvider(CodePagesEncodingProvider.Instance); // è¨»å†ŠBig5ç­‰ç·¨ç¢¼
                 Encoding big5Enc = Encoding.GetEncoding("big5");
 
                 using (var writer = new StreamWriter(memoryStream, big5Enc))
@@ -1521,23 +1521,23 @@ namespace Wra10Core2023.Controllers
 
                             if (sensorType.ToLower() == "earthquake")
                             {
-                                csvBuilder.AppendLine($"®É¶¡,X({unit}),Y({unit}),Z({unit})");
-                                //writer.WriteLine($"®É¶¡,X({unit}),Y({unit}),Z({unit})");
+                                csvBuilder.AppendLine($"æ™‚é–“,X({unit}),Y({unit}),Z({unit})");
+                                //writer.WriteLine($"æ™‚é–“,X({unit}),Y({unit}),Z({unit})");
                             }
                             else if (sensorType.ToLower() == "slope")
                             {
-                                csvBuilder.AppendLine($"®É¶¡,X({unit}),Y({unit})");
-                                //writer.WriteLine($"®É¶¡,X({unit}),Y({unit})");
+                                csvBuilder.AppendLine($"æ™‚é–“,X({unit}),Y({unit})");
+                                //writer.WriteLine($"æ™‚é–“,X({unit}),Y({unit})");
                             }
                             else if (sensorType.ToLower() == "crack")
                             {
-                                csvBuilder.AppendLine($"®É¶¡,X({unit}),ªì©l­È({unit})");
-                                //writer.WriteLine($"®É¶¡,X({unit}),ªì©l­È({unit})");
+                                csvBuilder.AppendLine($"æ™‚é–“,X({unit}),åˆå§‹å€¼({unit})");
+                                //writer.WriteLine($"æ™‚é–“,X({unit}),åˆå§‹å€¼({unit})");
                             }
                             else
                             {
-                                csvBuilder.AppendLine($"®É¶¡,X({unit})");
-                                //writer.WriteLine($"®É¶¡,X({unit})");
+                                csvBuilder.AppendLine($"æ™‚é–“,X({unit})");
+                                //writer.WriteLine($"æ™‚é–“,X({unit})");
                             }
                             //st.chart.chartTitle = dt.Rows[i]["SensorNameA"].ToString();// + " " + dt.Rows[i]["StationNameA"].ToString();
 
@@ -1602,7 +1602,7 @@ namespace Wra10Core2023.Controllers
                                 Data wdAlarm = new Data();
                                 wdAlarm.x = tFirst;
                                 wdAlarm.y = double.Parse(dt.Rows[i]["HiLimit01"].ToString());
-                                st.chart.lstData[st.chart.lstData.Count - 1].label = "¤T¯ÅÄµ§Ù(°ª)";
+                                st.chart.lstData[st.chart.lstData.Count - 1].label = "ä¸‰ç´šè­¦æˆ’(é«˜)";
                                 st.chart.lstData[st.chart.lstData.Count - 1].data.Add(wdAlarm);
                                 st.chart.lstData[st.chart.lstData.Count - 1].fill = true;
                                 st.chart.lstData[st.chart.lstData.Count - 1].backgroundColor = param.backgroundColorLevel3;
@@ -1620,7 +1620,7 @@ namespace Wra10Core2023.Controllers
                                 Data wdAlarm = new Data();
                                 wdAlarm.x = tFirst;
                                 wdAlarm.y = double.Parse(dt.Rows[i]["HiLimit02"].ToString());
-                                st.chart.lstData[st.chart.lstData.Count - 1].label = "¤G¯ÅÄµ§Ù(°ª)";
+                                st.chart.lstData[st.chart.lstData.Count - 1].label = "äºŒç´šè­¦æˆ’(é«˜)";
                                 st.chart.lstData[st.chart.lstData.Count - 1].data.Add(wdAlarm);
                                 st.chart.lstData[st.chart.lstData.Count - 1].fill = true;
                                 st.chart.lstData[st.chart.lstData.Count - 1].backgroundColor = param.backgroundColorLevel2;
@@ -1638,7 +1638,7 @@ namespace Wra10Core2023.Controllers
                                 Data wdAlarm = new Data();
                                 wdAlarm.x = tFirst;
                                 wdAlarm.y = double.Parse(dt.Rows[i]["HiLimit03"].ToString());
-                                st.chart.lstData[st.chart.lstData.Count - 1].label = "¤@¯ÅÄµ§Ù(°ª)";
+                                st.chart.lstData[st.chart.lstData.Count - 1].label = "ä¸€ç´šè­¦æˆ’(é«˜)";
                                 st.chart.lstData[st.chart.lstData.Count - 1].data.Add(wdAlarm);
                                 st.chart.lstData[st.chart.lstData.Count - 1].fill = true;
                                 st.chart.lstData[st.chart.lstData.Count - 1].backgroundColor = param.backgroundColorLevel1;
@@ -1656,7 +1656,7 @@ namespace Wra10Core2023.Controllers
                                 Data wdAlarm = new Data();
                                 wdAlarm.x = tFirst;
                                 wdAlarm.y = double.Parse(dt.Rows[i]["LoLimit01"].ToString());
-                                st.chart.lstData[st.chart.lstData.Count - 1].label = "¤T¯ÅÄµ§Ù(§C)";
+                                st.chart.lstData[st.chart.lstData.Count - 1].label = "ä¸‰ç´šè­¦æˆ’(ä½)";
                                 st.chart.lstData[st.chart.lstData.Count - 1].data.Add(wdAlarm);
                                 st.chart.lstData[st.chart.lstData.Count - 1].fill = true;
                                 st.chart.lstData[st.chart.lstData.Count - 1].backgroundColor = param.backgroundColorLevel3;
@@ -1674,7 +1674,7 @@ namespace Wra10Core2023.Controllers
                                 Data wdAlarm = new Data();
                                 wdAlarm.x = tFirst;
                                 wdAlarm.y = double.Parse(dt.Rows[i]["LoLimit02"].ToString());
-                                st.chart.lstData[st.chart.lstData.Count - 1].label = "¤G¯ÅÄµ§Ù(§C)";
+                                st.chart.lstData[st.chart.lstData.Count - 1].label = "äºŒç´šè­¦æˆ’(ä½)";
                                 st.chart.lstData[st.chart.lstData.Count - 1].data.Add(wdAlarm);
                                 st.chart.lstData[st.chart.lstData.Count - 1].fill = true;
                                 st.chart.lstData[st.chart.lstData.Count - 1].backgroundColor = param.backgroundColorLevel2;
@@ -1692,7 +1692,7 @@ namespace Wra10Core2023.Controllers
                                 Data wdAlarm = new Data();
                                 wdAlarm.x = tFirst;
                                 wdAlarm.y = double.Parse(dt.Rows[i]["LoLimit03"].ToString());
-                                st.chart.lstData[st.chart.lstData.Count - 1].label = "¤@¯ÅÄµ§Ù(§C)";
+                                st.chart.lstData[st.chart.lstData.Count - 1].label = "ä¸€ç´šè­¦æˆ’(ä½)";
                                 st.chart.lstData[st.chart.lstData.Count - 1].data.Add(wdAlarm);
                                 st.chart.lstData[st.chart.lstData.Count - 1].fill = true;
                                 st.chart.lstData[st.chart.lstData.Count - 1].backgroundColor = param.backgroundColorLevel1;
@@ -1710,7 +1710,7 @@ namespace Wra10Core2023.Controllers
                                 Data wdInitValue = new Data();
                                 wdInitValue.x = tFirst;
                                 wdInitValue.y = double.Parse(dt.Rows[i]["InitValue"].ToString());
-                                st.chart.lstData[st.chart.lstData.Count - 1].label = "ªì©l­È";
+                                st.chart.lstData[st.chart.lstData.Count - 1].label = "åˆå§‹å€¼";
                                 st.chart.lstData[st.chart.lstData.Count - 1].data.Add(wdInitValue);
                                 st.chart.lstData[st.chart.lstData.Count - 1].fill = true;
                                 st.chart.lstData[st.chart.lstData.Count - 1].backgroundColor = param.backgroundColorLevel1;
@@ -1785,14 +1785,14 @@ namespace Wra10Core2023.Controllers
         {
             try
             {
-                System.Text.Encoding.RegisterProvider(CodePagesEncodingProvider.Instance); // µù¥UBig5µ¥½s½X
+                System.Text.Encoding.RegisterProvider(CodePagesEncodingProvider.Instance); // è¨»å†ŠBig5ç­‰ç·¨ç¢¼
                 Encoding big5Enc = Encoding.GetEncoding("big5");
 
                 using var ms = new MemoryStream();
                 using var sr = new StreamWriter(ms, big5Enc);
                 List<string> dataList = new List<string>();
-                dataList.Add($"1,ªL¨|¤~,ahtsair@a.a");
-                dataList.Add($"2,ªL¨|Åï,ling@a.a");
+                dataList.Add($"1,æ—è‚²æ‰,ahtsair@a.a");
+                dataList.Add($"2,æ—è‚²éºŸ,ling@a.a");
                 foreach (var item in dataList)
                 {
                     StringBuilder sb = new StringBuilder();
@@ -1801,19 +1801,19 @@ namespace Wra10Core2023.Controllers
                 }
                 var config = new CsvConfiguration(CultureInfo.CurrentCulture)
                 {
-                    // ±Ä¥Î¼Ğ·Çªº RFC 4180 ¸ÑªR»P¼g¤J CSV ¸ê®Æ
+                    // æ¡ç”¨æ¨™æº–çš„ RFC 4180 è§£æèˆ‡å¯«å…¥ CSV è³‡æ–™
                     Mode = CsvMode.RFC4180,
-                    // ¥Î¨ÓÅı CSV Äæ¦ì¼ĞÀY¤£°Ï¤À¤j¤p¼g
+                    // ç”¨ä¾†è®“ CSV æ¬„ä½æ¨™é ­ä¸å€åˆ†å¤§å°å¯«
                     PrepareHeaderForMatch = args => args.Header.ToLower()
                 };
 
 
-                // ¼g¤J§À¦æ
+                // å¯«å…¥å°¾è¡Œ
                 sr.Flush();
                 ms.Flush();
                 ms.Position = 0;
                 byte[] bytes2 = ms.ToArray();
-                string fileName = "¿é¥X-" + DateTime.Now.ToString("yyyyMMdd_HHmmss") + ".csv";
+                string fileName = "è¼¸å‡º-" + DateTime.Now.ToString("yyyyMMdd_HHmmss") + ".csv";
                 string encodedFilename = HttpUtility.UrlPathEncode(fileName);
                 Response.Headers.Add("Content-Disposition",$"attachment; filename*=UTF-8''{encodedFilename}");
 
@@ -1823,7 +1823,7 @@ namespace Wra10Core2023.Controllers
             }
             catch (Exception ex)
             {
-                throw new ApplicationException("¶×¥X¥¢±Ñ¡I" + ex.Message, ex);
+                throw new ApplicationException("åŒ¯å‡ºå¤±æ•—ï¼" + ex.Message, ex);
             }
         }
 
@@ -1891,7 +1891,7 @@ namespace Wra10Core2023.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, "³B²z¸ê®Æ®Éµo¥Í¿ù»~(500)");
+                return StatusCode(500, "è™•ç†è³‡æ–™æ™‚ç™¼ç”ŸéŒ¯èª¤(500)");
             }
             
         }
@@ -1926,7 +1926,7 @@ namespace Wra10Core2023.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, "³B²z¸ê®Æ®Éµo¥Í¿ù»~(500)");
+                return StatusCode(500, "è™•ç†è³‡æ–™æ™‚ç™¼ç”ŸéŒ¯èª¤(500)");
             }
 
         }
@@ -1957,7 +1957,7 @@ namespace Wra10Core2023.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, "³B²z¸ê®Æ®Éµo¥Í¿ù»~(500)");
+                return StatusCode(500, "è™•ç†è³‡æ–™æ™‚ç™¼ç”ŸéŒ¯èª¤(500)");
             }
 
         }
