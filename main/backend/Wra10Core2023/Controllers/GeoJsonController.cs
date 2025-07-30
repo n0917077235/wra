@@ -5,6 +5,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using Org.BouncyCastle.Bcpg.Sig;
 using System.Data;
 using Wra10Core2023.Models;
 using FeatureCollection = GeoJSON.Net.Feature.FeatureCollection;
@@ -127,62 +129,67 @@ namespace Wra10Core2023.Controllers
         {
             var collection = new FeatureCollection() { CRS = new NamedCRS("EPSG:31370") };
             var sqlHelper = new SqlHelper(_configuration.GetConnectionString("Water2022"));
+            var dt = GetSensorGpsTable(sqlHelper, sensorType);
 
-            string cmd = "";
-            if (sensorType.ToLower() == "gate")
+            var pointList = dt.Rows.Cast<DataRow>().Select(row =>
             {
-                cmd = @"Select a.sensorid,sensorNameA,b.x,b.y,lastvalue1,lastvalue2,lastdatatime from sensors a
-                           inner join Stations b on a.stationid=b.stationId
-                           where sensortype='gate' and isnull(b.x,0)!=0 and isnull(b.y,0)!=0 and disablestate <> 1 and a.areaid not in ('A12','A13')";
-            }
-            else if (sensorType.ToLower() == "waterlevel")
-            {
-                cmd = @"Select a.sensorid,sensorNameA,b.x,b.y,lastvalue1,lastvalue2,lastdatatime from sensors a
-                           inner join Stations b on a.stationid=b.stationId 
-                           where sensortype='waterlevel' and isnull(b.x,0)!=0 and isnull(b.y,0)!=0 and disablestate <> 1 and  a.importflag not like 'em%' ";
-            }
-            else if (sensorType.ToLower() == "waterlevel2")
-            {
-                cmd = @"Select a.sensorid,sensorNameA,b.x,b.y,lastvalue1,lastvalue2,lastdatatime from sensors a
-                           inner join Stations b on a.stationid=b.stationId
-                           where sensortype='waterlevel' and isnull(b.x,0)!=0 and isnull(b.y,0)!=0 and disablestate <> 1 and a.importflag  like 'em%' ";
-            }
-            else
-            {
-                cmd = @"Select a.sensorid,sensorNameA,b.x,b.y,lastvalue1,lastvalue2,lastdatatime from sensors a
-                           inner join Stations b on a.stationid=b.stationId
-                           where sensortype='" + sensorType + "' and isnull(b.x,0)!=0 and disablestate <> 1  and isnull(b.y,0)!=0 ";
-            }
-
-            DataTable dt = sqlHelper.ExecuteQuery(cmd);
-            var pointList = new List<Feature>();
-            
-            for (int i = 0; i < dt.Rows.Count; i++)
-            {
-                var x = double.Parse(dt.Rows[i]["x"].ToString());
-                var y = double.Parse(dt.Rows[i]["y"].ToString());
+                var x = double.Parse(row["x"].ToString());
+                var y = double.Parse(row["y"].ToString());
                 var geometry = new Point(new Position(y, x));
+
                 var properties = new Dictionary<string, object>
                 {
-                    { "id", dt.Rows[i]["sensorid"].ToString() },
-                    { "name", dt.Rows[i]["sensorNameA"].ToString() },
-                    { "lastDataTime", dt.Rows[i]["lastDataTime"].ToString() },
-                    { "lastValue1", dt.Rows[i]["lastValue1"].ToString() },
-                    { "lastValue2", dt.Rows[i]["lastValue2"].ToString() },
-
+                    { "id", row["sensorid"] },
+                    { "name", row["sensorNameA"] },
+                    { "lastDataTime", row["lastDataTime"] },
+                    { "lastValue1", row["lastValue1"] },
+                    { "lastValue2", row["lastValue2"] },
                 };
-             
-                var feature = new Feature(geometry, properties);
-                pointList.Add(feature);
-            }
 
-            string json = JsonConvert.SerializeObject(pointList);
-            json = @"{
-  ""type"": ""FeatureCollection"",
-  ""features"":" + json + "}";
+                return new Feature(geometry, properties);
+            });
 
-
+            var json = ToFeatureCollectionJson(pointList);
             return json;
+        }
+
+        private static DataTable GetSensorGpsTable(SqlHelper sqlHelper, string sensorType)
+        {
+            var type = sensorType.ToLowerInvariant();
+            var sType = type == "waterlevel2" ? "waterlevel" : type;
+
+            var common = @"
+                Select a.sensorid, sensorNameA, b.x, b.y, lastvalue1
+                , lastvalue2, lastdatatime 
+                from sensors a
+                inner join Stations b 
+                on a.stationid=b.stationId
+                where sensortype=@sType and isnull(b.x,0)!=0 and isnull(b.y,0)!=0 
+                and disablestate <> 1
+                ";
+
+            var extra = type switch
+            {
+                "gate" => "and a.areaid not in ('A12','A13')",
+                "waterlevel" => "and a.importflag not like 'em%'",
+                "waterlevel2" => "and a.importflag like 'em%' ",
+                _ => ""
+            };
+
+            var query = $"{common} {extra}";
+            var dt = sqlHelper.ExecuteQuery(query, new[] { new SqlParameter("sType", sType) });
+            return dt;
+        }
+
+        private static string ToFeatureCollectionJson(IEnumerable<Feature> pointList)
+        {
+            var o = new
+            {
+                type = "FeatureCollection",
+                features = pointList
+            };
+
+            return JToken.FromObject(o).ToString();
         }
 
         [Authorize]
@@ -267,7 +274,6 @@ namespace Wra10Core2023.Controllers
             SqlHelper sqlHelper = new SqlHelper(_configuration.GetConnectionString("Water2022"));
             string cmd = @"Select sequence,objectid, GpsID as stationid,layername as stationname,lng as x,lat as y from gpslayersub where gpsid='" + gpsId + "' and isnull(lat,1)!=0 and isnull(lng,0)!=0 and isnull(mark,1)=1 order by layername,sequence";
             DataTable dt = sqlHelper.ExecuteQuery(cmd);
-            //List<CommonGps> lstGps = new List<CommonGps>();
             var pointList = new List<Feature>();
             for (int i = 0; i < dt.Rows.Count; i++)
             {
@@ -278,9 +284,9 @@ namespace Wra10Core2023.Controllers
                     { "name", dt.Rows[i]["stationname"].ToString() },
 
                 };
+
                 var feature = new Feature(geometry, properties);
                 pointList.Add(feature);
-                //collection.Features.Add(feature);
             }
 
 
@@ -349,7 +355,7 @@ namespace Wra10Core2023.Controllers
                     { "name", dt.Rows[i]["stationnameA"].ToString() },
 
                 };
-             
+
                 var feature = new Feature(geometry, properties);
                 pointList.Add(feature);
             }
