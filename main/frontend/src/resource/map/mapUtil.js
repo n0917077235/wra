@@ -43,8 +43,8 @@ export default class MapUtil {
             let index = MapUtil._eqIntensities.indexOf(intensity);
             if (index >= 0) imageIndex = index;
         } else if (layerId == 'layer21') {
-            imageIndex = lastValue <= 5 ? 0 : 1;
-            value = lastValue.toString() + unit;
+            imageIndex = lastValue1 <= 5 ? 0 : 1;
+            value = lastValue1.toString() + unit;
         }
 
         return { imageIndex, value };

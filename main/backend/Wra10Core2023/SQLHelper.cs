@@ -136,8 +136,6 @@ namespace SQLHelper
             return res;
         }
 
-
-
         public DataTable ExecuteQuery(string sql)
         {
             DataTable dt = new DataTable();
@@ -161,7 +159,6 @@ namespace SQLHelper
             return dset;
         }
 
-
         public DataTable ExecuteQuery(string sql, SqlParameter[] paras)
         {
             DataTable dt = new DataTable();
@@ -173,6 +170,11 @@ namespace SQLHelper
                 dt.Load(sdr);
             }
             return dt;
+        }
+
+        public DataTable ExecuteStoreProcedureQuery(string storeProcedure)
+        {
+            return ExecuteStoreProcedureQuery(storeProcedure, new SqlParameter[0]);
         }
 
         public DataTable ExecuteStoreProcedureQuery(string storeProcedure, SqlParameter[] paras)
@@ -188,7 +190,6 @@ namespace SQLHelper
             }
             return dt;
         }
-
 
         public bool BoolExecuteQuery(string sql, SqlParameter[] paras)
         {

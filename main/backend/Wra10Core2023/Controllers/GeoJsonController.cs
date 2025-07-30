@@ -60,7 +60,6 @@ public class GeoJsonController : ControllerBase
         };
 
         return Ok(fileName);
-
     }
 
     [Authorize]
@@ -88,37 +87,41 @@ public class GeoJsonController : ControllerBase
     [HttpGet]
     [Authorize(AuthenticationSchemes = "Bearer")]
     [Route("GetTaipeiGateGps")]
-    //[AllowAnonymous]
     public string GetTaipeiGateGps()
     {
-        SqlHelper sqlHelper = new SqlHelper(_configuration.GetConnectionString("Water2022"));
-        List<SqlParameter> lstParam = new List<SqlParameter>();
-        DataTable dt = sqlHelper.ExecuteStoreProcedureQuery("sp_TaipeiGate", lstParam.ToArray());
-        var pointList = new List<Feature>();
+        var sqlHelper = new SqlHelper(_configuration.GetConnectionString("Water2022"));
+        var query = @"
+            Select a.AreaID, a.SensorType, b.AreaName, SensorNameA, a.x, a.y
+            ,convert(varchar,[LastDataTime],120) as LastDataTime
+            ,CAST(LastValue1 AS INT) AS LastValue1
+            from sensors a
+            inner join Areas b on a.AreaID=b.areaid
+            where SensorType='Gate' and a.areaid in ('A12','A13')
+            order by areaid, sensorid
+            ";
 
-        for (int i = 0; i < dt.Rows.Count; i++)
+        var dt = sqlHelper.ExecuteQuery(query);
+
+        var pointList = dt.Rows.Cast<DataRow>().Select((row, i) =>
         {
-            var x = double.Parse(dt.Rows[i]["x"].ToString());
-            var y = double.Parse(dt.Rows[i]["y"].ToString());
+            var x = (double)(decimal)row["x"];
+            var y = (double)(decimal)row["y"];
             var geometry = new Point(new Position(y, x));
+
             var properties = new Dictionary<string, object>
             {
                 { "id", i.ToString() },
-                { "name", dt.Rows[i]["sensorNameA"].ToString() },
-                { "lastDataTime", dt.Rows[i]["lastDataTime"].ToString() },
-                { "lastValue", dt.Rows[i]["lastValue1"].ToString() },
+                { "name", row["sensorNameA"].ToString() },
+                { "lastDataTime", row["lastDataTime"].ToString() },
+                { "lastValue1", row["lastValue1"].ToString() },
+                { "sensorType", row["SensorType"]},
+                { "areaID", row["AreaID"] },
             };
 
-            var feature = new Feature(geometry, properties);
-            pointList.Add(feature);
-        }
+            return new Feature(geometry, properties);
+        });
 
-        string json = JsonConvert.SerializeObject(pointList);
-        json = @"{
-  ""type"": ""FeatureCollection"",
-  ""features"":" + json + "}";
-
-
+        var json = ToFeatureCollectionJson(pointList);
         return json;
     }
 
