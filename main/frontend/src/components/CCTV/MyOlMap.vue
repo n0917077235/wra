@@ -726,7 +726,6 @@ async function getLayers(layerId, funcName) {
 
 async function addLayer(layerId, funcName, layerGroup = null) {
     if (layerGroup === null) layerGroup = layerId;
-    console.log(`adding layer ${layerId}`);
     let map = pMap.value;
     let myLayers = await getLayers(layerId, funcName);
 

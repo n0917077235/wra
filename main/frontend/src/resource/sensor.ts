@@ -189,13 +189,11 @@ export interface GetSensorChartDataResponse {
 export async function apiGetSensorChartData(
   payload: GetSensorChartDataRequest,
 ): Promise<GetSensorChartDataResponse> {
-    //tag1130826
-    //alert(payload.); payload 如何產生
   const response = await apiClient.post<GetSensorChartDataResponse>(
     `/Sensor/GetSensorChartData`,
     payload,
   );
-  console.log(response.data);
+
   return response.data;
 }
 
