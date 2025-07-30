@@ -13,152 +13,152 @@ using FeatureCollection = GeoJSON.Net.Feature.FeatureCollection;
 using Point = GeoJSON.Net.Geometry.Point;
 using SqlHelper = SQLHelper.SQLHelper;
 
-namespace Wra10Core2023.Controllers
-{
-    [ApiController]
-    [Route("api/[controller]")]
-    public class GeoJsonController : ControllerBase
-    {
-        private readonly ILogger<GeoJsonController> _logger;
-        private readonly IConfiguration _configuration;
-        private readonly IWebHostEnvironment _hostingEnvironment;
+namespace Wra10Core2023.Controllers;
 
-        public GeoJsonController(ILogger<GeoJsonController> logger,
-            IConfiguration configuration, IWebHostEnvironment hostingEnvironment)
+[ApiController]
+[Route("api/[controller]")]
+public class GeoJsonController : ControllerBase
+{
+    private readonly ILogger<GeoJsonController> _logger;
+    private readonly IConfiguration _configuration;
+    private readonly IWebHostEnvironment _hostingEnvironment;
+
+    public GeoJsonController(ILogger<GeoJsonController> logger,
+        IConfiguration configuration, IWebHostEnvironment hostingEnvironment)
+    {
+        _logger = logger;
+        _configuration = configuration;
+        _hostingEnvironment = hostingEnvironment;
+    }
+
+    [Authorize]
+    [HttpGet]
+    [Route("GetGeoJsonFileName")]
+    public IActionResult GetGeoJsonFileName()
+    {
+        var fileName = new List<string>
         {
-            _logger = logger;
-            _configuration = configuration;
-            _hostingEnvironment = hostingEnvironment;
+            "GPS01.json",
+            "GPS02.json",
+            "GPS03.json",
+            "GPS04.json",
+            "GPS05.json",
+            "GPS08.json",
+            "map.json",
+            "river.json",
+            "三重.json",
+            "二重疏洪道左岸堤防.json",
+            "基隆.json",
+            "已施作透地雷達_109年.json",
+            "新店.json",
+            "板橋.json",
+            "汐止.json",
+            "河川排水水道.json",
+            "a河川區域線.geojson",
+            "b用地範圍線.geojson",
+            "c治理計畫線.geojson"
+        };
+
+        return Ok(fileName);
+
+    }
+
+    [Authorize]
+    [HttpPost]
+    [Route("GetGeoJsonDataByFileName")]
+    public string GetGeoJsonDataByFileName(string fileName)
+    {
+        string geoJsonFilePath = _hostingEnvironment.ContentRootPath + _configuration["GeoJsonPath:Path"];
+        geoJsonFilePath = Path.Combine(geoJsonFilePath, fileName);
+        if (!System.IO.File.Exists(geoJsonFilePath))
+        {
+            return ""; // Return a 404 Not Found if the file doesn't exist
         }
 
-        [Authorize]
-        [HttpGet]
-        [Route("GetGeoJsonFileName")]
-        public IActionResult GetGeoJsonFileName()
+        var geoJsonData = readJsonFile(geoJsonFilePath).Result;
+        return geoJsonData;
+    }
+
+    private async Task<string> readJsonFile(string filePath)
+    {
+        string geoJsonData = await System.IO.File.ReadAllTextAsync(filePath);
+        return geoJsonData;
+    }
+
+    [HttpGet]
+    [Authorize(AuthenticationSchemes = "Bearer")]
+    [Route("GetTaipeiGateGps")]
+    //[AllowAnonymous]
+    public string GetTaipeiGateGps()
+    {
+        SqlHelper sqlHelper = new SqlHelper(_configuration.GetConnectionString("Water2022"));
+        List<SqlParameter> lstParam = new List<SqlParameter>();
+        DataTable dt = sqlHelper.ExecuteStoreProcedureQuery("sp_TaipeiGate", lstParam.ToArray());
+        var pointList = new List<Feature>();
+
+        for (int i = 0; i < dt.Rows.Count; i++)
         {
-            var fileName = new List<string>
+            var x = double.Parse(dt.Rows[i]["x"].ToString());
+            var y = double.Parse(dt.Rows[i]["y"].ToString());
+            var geometry = new Point(new Position(y, x));
+            var properties = new Dictionary<string, object>
             {
-                "GPS01.json",
-                "GPS02.json",
-                "GPS03.json",
-                "GPS04.json",
-                "GPS05.json",
-                "GPS08.json",
-                "map.json",
-                "river.json",
-                "三重.json",
-                "二重疏洪道左岸堤防.json",
-                "基隆.json",
-                "已施作透地雷達_109年.json",
-                "新店.json",
-                "板橋.json",
-                "汐止.json",
-                "河川排水水道.json",
-                "a河川區域線.geojson",
-                "b用地範圍線.geojson",
-                "c治理計畫線.geojson"
+                { "id", i.ToString() },
+                { "name", dt.Rows[i]["sensorNameA"].ToString() },
+                { "lastDataTime", dt.Rows[i]["lastDataTime"].ToString() },
+                { "lastValue", dt.Rows[i]["lastValue1"].ToString() },
             };
 
-            return Ok(fileName);
-
+            var feature = new Feature(geometry, properties);
+            pointList.Add(feature);
         }
 
-        [Authorize]
-        [HttpPost]
-        [Route("GetGeoJsonDataByFileName")]
-        public string GetGeoJsonDataByFileName(string fileName)
-        {
-            string geoJsonFilePath = _hostingEnvironment.ContentRootPath + _configuration["GeoJsonPath:Path"];
-            geoJsonFilePath = Path.Combine(geoJsonFilePath, fileName);
-            if (!System.IO.File.Exists(geoJsonFilePath))
-            {
-                return ""; // Return a 404 Not Found if the file doesn't exist
-            }
-
-            var geoJsonData = readJsonFile(geoJsonFilePath).Result;
-            return geoJsonData;
-        }
-
-        private async Task<string> readJsonFile(string filePath)
-        {
-            string geoJsonData = await System.IO.File.ReadAllTextAsync(filePath);
-            return geoJsonData;
-        }
-
-        [HttpGet]
-        [Authorize(AuthenticationSchemes = "Bearer")]
-        [Route("GetTaipeiGateGps")]
-        //[AllowAnonymous]
-        public string GetTaipeiGateGps()
-        {
-            SqlHelper sqlHelper = new SqlHelper(_configuration.GetConnectionString("Water2022"));
-            List<SqlParameter> lstParam = new List<SqlParameter>();
-            DataTable dt = sqlHelper.ExecuteStoreProcedureQuery("sp_TaipeiGate", lstParam.ToArray());
-            var pointList = new List<Feature>();
-
-            for (int i = 0; i < dt.Rows.Count; i++)
-            {
-                var x = double.Parse(dt.Rows[i]["x"].ToString());
-                var y = double.Parse(dt.Rows[i]["y"].ToString());
-                var geometry = new Point(new Position(y, x));
-                var properties = new Dictionary<string, object>
-                {
-                    { "id", i.ToString() },
-                    { "name", dt.Rows[i]["sensorNameA"].ToString() },
-                    { "lastDataTime", dt.Rows[i]["lastDataTime"].ToString() },
-                    { "lastValue", dt.Rows[i]["lastValue1"].ToString() },
-                };
-
-                var feature = new Feature(geometry, properties);
-                pointList.Add(feature);
-            }
-
-            string json = JsonConvert.SerializeObject(pointList);
-            json = @"{
+        string json = JsonConvert.SerializeObject(pointList);
+        json = @"{
   ""type"": ""FeatureCollection"",
   ""features"":" + json + "}";
 
 
-            return json;
-        }
+        return json;
+    }
 
-        [Authorize]
-        [HttpGet]
-        [Route("GetSensorGps")]
-        public string GetSensorGps(string sensorType)
+    [Authorize]
+    [HttpGet]
+    [Route("GetSensorGps")]
+    public string GetSensorGps(string sensorType)
+    {
+        var collection = new FeatureCollection() { CRS = new NamedCRS("EPSG:31370") };
+        var sqlHelper = new SqlHelper(_configuration.GetConnectionString("Water2022"));
+        var dt = GetSensorGpsTable(sqlHelper, sensorType);
+
+        var pointList = dt.Rows.Cast<DataRow>().Select(row =>
         {
-            var collection = new FeatureCollection() { CRS = new NamedCRS("EPSG:31370") };
-            var sqlHelper = new SqlHelper(_configuration.GetConnectionString("Water2022"));
-            var dt = GetSensorGpsTable(sqlHelper, sensorType);
+            var x = double.Parse(row["x"].ToString());
+            var y = double.Parse(row["y"].ToString());
+            var geometry = new Point(new Position(y, x));
 
-            var pointList = dt.Rows.Cast<DataRow>().Select(row =>
+            var properties = new Dictionary<string, object>
             {
-                var x = double.Parse(row["x"].ToString());
-                var y = double.Parse(row["y"].ToString());
-                var geometry = new Point(new Position(y, x));
+                { "id", row["sensorid"] },
+                { "name", row["sensorNameA"] },
+                { "lastDataTime", row["lastDataTime"] },
+                { "lastValue1", row["lastValue1"] },
+                { "lastValue2", row["lastValue2"] },
+            };
 
-                var properties = new Dictionary<string, object>
-                {
-                    { "id", row["sensorid"] },
-                    { "name", row["sensorNameA"] },
-                    { "lastDataTime", row["lastDataTime"] },
-                    { "lastValue1", row["lastValue1"] },
-                    { "lastValue2", row["lastValue2"] },
-                };
+            return new Feature(geometry, properties);
+        });
 
-                return new Feature(geometry, properties);
-            });
+        var json = ToFeatureCollectionJson(pointList);
+        return json;
+    }
 
-            var json = ToFeatureCollectionJson(pointList);
-            return json;
-        }
+    private static DataTable GetSensorGpsTable(SqlHelper sqlHelper, string sensorType)
+    {
+        var type = sensorType.ToLowerInvariant();
+        var sType = type == "waterlevel2" ? "waterlevel" : type;
 
-        private static DataTable GetSensorGpsTable(SqlHelper sqlHelper, string sensorType)
-        {
-            var type = sensorType.ToLowerInvariant();
-            var sType = type == "waterlevel2" ? "waterlevel" : type;
-
-            var common = @"
+        var common = @"
                 Select a.sensorid, sensorNameA, b.x, b.y, lastvalue1
                 , lastvalue2, lastdatatime 
                 from sensors a
@@ -168,384 +168,383 @@ namespace Wra10Core2023.Controllers
                 and disablestate <> 1
                 ";
 
-            var extra = type switch
+        var extra = type switch
+        {
+            "gate" => "and a.areaid not in ('A12','A13')",
+            "waterlevel" => "and a.importflag not like 'em%'",
+            "waterlevel2" => "and a.importflag like 'em%' ",
+            _ => ""
+        };
+
+        var query = $"{common} {extra}";
+        var dt = sqlHelper.ExecuteQuery(query, new[] { new SqlParameter("sType", sType) });
+        return dt;
+    }
+
+    private static string ToFeatureCollectionJson(IEnumerable<Feature> pointList)
+    {
+        var o = new
+        {
+            type = "FeatureCollection",
+            features = pointList
+        };
+
+        return JToken.FromObject(o).ToString();
+    }
+
+    [Authorize]
+    [HttpGet]
+    [Route("GetTansuiGps")]
+    public string GetTansuiGps()
+    {
+        //string value="";
+        var collection = new FeatureCollection() { CRS = new NamedCRS("EPSG:31370") };
+        SqlHelper sqlHelper = new SqlHelper(_configuration.GetConnectionString("Water2022"));
+        string cmd = @"Select stationid,stationnamea,x,y from Stations where isnull(x,0)!=0 and isnull(y,0)!=0 and areaid<>'A08' and isnull( importflag,'') <> 'EMBank' and isnull(importflag,'') <> 'EM2022'";
+        DataTable dt = sqlHelper.ExecuteQuery(cmd);
+        //List<CommonGps> lstGps = new List<CommonGps>();
+        var pointList = new List<Feature>();
+        for (int i = 0; i < dt.Rows.Count; i++)
+        {
+            var geometry = new Point(new Position(double.Parse(dt.Rows[i]["y"].ToString()), double.Parse(dt.Rows[i]["x"].ToString())));
+            var properties = new Dictionary<string, object>
             {
-                "gate" => "and a.areaid not in ('A12','A13')",
-                "waterlevel" => "and a.importflag not like 'em%'",
-                "waterlevel2" => "and a.importflag like 'em%' ",
-                _ => ""
+                { "id", dt.Rows[i]["stationid"].ToString() },
+                { "name", dt.Rows[i]["stationnameA"].ToString() },
+
+            };
+            var feature = new Feature(geometry, properties);
+            pointList.Add(feature);
+            //collection.Features.Add(feature);
+        }
+
+
+        string json = JsonConvert.SerializeObject(pointList);
+        json = @"{
+  ""type"": ""FeatureCollection"",
+  ""features"":" + json + "}";
+
+
+        return json;
+    }
+
+    [Authorize]
+    [HttpGet]
+    [Route("GetAdslGps")]
+    public string GetAdslGps()
+    {
+        string gpsId = "GPS06";
+        var collection = new FeatureCollection() { CRS = new NamedCRS("EPSG:31370") };
+        SqlHelper sqlHelper = new SqlHelper(_configuration.GetConnectionString("Water2022"));
+        string cmd = @"Select sequence,objectid, GpsID as stationid,layername as stationname,lng as x,lat as y from gpslayersub where gpsid='" + gpsId + "' and isnull(lat,1)!=0 and isnull(lng,0)!=0 and isnull(mark,1)=1 order by layername,sequence";
+        DataTable dt = sqlHelper.ExecuteQuery(cmd);
+        //List<CommonGps> lstGps = new List<CommonGps>();
+        var pointList = new List<Feature>();
+        for (int i = 0; i < dt.Rows.Count; i++)
+        {
+            var geometry = new Point(new Position(double.Parse(dt.Rows[i]["y"].ToString()), double.Parse(dt.Rows[i]["x"].ToString())));
+            var properties = new Dictionary<string, object>
+            {
+                { "id", dt.Rows[i]["stationname"].ToString() },
+                { "name", dt.Rows[i]["stationname"].ToString() },
+
+            };
+            var feature = new Feature(geometry, properties);
+            pointList.Add(feature);
+            //collection.Features.Add(feature);
+        }
+
+
+        string json = JsonConvert.SerializeObject(pointList);
+        json = @"{
+  ""type"": ""FeatureCollection"",
+  ""features"":" + json + "}";
+
+
+        return json;
+    }
+
+    [Authorize]
+    [HttpGet]
+    [Route("Get4GGps")]
+    public string Get4GGps()
+    {
+        string gpsId = "GPS07";
+        var collection = new FeatureCollection() { CRS = new NamedCRS("EPSG:31370") };
+        SqlHelper sqlHelper = new SqlHelper(_configuration.GetConnectionString("Water2022"));
+        string cmd = @"Select sequence,objectid, GpsID as stationid,layername as stationname,lng as x,lat as y from gpslayersub where gpsid='" + gpsId + "' and isnull(lat,1)!=0 and isnull(lng,0)!=0 and isnull(mark,1)=1 order by layername,sequence";
+        DataTable dt = sqlHelper.ExecuteQuery(cmd);
+        var pointList = new List<Feature>();
+        for (int i = 0; i < dt.Rows.Count; i++)
+        {
+            var geometry = new Point(new Position(double.Parse(dt.Rows[i]["y"].ToString()), double.Parse(dt.Rows[i]["x"].ToString())));
+            var properties = new Dictionary<string, object>
+            {
+                { "id", dt.Rows[i]["stationname"].ToString() },
+                { "name", dt.Rows[i]["stationname"].ToString() },
+
             };
 
-            var query = $"{common} {extra}";
-            var dt = sqlHelper.ExecuteQuery(query, new[] { new SqlParameter("sType", sType) });
-            return dt;
+            var feature = new Feature(geometry, properties);
+            pointList.Add(feature);
         }
 
-        private static string ToFeatureCollectionJson(IEnumerable<Feature> pointList)
-        {
-            var o = new
-            {
-                type = "FeatureCollection",
-                features = pointList
-            };
 
-            return JToken.FromObject(o).ToString();
-        }
-
-        [Authorize]
-        [HttpGet]
-        [Route("GetTansuiGps")]
-        public string GetTansuiGps()
-        {
-            //string value="";
-            var collection = new FeatureCollection() { CRS = new NamedCRS("EPSG:31370") };
-            SqlHelper sqlHelper = new SqlHelper(_configuration.GetConnectionString("Water2022"));
-            string cmd = @"Select stationid,stationnamea,x,y from Stations where isnull(x,0)!=0 and isnull(y,0)!=0 and areaid<>'A08' and isnull( importflag,'') <> 'EMBank' and isnull(importflag,'') <> 'EM2022'";
-            DataTable dt = sqlHelper.ExecuteQuery(cmd);
-            //List<CommonGps> lstGps = new List<CommonGps>();
-            var pointList = new List<Feature>();
-            for (int i = 0; i < dt.Rows.Count; i++)
-            {
-                var geometry = new Point(new Position(double.Parse(dt.Rows[i]["y"].ToString()), double.Parse(dt.Rows[i]["x"].ToString())));
-                var properties = new Dictionary<string, object>
-                {
-                    { "id", dt.Rows[i]["stationid"].ToString() },
-                    { "name", dt.Rows[i]["stationnameA"].ToString() },
-
-                };
-                var feature = new Feature(geometry, properties);
-                pointList.Add(feature);
-                //collection.Features.Add(feature);
-            }
-
-
-            string json = JsonConvert.SerializeObject(pointList);
-            json = @"{
+        string json = JsonConvert.SerializeObject(pointList);
+        json = @"{
   ""type"": ""FeatureCollection"",
   ""features"":" + json + "}";
 
 
-            return json;
-        }
+        return json;
+    }
 
-        [Authorize]
-        [HttpGet]
-        [Route("GetAdslGps")]
-        public string GetAdslGps()
-        {
-            string gpsId = "GPS06";
-            var collection = new FeatureCollection() { CRS = new NamedCRS("EPSG:31370") };
-            SqlHelper sqlHelper = new SqlHelper(_configuration.GetConnectionString("Water2022"));
-            string cmd = @"Select sequence,objectid, GpsID as stationid,layername as stationname,lng as x,lat as y from gpslayersub where gpsid='" + gpsId + "' and isnull(lat,1)!=0 and isnull(lng,0)!=0 and isnull(mark,1)=1 order by layername,sequence";
-            DataTable dt = sqlHelper.ExecuteQuery(cmd);
-            //List<CommonGps> lstGps = new List<CommonGps>();
-            var pointList = new List<Feature>();
-            for (int i = 0; i < dt.Rows.Count; i++)
-            {
-                var geometry = new Point(new Position(double.Parse(dt.Rows[i]["y"].ToString()), double.Parse(dt.Rows[i]["x"].ToString())));
-                var properties = new Dictionary<string, object>
-                {
-                    { "id", dt.Rows[i]["stationname"].ToString() },
-                    { "name", dt.Rows[i]["stationname"].ToString() },
-
-                };
-                var feature = new Feature(geometry, properties);
-                pointList.Add(feature);
-                //collection.Features.Add(feature);
-            }
-
-
-            string json = JsonConvert.SerializeObject(pointList);
-            json = @"{
-  ""type"": ""FeatureCollection"",
-  ""features"":" + json + "}";
-
-
-            return json;
-        }
-
-        [Authorize]
-        [HttpGet]
-        [Route("Get4GGps")]
-        public string Get4GGps()
-        {
-            string gpsId = "GPS07";
-            var collection = new FeatureCollection() { CRS = new NamedCRS("EPSG:31370") };
-            SqlHelper sqlHelper = new SqlHelper(_configuration.GetConnectionString("Water2022"));
-            string cmd = @"Select sequence,objectid, GpsID as stationid,layername as stationname,lng as x,lat as y from gpslayersub where gpsid='" + gpsId + "' and isnull(lat,1)!=0 and isnull(lng,0)!=0 and isnull(mark,1)=1 order by layername,sequence";
-            DataTable dt = sqlHelper.ExecuteQuery(cmd);
-            var pointList = new List<Feature>();
-            for (int i = 0; i < dt.Rows.Count; i++)
-            {
-                var geometry = new Point(new Position(double.Parse(dt.Rows[i]["y"].ToString()), double.Parse(dt.Rows[i]["x"].ToString())));
-                var properties = new Dictionary<string, object>
-                {
-                    { "id", dt.Rows[i]["stationname"].ToString() },
-                    { "name", dt.Rows[i]["stationname"].ToString() },
-
-                };
-
-                var feature = new Feature(geometry, properties);
-                pointList.Add(feature);
-            }
-
-
-            string json = JsonConvert.SerializeObject(pointList);
-            json = @"{
-  ""type"": ""FeatureCollection"",
-  ""features"":" + json + "}";
-
-
-            return json;
-        }
-
-        [Authorize]
-        [HttpPost]
-        [Route("GetCCTVGpsByArea")]
-        public string GetCCTVGpsByArea(string? areaId)
-        {
-            var collection = new FeatureCollection() { CRS = new NamedCRS("EPSG:31370") };
-            SqlHelper sqlHelper = new SqlHelper(_configuration.GetConnectionString("Water2022"));
-            string cmd = @"select camid,camname,a.x,a.y,streamMain from Cameras a 
+    [Authorize]
+    [HttpPost]
+    [Route("GetCCTVGpsByArea")]
+    public string GetCCTVGpsByArea(string? areaId)
+    {
+        var collection = new FeatureCollection() { CRS = new NamedCRS("EPSG:31370") };
+        SqlHelper sqlHelper = new SqlHelper(_configuration.GetConnectionString("Water2022"));
+        string cmd = @"select camid,camname,a.x,a.y,streamMain from Cameras a 
        inner join stations b on a.StationID=b.StationID 
                            where isnull(a.X,0)!=0 and isnull(a.y,0)!=0 and areaId=@areaId order by channel";// and station!=10096";
-            List<SqlParameter> lstParam = new List<SqlParameter>();
-            lstParam.Add(new SqlParameter("@AreaId", areaId));
-            DataTable dt = sqlHelper.ExecuteQuery(cmd, lstParam.ToArray());
-            var pointList = new List<Feature>();
-            for (int i = 0; i < dt.Rows.Count; i++)
+        List<SqlParameter> lstParam = new List<SqlParameter>();
+        lstParam.Add(new SqlParameter("@AreaId", areaId));
+        DataTable dt = sqlHelper.ExecuteQuery(cmd, lstParam.ToArray());
+        var pointList = new List<Feature>();
+        for (int i = 0; i < dt.Rows.Count; i++)
+        {
+            var geometry = new Point(new Position(double.Parse(dt.Rows[i]["y"].ToString()), double.Parse(dt.Rows[i]["x"].ToString())));
+            var properties = new Dictionary<string, object>
             {
-                var geometry = new Point(new Position(double.Parse(dt.Rows[i]["y"].ToString()), double.Parse(dt.Rows[i]["x"].ToString())));
-                var properties = new Dictionary<string, object>
-                {
-                    { "id", dt.Rows[i]["camid"].ToString() },
-                    { "name", dt.Rows[i]["camname"].ToString()+";"+_configuration["VirtualVideoImage:Path"]+dt.Rows[i]["streammain"].ToString() },
+                { "id", dt.Rows[i]["camid"].ToString() },
+                { "name", dt.Rows[i]["camname"].ToString()+";"+_configuration["VirtualVideoImage:Path"]+dt.Rows[i]["streammain"].ToString() },
 
-                };
+            };
 
-                var feature = new Feature(geometry, properties);
-                pointList.Add(feature);
-                //collection.Features.Add(feature);
-            }
-            string json = JsonConvert.SerializeObject(pointList);
-            json = @"{
+            var feature = new Feature(geometry, properties);
+            pointList.Add(feature);
+            //collection.Features.Add(feature);
+        }
+        string json = JsonConvert.SerializeObject(pointList);
+        json = @"{
   ""type"": ""FeatureCollection"",
   ""features"":" + json + "}";
 
-            return json;
+        return json;
+    }
+
+    [Authorize]
+    [HttpGet]
+    [Route("GetBankGps")]
+    public string GetBankGps()
+    {
+        var collection = new FeatureCollection() { CRS = new NamedCRS("EPSG:31370") };
+        var sqlHelper = new SqlHelper(_configuration.GetConnectionString("Water2022"));
+        string cmd = @"Select stationid,stationnamea,x,y from Stations where isnull(x,0)!=0 and isnull(y,0)!=0 and importflag like 'EM%'";
+        DataTable dt = sqlHelper.ExecuteQuery(cmd);
+        var pointList = new List<Feature>();
+
+        for (int i = 0; i < dt.Rows.Count; i++)
+        {
+            var geometry = new Point(new Position(double.Parse(dt.Rows[i]["y"].ToString()), double.Parse(dt.Rows[i]["x"].ToString())));
+            var properties = new Dictionary<string, object>
+            {
+                { "id", dt.Rows[i]["stationid"].ToString() },
+                { "name", dt.Rows[i]["stationnameA"].ToString() },
+
+            };
+
+            var feature = new Feature(geometry, properties);
+            pointList.Add(feature);
         }
 
-        [Authorize]
-        [HttpGet]
-        [Route("GetBankGps")]
-        public string GetBankGps()
-        {
-            var collection = new FeatureCollection() { CRS = new NamedCRS("EPSG:31370") };
-            var sqlHelper = new SqlHelper(_configuration.GetConnectionString("Water2022"));
-            string cmd = @"Select stationid,stationnamea,x,y from Stations where isnull(x,0)!=0 and isnull(y,0)!=0 and importflag like 'EM%'";
-            DataTable dt = sqlHelper.ExecuteQuery(cmd);
-            var pointList = new List<Feature>();
 
-            for (int i = 0; i < dt.Rows.Count; i++)
-            {
-                var geometry = new Point(new Position(double.Parse(dt.Rows[i]["y"].ToString()), double.Parse(dt.Rows[i]["x"].ToString())));
-                var properties = new Dictionary<string, object>
-                {
-                    { "id", dt.Rows[i]["stationid"].ToString() },
-                    { "name", dt.Rows[i]["stationnameA"].ToString() },
-
-                };
-
-                var feature = new Feature(geometry, properties);
-                pointList.Add(feature);
-            }
-
-
-            string json = JsonConvert.SerializeObject(pointList);
-            json = @"{
+        string json = JsonConvert.SerializeObject(pointList);
+        json = @"{
   ""type"": ""FeatureCollection"",
   ""features"":" + json + "}";
 
-            return json;
+        return json;
+    }
+
+    [Authorize]
+    [HttpGet]
+    [Route("GetStationGps")]
+    public string GetStationsGps()
+    {
+        var collection = new FeatureCollection() { CRS = new NamedCRS("EPSG:31370") };
+        SqlHelper sqlHelper = new SqlHelper(_configuration.GetConnectionString("Water2022"));
+        string cmd = @"Select stationid,stationnamea,x,y from Stations where isnull(x,0)!=0 and isnull(y,0)!=0";
+        DataTable dt = sqlHelper.ExecuteQuery(cmd);
+        var pointList = new List<Feature>();
+
+        for (int i = 0; i < dt.Rows.Count; i++)
+        {
+            var geometry = new Point(new Position(double.Parse(dt.Rows[i]["y"].ToString()), double.Parse(dt.Rows[i]["x"].ToString())));
+            var properties = new Dictionary<string, object>
+            {
+                { "id", dt.Rows[i]["stationid"].ToString() },
+                { "name", dt.Rows[i]["stationnameA"].ToString() },
+
+            };
+            var feature = new Feature(geometry, properties);
+            pointList.Add(feature);
         }
 
-        [Authorize]
-        [HttpGet]
-        [Route("GetStationGps")]
-        public string GetStationsGps()
-        {
-            var collection = new FeatureCollection() { CRS = new NamedCRS("EPSG:31370") };
-            SqlHelper sqlHelper = new SqlHelper(_configuration.GetConnectionString("Water2022"));
-            string cmd = @"Select stationid,stationnamea,x,y from Stations where isnull(x,0)!=0 and isnull(y,0)!=0";
-            DataTable dt = sqlHelper.ExecuteQuery(cmd);
-            var pointList = new List<Feature>();
-
-            for (int i = 0; i < dt.Rows.Count; i++)
-            {
-                var geometry = new Point(new Position(double.Parse(dt.Rows[i]["y"].ToString()), double.Parse(dt.Rows[i]["x"].ToString())));
-                var properties = new Dictionary<string, object>
-                {
-                    { "id", dt.Rows[i]["stationid"].ToString() },
-                    { "name", dt.Rows[i]["stationnameA"].ToString() },
-
-                };
-                var feature = new Feature(geometry, properties);
-                pointList.Add(feature);
-            }
-
-            string json = JsonConvert.SerializeObject(pointList);
-            json = @"{
-  ""type"": ""FeatureCollection"",
-  ""features"":" + json + "}";
-
-
-            return json;
-        }
-
-        [Authorize]
-        [HttpGet]
-        [Route("GetDamPointGps")]
-        public string GetDamPointGps()
-        {
-            string? gpsId = "GPS03";
-            var collection = new FeatureCollection() { CRS = new NamedCRS("EPSG:31370") };
-            SqlHelper sqlHelper = new SqlHelper(_configuration.GetConnectionString("Water2022"));
-            string cmd = @"Select sequence,objectid, GpsID as stationid,layername as stationname,lng as x,lat as y from gpslayersub where gpsid='" + gpsId + "' and isnull(lat,1)!=0 and isnull(lng,0)!=0 and isnull(mark,1)=1 order by layername,sequence";
-            DataTable dt = sqlHelper.ExecuteQuery(cmd);
-            var pointList = new List<Feature>();
-
-            for (int i = 0; i < dt.Rows.Count; i++)
-            {
-                var geometry = new Point(new Position(double.Parse(dt.Rows[i]["y"].ToString()), double.Parse(dt.Rows[i]["x"].ToString())));
-                var properties = new Dictionary<string, object>
-                {
-                    { "id", dt.Rows[i]["stationname"].ToString() },
-                    { "name", dt.Rows[i]["stationname"].ToString() },
-
-                };
-                var feature = new Feature(geometry, properties);
-                pointList.Add(feature);
-            }
-
-            string json = JsonConvert.SerializeObject(pointList);
-            json = @"{
+        string json = JsonConvert.SerializeObject(pointList);
+        json = @"{
   ""type"": ""FeatureCollection"",
   ""features"":" + json + "}";
 
 
-            return json;
+        return json;
+    }
+
+    [Authorize]
+    [HttpGet]
+    [Route("GetDamPointGps")]
+    public string GetDamPointGps()
+    {
+        string? gpsId = "GPS03";
+        var collection = new FeatureCollection() { CRS = new NamedCRS("EPSG:31370") };
+        SqlHelper sqlHelper = new SqlHelper(_configuration.GetConnectionString("Water2022"));
+        string cmd = @"Select sequence,objectid, GpsID as stationid,layername as stationname,lng as x,lat as y from gpslayersub where gpsid='" + gpsId + "' and isnull(lat,1)!=0 and isnull(lng,0)!=0 and isnull(mark,1)=1 order by layername,sequence";
+        DataTable dt = sqlHelper.ExecuteQuery(cmd);
+        var pointList = new List<Feature>();
+
+        for (int i = 0; i < dt.Rows.Count; i++)
+        {
+            var geometry = new Point(new Position(double.Parse(dt.Rows[i]["y"].ToString()), double.Parse(dt.Rows[i]["x"].ToString())));
+            var properties = new Dictionary<string, object>
+            {
+                { "id", dt.Rows[i]["stationname"].ToString() },
+                { "name", dt.Rows[i]["stationname"].ToString() },
+
+            };
+            var feature = new Feature(geometry, properties);
+            pointList.Add(feature);
         }
 
-
-        [Authorize]
-        [HttpGet]
-        [Route("GetYansantziGps")]
-        public string GetYansantziGps()
-        {
-            var collection = new FeatureCollection() { CRS = new NamedCRS("EPSG:31370") };
-            SqlHelper sqlHelper = new SqlHelper(_configuration.GetConnectionString("Water2022"));
-            string cmd = @"Select stationid,stationnameA,x,y from Stations where isnull(x,0)!=0 and isnull(y,0)!=0 and stationid='ST0077'";
-            DataTable dt = sqlHelper.ExecuteQuery(cmd);
-            var pointList = new List<Feature>();
-            for (int i = 0; i < dt.Rows.Count; i++)
-            {
-                var geometry = new Point(new Position(double.Parse(dt.Rows[i]["y"].ToString()), double.Parse(dt.Rows[i]["x"].ToString())));
-                var properties = new Dictionary<string, object>
-                {
-                    { "id", dt.Rows[i]["stationid"].ToString() },
-                    { "name", dt.Rows[i]["stationnameA"].ToString() },
-
-                };
-
-                var feature = new Feature(geometry, properties);
-                pointList.Add(feature);
-            }
-
-            string json = JsonConvert.SerializeObject(pointList);
-            json = @"{
+        string json = JsonConvert.SerializeObject(pointList);
+        json = @"{
   ""type"": ""FeatureCollection"",
   ""features"":" + json + "}";
 
-            return json;
+
+        return json;
+    }
+
+
+    [Authorize]
+    [HttpGet]
+    [Route("GetYansantziGps")]
+    public string GetYansantziGps()
+    {
+        var collection = new FeatureCollection() { CRS = new NamedCRS("EPSG:31370") };
+        SqlHelper sqlHelper = new SqlHelper(_configuration.GetConnectionString("Water2022"));
+        string cmd = @"Select stationid,stationnameA,x,y from Stations where isnull(x,0)!=0 and isnull(y,0)!=0 and stationid='ST0077'";
+        DataTable dt = sqlHelper.ExecuteQuery(cmd);
+        var pointList = new List<Feature>();
+        for (int i = 0; i < dt.Rows.Count; i++)
+        {
+            var geometry = new Point(new Position(double.Parse(dt.Rows[i]["y"].ToString()), double.Parse(dt.Rows[i]["x"].ToString())));
+            var properties = new Dictionary<string, object>
+            {
+                { "id", dt.Rows[i]["stationid"].ToString() },
+                { "name", dt.Rows[i]["stationnameA"].ToString() },
+
+            };
+
+            var feature = new Feature(geometry, properties);
+            pointList.Add(feature);
         }
 
-        [Authorize]
-        [HttpGet]
-        [Route("GetCCTVGps")]
-        public string GetCCTVGps()
-        {
-            var collection = new FeatureCollection() { CRS = new NamedCRS("EPSG:31370") };
-            SqlHelper sqlHelper = new SqlHelper(_configuration.GetConnectionString("Water2022"));
-            string cmd = @"select camid,camname,a.x,a.y,streamMain from Cameras a 
+        string json = JsonConvert.SerializeObject(pointList);
+        json = @"{
+  ""type"": ""FeatureCollection"",
+  ""features"":" + json + "}";
+
+        return json;
+    }
+
+    [Authorize]
+    [HttpGet]
+    [Route("GetCCTVGps")]
+    public string GetCCTVGps()
+    {
+        var collection = new FeatureCollection() { CRS = new NamedCRS("EPSG:31370") };
+        SqlHelper sqlHelper = new SqlHelper(_configuration.GetConnectionString("Water2022"));
+        string cmd = @"select camid,camname,a.x,a.y,streamMain from Cameras a 
        inner join stations b on a.StationID=b.StationID 
                            where isnull(a.X,0)!=0 and isnull(a.y,0)!=0 ";// and station!=10096";
-            DataTable dt = sqlHelper.ExecuteQuery(cmd);
-            var pointList = new List<Feature>();
-            for (int i = 0; i < dt.Rows.Count; i++)
+        DataTable dt = sqlHelper.ExecuteQuery(cmd);
+        var pointList = new List<Feature>();
+        for (int i = 0; i < dt.Rows.Count; i++)
+        {
+            var geometry = new Point(new Position(double.Parse(dt.Rows[i]["y"].ToString()), double.Parse(dt.Rows[i]["x"].ToString())));
+            var properties = new Dictionary<string, object>
             {
-                var geometry = new Point(new Position(double.Parse(dt.Rows[i]["y"].ToString()), double.Parse(dt.Rows[i]["x"].ToString())));
-                var properties = new Dictionary<string, object>
-                {
-                    { "id", dt.Rows[i]["camid"].ToString() },
-                    { "name", dt.Rows[i]["camname"].ToString()+";"+new Uri($"{Request.Scheme}://{Request.Host}/" + _configuration["VirtualVideoImage:Path"] + @"/" + dt.Rows[i]["camid"].ToString()+".jpg").ToString() },
+                { "id", dt.Rows[i]["camid"].ToString() },
+                { "name", dt.Rows[i]["camname"].ToString()+";"+new Uri($"{Request.Scheme}://{Request.Host}/" + _configuration["VirtualVideoImage:Path"] + @"/" + dt.Rows[i]["camid"].ToString()+".jpg").ToString() },
 
-                };
+            };
 
-                var feature = new Feature(geometry, properties);
-                pointList.Add(feature);
-            }
+            var feature = new Feature(geometry, properties);
+            pointList.Add(feature);
+        }
 
-            string json = JsonConvert.SerializeObject(pointList);
-            json = @"{
+        string json = JsonConvert.SerializeObject(pointList);
+        json = @"{
   ""type"": ""FeatureCollection"",
   ""features"":" + json + "}";
 
-            return json;
+        return json;
+    }
+
+    [Authorize]
+    [HttpGet]
+    [Route("GetChainGps")]
+    public IActionResult GetChainGPS()
+    {
+        var files = new List<ChainGPS>();
+        string chainFiles = _configuration["ChainGPS:Files"];
+        foreach (var file in Directory.EnumerateFiles(Path.Combine(_hostingEnvironment.ContentRootPath, "GeoJson"), "*.json"))
+        {
+            string fileName = "";
+            int lastIndex = file.LastIndexOf('\\');
+            if (lastIndex != -1)
+            {
+                fileName = file.Substring(lastIndex + 1);
+            }
+            if (fileName.Length > 0 && chainFiles.IndexOf(fileName) != -1)
+            {
+                using (var streamReader = new StreamReader(file))
+                {
+                    string json = streamReader.ReadToEnd();
+                    var data = JsonConvert.DeserializeObject<ChainGPS>(json);
+                    files.Add(data);
+                }
+            }
+
         }
 
-        [Authorize]
-        [HttpGet]
-        [Route("GetChainGps")]
-        public IActionResult GetChainGPS()
+        var combinedData = files;
+        return Ok(combinedData);
+    }
+
+    public class Feature : Feature<IGeometryObject>
+    {
+        [JsonConstructor]
+        public Feature(IGeometryObject geometry, IDictionary<string, object> properties = null, string id = null)
+            : base(geometry, properties, id)
         {
-            var files = new List<ChainGPS>();
-            string chainFiles = _configuration["ChainGPS:Files"];
-            foreach (var file in Directory.EnumerateFiles(Path.Combine(_hostingEnvironment.ContentRootPath, "GeoJson"), "*.json"))
-            {
-                string fileName = "";
-                int lastIndex = file.LastIndexOf('\\');
-                if (lastIndex != -1)
-                {
-                    fileName = file.Substring(lastIndex + 1);
-                }
-                if (fileName.Length > 0 && chainFiles.IndexOf(fileName) != -1)
-                {
-                    using (var streamReader = new StreamReader(file))
-                    {
-                        string json = streamReader.ReadToEnd();
-                        var data = JsonConvert.DeserializeObject<ChainGPS>(json);
-                        files.Add(data);
-                    }
-                }
-
-            }
-
-            var combinedData = files;
-            return Ok(combinedData);
         }
 
-        public class Feature : Feature<IGeometryObject>
+        public Feature(IGeometryObject geometry, object properties, string id = null)
+            : base(geometry, properties, id)
         {
-            [JsonConstructor]
-            public Feature(IGeometryObject geometry, IDictionary<string, object> properties = null, string id = null)
-                : base(geometry, properties, id)
-            {
-            }
-
-            public Feature(IGeometryObject geometry, object properties, string id = null)
-                : base(geometry, properties, id)
-            {
-            }
         }
     }
 }
