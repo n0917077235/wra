@@ -2,13 +2,21 @@
     <div id="app" class="app-container">
         <el-tag v-if="title">{{ title }}</el-tag>
         <div id="olmap" class="cctv-map"></div>
-        <div id="menuToggle" @click="toggleMenu"><img src="@/assets/image/layers.png"></div>
+        <div id="menuToggle" @click="toggleMenu">
+            <img src="@/assets/image/layers.png">
+        </div>
         <div id="layerControl">
             <div id="baseMaps" class="layer-content">
-                <label><input type="checkbox" id="MapType1" :checked="mapType == '1'" @click="changeMapType('1')">
-                    衛星圖</label><br>
-                <label><input type="checkbox" id="MapType2" :checked="mapType == '2'" @click="changeMapType('2')">
-                    電子地圖</label><br>
+                <label>
+                    <input type="checkbox" id="MapType1" :checked="mapType == '1'" @click="changeMapType('1')">
+                    衛星圖
+                </label>
+                <br>
+                <label>
+                    <input type="checkbox" id="MapType2" :checked="mapType == '2'" @click="changeMapType('2')">
+                    電子地圖
+                </label>
+                <br>
             </div>
             <hr>
             <div class="layer-group">
@@ -32,35 +40,68 @@
             <hr>
             <div class="layer-group">
                 <h4>
-                    <label v-on:click="toggleLayerGroup('SenserMaps')"> {{ SenserMapsExpanded ? '-' : '+' }} 感測器圖層
+                    <label v-on:click="toggleLayerGroup('SenserMaps')">
+                        {{ SenserMapsExpanded ? '-' : '+' }} 感測器圖層
                     </label>
-                    <label><input type="checkbox" id="showValues" @click="toggleShowValues()" /> 顯示數值</label>
+                    <label>
+                        <input type="checkbox" id="showValues" @click="toggleShowValues()" />
+                        顯示數值
+                    </label>
                 </h4>
                 <div id="SenserMaps" class="layer-group-content">
-                    <label><input type="checkbox" id="layer5" @click="toggleLayer('layer5')"> 沉陷計<img
-                            src="@/assets/image/pink-dot_.png" width="20" height="20"
-                            style="float:right; margin-right:5px;"></label><br>
-                    <label><input type="checkbox" id="layer6" @click="toggleLayer('layer6')"> 高灘地水位計<img
-                            src="@/assets/image/yellow-dot_.png" width="20" height="20"
-                            style="float:right; margin-right:5px;"></label><br>
-                    <label><input type="checkbox" id="layer7" @click="toggleLayer('layer7')"> 裂縫計<img
-                            src="@/assets/image/purple-dot_.png" width="20" height="20"
-                            style="float:right; margin-right:5px;"></label><br>
-                    <label><input type="checkbox" id="layer8" @click="toggleLayer('layer8')"> 地震儀<img
-                            src="@/assets/image/green-dot_.png" width="20" height="20"
-                            style="float:right; margin-right:5px;"></label><br>
-                    <label><input type="checkbox" id="layer9" @click="toggleLayer('layer9')"> 傾斜計<img
-                            src="@/assets/image/orange-dot_.png" width="20" height="20"
-                            style="float:right; margin-right:5px;"></label><br>
-                    <label><input type="checkbox" id="layer10" @click="toggleLayer('layer10')"> 水位計<img
-                            src="@/assets/image/red-dot_.png" width="20" height="20"
-                            style="float:right; margin-right:5px;"></label><br>
-                    <label><input type="checkbox" id="layer11" @click="toggleLayer('layer11')"> 閘門開度計<img
-                            src="@/assets/image/reddooropen.png" width="20" height="20"
-                            style="float:right; margin-right:5px;"></label><br>
-                    <label><input type="checkbox" id="layer12" @click="toggleLayer('layer12')"> 等震度圖<img
-                            src="@/assets/image/intensityblack.png" width="20" height="20"
-                            style="float:right; margin-right:5px;"></label><br>
+                    <label>
+                        <input type="checkbox" id="layer5" @click="toggleLayer('layer5')">
+                        沉陷計
+                        <img src="@/assets/image/pink-dot_.png" width="20" height="20"
+                            style="float:right; margin-right:5px;">
+                    </label>
+                    <br>
+                    <label>
+                        <input type="checkbox" id="layer6" @click="toggleLayer('layer6')">
+                        高灘地水位計
+                        <img src="@/assets/image/yellow-dot_.png" width="20" height="20"
+                            style="float:right; margin-right:5px;">
+                    </label>
+                    <br>
+                    <label>
+                        <input type="checkbox" id="layer7" @click="toggleLayer('layer7')">
+                        裂縫計
+                        <img src="@/assets/image/purple-dot_.png" width="20" height="20"
+                            style="float:right; margin-right:5px;">
+                    </label>
+                    <br>
+                    <label>
+                        <input type="checkbox" id="layer8" @click="toggleLayer('layer8')">
+                        地震儀<img src="@/assets/image/green-dot_.png" width="20" height="20"
+                            style="float:right; margin-right:5px;">
+                    </label>
+                    <br>
+                    <label>
+                        <input type="checkbox" id="layer9" @click="toggleLayer('layer9')">
+                        傾斜計
+                        <img src="@/assets/image/orange-dot_.png" width="20" height="20"
+                            style="float:right; margin-right:5px;">
+                    </label>
+                    <br>
+                    <label>
+                        <input type="checkbox" id="layer10" @click="toggleLayer('layer10')">
+                        水位計<img src="@/assets/image/red-dot_.png" width="20" height="20"
+                            style="float:right; margin-right:5px;">
+                    </label>
+                    <br>
+                    <label><input type="checkbox" id="layer11" @click="toggleLayer('layer11')">
+                        閘門開度計
+                        <img src="@/assets/image/reddooropen.png" width="20" height="20"
+                            style="float:right; margin-right:5px;">
+                    </label>
+                    <br>
+                    <label>
+                        <input type="checkbox" id="layer12" @click="toggleLayer('layer12')">
+                        等震度圖
+                        <img src="@/assets/image/intensityblack.png" width="20" height="20"
+                            style="float:right; margin-right:5px;">
+                    </label>
+                    <br>
                 </div>
             </div>
             <hr>
@@ -709,7 +750,7 @@ async function addLayer(layerId, funcName, layerGroup = null) {
         map.addLayer(vectorLayer);
         addPopupOverlay(map);
         layers.add(layerGroup, vectorLayer);
-        
+
         let layerItems = {
             layerProps,
             map,
