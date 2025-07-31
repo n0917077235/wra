@@ -9,6 +9,7 @@ using Newtonsoft.Json.Linq;
 using Org.BouncyCastle.Bcpg.Sig;
 using System.Data;
 using Wra10Core2023.Models;
+using Wra10Core2023.Util;
 using FeatureCollection = GeoJSON.Net.Feature.FeatureCollection;
 using Point = GeoJSON.Net.Geometry.Point;
 using SqlHelper = SQLHelper.SQLHelper;
@@ -92,8 +93,7 @@ public class GeoJsonController : ControllerBase
         var sqlHelper = new SqlHelper(_configuration.GetConnectionString("Water2022"));
         var query = @"
             Select a.AreaID, a.SensorType, b.AreaName, SensorNameA, a.x, a.y
-            ,convert(varchar,[LastDataTime],120) as LastDataTime
-            ,CAST(LastValue1 AS INT) AS LastValue1
+            , LastDataTime ,CAST(LastValue1 AS INT) AS LastValue1
             from sensors a
             inner join Areas b on a.AreaID=b.areaid
             where SensorType='Gate' and a.areaid in ('A12','A13')
@@ -112,7 +112,7 @@ public class GeoJsonController : ControllerBase
             {
                 { "id", i.ToString() },
                 { "name", row["sensorNameA"].ToString() },
-                { "lastDataTime", row["lastDataTime"].ToString() },
+                { "lastDataTime", row.GetDate("lastDataTime").ToStandardString() },
                 { "lastValue1", row["lastValue1"].ToString() },
                 { "sensorType", row["SensorType"]},
                 { "areaID", row["AreaID"] },
@@ -144,7 +144,7 @@ public class GeoJsonController : ControllerBase
             {
                 { "id", row["sensorid"] },
                 { "name", row["sensorNameA"] },
-                { "lastDataTime", row["lastDataTime"] },
+                { "lastDataTime", row.GetDate("lastDataTime").ToStandardString() },
                 { "lastValue1", row["lastValue1"] },
                 { "lastValue2", row["lastValue2"] },
                 { "sensorType", row["SensorType"]},
@@ -202,13 +202,12 @@ public class GeoJsonController : ControllerBase
     [Route("GetTansuiGps")]
     public string GetTansuiGps()
     {
-        //string value="";
         var collection = new FeatureCollection() { CRS = new NamedCRS("EPSG:31370") };
         SqlHelper sqlHelper = new SqlHelper(_configuration.GetConnectionString("Water2022"));
         string cmd = @"Select stationid,stationnamea,x,y from Stations where isnull(x,0)!=0 and isnull(y,0)!=0 and areaid<>'A08' and isnull( importflag,'') <> 'EMBank' and isnull(importflag,'') <> 'EM2022'";
         DataTable dt = sqlHelper.ExecuteQuery(cmd);
-        //List<CommonGps> lstGps = new List<CommonGps>();
         var pointList = new List<Feature>();
+
         for (int i = 0; i < dt.Rows.Count; i++)
         {
             var geometry = new Point(new Position(double.Parse(dt.Rows[i]["y"].ToString()), double.Parse(dt.Rows[i]["x"].ToString())));
@@ -220,16 +219,9 @@ public class GeoJsonController : ControllerBase
             };
             var feature = new Feature(geometry, properties);
             pointList.Add(feature);
-            //collection.Features.Add(feature);
         }
 
-
-        string json = JsonConvert.SerializeObject(pointList);
-        json = @"{
-  ""type"": ""FeatureCollection"",
-  ""features"":" + json + "}";
-
-
+        string json = ToFeatureCollectionJson(pointList);
         return json;
     }
 

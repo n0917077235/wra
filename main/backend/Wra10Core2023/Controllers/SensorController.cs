@@ -4,8 +4,8 @@ using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
 using System.Data;
 using SqlHelper = SQLHelper.SQLHelper;
-using Dapper;
-using Azure.Core;
+//using Dapper;
+//using Azure.Core;
 using Microsoft.AspNetCore.Hosting.Server;
 using Newtonsoft.Json.Linq;
 using System.Runtime.Intrinsics.X86;
@@ -24,6 +24,7 @@ using System.Globalization;
 using System.Web;
 using Org.BouncyCastle.Utilities;
 using System.Text.Encodings;
+using Wra10Core2023.Util;
 
 
 namespace Wra10Core2023.Controllers
@@ -950,46 +951,48 @@ namespace Wra10Core2023.Controllers
         [Route("GetSensorMoreDataByStationName")]
         public IActionResult GetSensorMoreDataByStationName(string? stationName)
         {
-            List<SensorMoreData> lstStations = new List<SensorMoreData>();
-            List<SensorMoreData> lstWaters = new List<SensorMoreData>();
-            List<SensorMoreData> lstGates = new List<SensorMoreData>();
-            List<SensorMoreData> lstOthers = new List<SensorMoreData>();
-            string jsonStation = "";
+            var lstStations = new List<SensorMoreData>();
+            var lstWaters = new List<SensorMoreData>();
+            var lstGates = new List<SensorMoreData>();
+            var lstOthers = new List<SensorMoreData>();
 
             SqlHelper sqlhelper = new SqlHelper(_configuration.GetConnectionString("Water2022"));
             List<SqlParameter> lstParameter = new List<SqlParameter>();
             lstParameter.Add(new SqlParameter("stationName", stationName));
+            
             try
             {
                 DataTable dt = sqlhelper.ExecuteStoreProcedureQuery("sp_AllSensorsByStationName", lstParameter.ToArray());
+               
                 for (int i = 0; i < dt.Rows.Count; i++)
                 {
+                    var row = dt.Rows[i];
                     SensorMoreData sensor = new SensorMoreData();
                     sensor.errorMessage = "";
-                    sensor.sensorType = dt.Rows[i]["sensorType"].ToString();
-                    sensor.sensorTypeName = dt.Rows[i]["sensorTypeName"].ToString();
-                    sensor.areaID = dt.Rows[i]["areaId"].ToString();
-                    sensor.areaName = dt.Rows[i]["areaName"].ToString();
-                    sensor.stationNameA = dt.Rows[i]["stationnameA"].ToString();
-                    sensor.sensorNameA = dt.Rows[i]["sensornameA"].ToString();
-                    sensor.sensorId = dt.Rows[i]["sensorId"].ToString();
-                    sensor.lastDataTime = dt.Rows[i]["lastdatatime"].ToString();
-                    sensor.lastDataTimePrev = dt.Rows[i]["lastdatatimePrev"].ToString();
-                    sensor.value1 = decimal.Parse(dt.Rows[i]["value1"].ToString());
-                    sensor.value2 = decimal.Parse(dt.Rows[i]["value2"].ToString());
-                    sensor.diff1 = decimal.Parse(dt.Rows[i]["diff1"].ToString());
-                    sensor.diff2 = decimal.Parse(dt.Rows[i]["diff2"].ToString());
-                    sensor.initValue = decimal.Parse(dt.Rows[i]["InitValue"].ToString());
-                    sensor.initValue2 = decimal.Parse(dt.Rows[i]["InitValue2"].ToString());
-                    sensor.offset = decimal.Parse(dt.Rows[i]["offset"].ToString());
-                    sensor.offset2 = decimal.Parse(dt.Rows[i]["offset2"].ToString());
-                    sensor.status1 = int.Parse(dt.Rows[i]["status1"].ToString());
-                    sensor.status2 = int.Parse(dt.Rows[i]["status2"].ToString());
-                    sensor.unit = dt.Rows[i]["unit"].ToString();
-                    sensor.remark = dt.Rows[i]["remark"].ToString();
-                    sensor.alarm = int.Parse(dt.Rows[i]["alarm"].ToString());
+                    sensor.sensorType = row["sensorType"].ToString();
+                    sensor.sensorTypeName = row["sensorTypeName"].ToString();
+                    sensor.areaID = row["areaId"].ToString();
+                    sensor.areaName = row["areaName"].ToString();
+                    sensor.stationNameA = row["stationnameA"].ToString();
+                    sensor.sensorNameA = row["sensornameA"].ToString();
+                    sensor.sensorId = row["sensorId"].ToString();
+                    sensor.lastDataTime = row.GetDate("lastdatatime").ToStandardString();
+                    sensor.lastDataTimePrev = row.GetDate("lastdatatimePrev").ToStandardString();
+                    sensor.value1 = decimal.Parse(row["value1"].ToString());
+                    sensor.value2 = decimal.Parse(row["value2"].ToString());
+                    sensor.diff1 = decimal.Parse(row["diff1"].ToString());
+                    sensor.diff2 = decimal.Parse(row["diff2"].ToString());
+                    sensor.initValue = decimal.Parse(row["InitValue"].ToString());
+                    sensor.initValue2 = decimal.Parse(row["InitValue2"].ToString());
+                    sensor.offset = decimal.Parse(row["offset"].ToString());
+                    sensor.offset2 = decimal.Parse(row["offset2"].ToString());
+                    sensor.status1 = int.Parse(row["status1"].ToString());
+                    sensor.status2 = int.Parse(row["status2"].ToString());
+                    sensor.unit = row["unit"].ToString();
+                    sensor.remark = row["remark"].ToString();
+                    sensor.alarm = int.Parse(row["alarm"].ToString());
                     int eqGrade = 0;
-                    int.TryParse(dt.Rows[i]["eqgrade"].ToString(), out eqGrade);
+                    int.TryParse(row["eqgrade"].ToString(), out eqGrade);
                     sensor.eqGrade = eqGrade;
                     if (sensor.sensorType.ToLower() == "waterlevel")
                         lstWaters.Add(sensor);
@@ -998,14 +1001,12 @@ namespace Wra10Core2023.Controllers
                     else
                         lstOthers.Add(sensor);
                 }
-                //jsonStation = JsonConvert.SerializeObject(lstStations);
-                //Context.Response.Write(jsonStation);
             }
             catch (Exception ex)
             {
                 return BadRequest(ex.Message);
-                //Context.Response.Write(jsonStation); 
             }
+
             for (int i = 0; i < lstWaters.Count; i++)
             {
                 lstStations.Add(lstWaters[i]);
@@ -1042,11 +1043,8 @@ namespace Wra10Core2023.Controllers
                     sensor.areaName = "";
                     sensor.stationNameA = dt.Rows[i]["stationnameA"].ToString(); ;
                     sensor.sensorNameA = dt.Rows[i]["camName"].ToString(); ;
-                    //sensor.stream = _configuration["VideoImage:Path"];
                     sensor.sensorId = dt.Rows[i]["camId"].ToString();
                     sensor.stream= new Uri($"{Request.Scheme}://{Request.Host}/" + _configuration["VirtualVideoImage:Path"] + @"/" + sensor.sensorId+".jpg").ToString();
-                    //sensor.stream = _configuration["VirtualVideoImage:Path"] + @"/" + sensor.sensorId + ".jpg";
-                    //{ "name", dt.Rows[i]["camname"].ToString() + ";" + _configuration["VirtualVideoImage:Path"] + @"\" + dt.Rows[i]["streammain"].ToString() },
                     sensor.lastDataTime = "";
                     sensor.lastDataTimePrev = "";
                     sensor.value1 = 0;
@@ -1064,16 +1062,14 @@ namespace Wra10Core2023.Controllers
                     lstStations.Add(sensor);
 
                 }
-                //Context.Response.Write(jsonStation);
             }
             catch (Exception ex)
             {
                 return BadRequest(ex.Message);
             }
+
             return Ok(lstStations.ToList());
         }
-
-
 
         [Authorize]
         [HttpPost]
