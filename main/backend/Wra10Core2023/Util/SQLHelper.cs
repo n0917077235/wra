@@ -1,7 +1,7 @@
 ﻿using Microsoft.Data.SqlClient;
 using System.Data;
 
-namespace SQLHelper;
+namespace Wra10Core2023.Util;
 
 public class SQLHelper
 {

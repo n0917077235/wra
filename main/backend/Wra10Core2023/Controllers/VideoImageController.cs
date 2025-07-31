@@ -10,7 +10,7 @@ using System.Net;
 using System.Runtime.InteropServices;
 using System.Security.Principal;
 using Wra10Core2023.Models;
-using SqlHelper = SQLHelper.SQLHelper;
+using SqlHelper = Wra10Core2023.Util.SQLHelper;
 using System;
 using System.IO;
 using System.Net;

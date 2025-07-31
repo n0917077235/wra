@@ -8,7 +8,7 @@ using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authentication;
 using System.DirectoryServices.AccountManagement;
-using SqlHelper = SQLHelper.SQLHelper;
+using SqlHelper = Wra10Core2023.Util.SQLHelper;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.Data.SqlClient;
 using System.Data;

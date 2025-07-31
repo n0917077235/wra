@@ -1,5 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using SqlHelper = SQLHelper.SQLHelper;
+using SqlHelper = Wra10Core2023.Util.SQLHelper;
 using Microsoft.Data.SqlClient;
 using System.Data;
 using System.Text;

@@ -53,6 +53,13 @@
         public DateTime x { get; set; }
         public double y { get; set; }
 
+        public Data() { }
+
+        public Data(DateTime x, double y)
+        {
+            this.x = x;
+            this.y = y;
+        }
     }
 
     public class SensorQueryStation
@@ -81,8 +88,5 @@
         public double X { get; set; }
         public double Y { get; set; }
         public string? areaId{ get; set; }
-        //public string? areaName { get; set; }
-    }
-
-    
+    }    
 }

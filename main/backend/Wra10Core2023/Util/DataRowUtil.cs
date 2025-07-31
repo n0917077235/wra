@@ -13,6 +13,8 @@ public static class DataRowUtil
 
     public static DateTime GetDate(this DataRow row, string key) => row.Get<DateTime>(key);
     public static byte[] GetBytes(this DataRow row, string key) => row.Get<byte[]>(key);
+    public static decimal GetDecimal(this DataRow row, string key) => row.Get<decimal>(key);
+    public static double GetDouble(this DataRow row, string key) => row.Get<double>(key);
 
     public static T GetMaybe<T>(this DataRow row, string key) where T : class
     {

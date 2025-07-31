@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore.Migrations.Operations;
 using Microsoft.VisualBasic.Logging;
 using System.IO;
 using Wra10Core2023.Models;
-using SqlHelper = SQLHelper.SQLHelper;
+using SqlHelper = Wra10Core2023.Util.SQLHelper;
 
 namespace Wra10Core2023.Controllers
 {

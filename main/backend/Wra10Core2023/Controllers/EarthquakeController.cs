@@ -6,7 +6,7 @@ using Org.BouncyCastle.Bcpg.OpenPgp;
 using System.Data;
 using System.Diagnostics;
 using Wra10Core2023.Models;
-using SqlHelper = SQLHelper.SQLHelper;
+using SqlHelper = Wra10Core2023.Util.SQLHelper;
 using System.IO;
 using Docker.DotNet;
 using Docker.DotNet.Models;

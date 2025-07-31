@@ -3,7 +3,7 @@ using Microsoft.Data.SqlClient;
 using System.Data;
 using Wra10Core2023.Models;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement.ListView;
-using SqlHelper = SQLHelper.SQLHelper;
+using SqlHelper = Wra10Core2023.Util.SQLHelper;
 using MimeKit;
 using MailKit.Net.Smtp;
 using System.Security.Cryptography;

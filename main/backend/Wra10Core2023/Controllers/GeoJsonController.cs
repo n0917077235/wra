@@ -12,7 +12,7 @@ using Wra10Core2023.Models;
 using Wra10Core2023.Util;
 using FeatureCollection = GeoJSON.Net.Feature.FeatureCollection;
 using Point = GeoJSON.Net.Geometry.Point;
-using SqlHelper = SQLHelper.SQLHelper;
+using SqlHelper = Wra10Core2023.Util.SQLHelper;
 
 namespace Wra10Core2023.Controllers;
 

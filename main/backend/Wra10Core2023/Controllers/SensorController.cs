@@ -1,28 +1,29 @@
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Hosting.Server;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
-using Microsoft.Extensions.Configuration;
-using System.Data;
-using SqlHelper = SQLHelper.SQLHelper;
-using Microsoft.AspNetCore.Hosting.Server;
-using Newtonsoft.Json.Linq;
-using System.Runtime.Intrinsics.X86;
-using Microsoft.AspNetCore.Http;
-using Microsoft.IdentityModel.Tokens;
-using Wra10Core2023.Models;
-using Newtonsoft.Json;
-using static System.Collections.Specialized.BitVector32;
-using System;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Query.SqlExpressions;
-using System.Text;
-using Windows.Devices.Sensors;
+using Microsoft.Extensions.Configuration;
+using Microsoft.IdentityModel.Tokens;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using Org.BouncyCastle.Utilities;
+using System;
+using System.Data;
+using System.Globalization;
 using System.IO;
 using System.Runtime.InteropServices;
-using System.Globalization;
-using System.Web;
-using Org.BouncyCastle.Utilities;
+using System.Runtime.Intrinsics.X86;
+using System.Text;
 using System.Text.Encodings;
+using System.Web;
+using Windows.Devices.Sensors;
+using Wra10Core2023.Models;
 using Wra10Core2023.Util;
+using static System.Collections.Specialized.BitVector32;
+using SqlHelper = Wra10Core2023.Util.SQLHelper;
 
 namespace Wra10Core2023.Controllers;
 
@@ -43,7 +44,7 @@ public class SensorController : ControllerBase
     [Route("GetWaterSensorType")]
     public IActionResult GetWaterSensorType()
     {
-        DataTable dt ;
+        DataTable dt;
         List<WaterSensorType> lstSensorType = new List<WaterSensorType>();
         string? conn = _configuration.GetConnectionString("Water2022");
         try
@@ -318,7 +319,7 @@ public class SensorController : ControllerBase
 
             return Ok(lstSensorArea.ToList());
         }
-        catch(Exception ex)
+        catch (Exception ex)
         {
             return BadRequest(ex.Message);
         }
@@ -363,7 +364,7 @@ public class SensorController : ControllerBase
 
             return Ok(lstSensor.ToList());
         }
-        catch(Exception ex)
+        catch (Exception ex)
         {
             return BadRequest(ex.Message);
         }
@@ -382,7 +383,7 @@ public class SensorController : ControllerBase
         try
         {
             SqlHelper sqlHelper = new SqlHelper(conn);
-            
+
             dt = sqlHelper.ExecuteQuery(@"Select SensorId,SensorNameA,lastvalue1,lastdatatime,a.StationId,b.StationNameA,HiLimit01 from sensors a 
                                               inner join Stations b on a.stationid=b.stationId and a.importflag like 'EM%' and sensortype='WaterLevel' and lastvalue1 >= hilimit01 ");
 
@@ -449,7 +450,7 @@ public class SensorController : ControllerBase
 
             return Ok(lstSensor.ToList());
         }
-        catch(Exception ex)
+        catch (Exception ex)
         {
             return BadRequest(ex.Message);
         }
@@ -491,7 +492,7 @@ public class SensorController : ControllerBase
 
             return Ok(lstSensor.ToList());
         }
-        catch(Exception ex)
+        catch (Exception ex)
         {
             return BadRequest(ex.Message);
         }
@@ -541,9 +542,9 @@ public class SensorController : ControllerBase
 
             return Ok(lstSensor.ToList());
         }
-        catch(Exception ex)
+        catch (Exception ex)
         {
-            return BadRequest(ex.Message);  
+            return BadRequest(ex.Message);
         }
 
     }
@@ -585,7 +586,7 @@ public class SensorController : ControllerBase
 
             return Ok(lstSensor.ToList());
         }
-        catch(Exception ex)
+        catch (Exception ex)
         {
             return BadRequest(ex.Message);
         }
@@ -631,7 +632,7 @@ public class SensorController : ControllerBase
 
             return Ok(lstSensor.ToList());
         }
-        catch(Exception ex)
+        catch (Exception ex)
         {
             return BadRequest(ex.Message);
         }
@@ -677,7 +678,7 @@ public class SensorController : ControllerBase
 
             return Ok(lstSensor.ToList());
         }
-        catch(Exception ex)
+        catch (Exception ex)
         {
             return BadRequest(ex.Message);
         }
@@ -722,7 +723,7 @@ public class SensorController : ControllerBase
             }
             return Ok(lstSensor.ToList());
         }
-        catch(Exception ex)
+        catch (Exception ex)
         {
             return BadRequest(ex.Message);
         }
@@ -735,7 +736,7 @@ public class SensorController : ControllerBase
         List<StationSensorData> lstSensors = new List<StationSensorData>();
         try
         {
-            
+
             SqlHelper sqlhelper = new SqlHelper(_configuration.GetConnectionString("Water2022"));
             List<SqlParameter> lstParameter = new List<SqlParameter>();
             lstParameter.Add(new SqlParameter("stationid", stationId));
@@ -753,10 +754,10 @@ public class SensorController : ControllerBase
                 lstSensors.Add(sensor);
             }
         }
-        catch(Exception ex)
+        catch (Exception ex)
         {
             return BadRequest(ex.Message);
-            
+
         }
         return Ok(lstSensors);
     }
@@ -777,7 +778,7 @@ public class SensorController : ControllerBase
             }
             else
             {
-                
+
                 lstParameter.Add(new SqlParameter("stationName", stationName));
             }
             DataTable dt = sqlhelper.ExecuteStoreProcedureQuery("sp_SensorsByStationName", lstParameter.ToArray());
@@ -791,7 +792,7 @@ public class SensorController : ControllerBase
                 sensor.lastDataTime = DateTime.Parse(dt.Rows[i]["lastdatatime"].ToString()).ToString("yyyy-MM-dd HH:mm:ss");
                 sensor.value1 = decimal.Parse(dt.Rows[i]["value1"].ToString());
                 sensor.value2 = decimal.Parse(dt.Rows[i]["value2"].ToString());
-                sensor.alarmName= dt.Rows[i]["alarmName"].ToString();
+                sensor.alarmName = dt.Rows[i]["alarmName"].ToString();
                 lstSensors.Add(sensor);
             }
         }
@@ -899,7 +900,7 @@ public class SensorController : ControllerBase
                 sensor.areaName = "";
                 sensor.stationNameA = dt.Rows[i]["stationNameA"].ToString(); ;
                 sensor.sensorNameA = dt.Rows[i]["camName"].ToString(); ;
-                
+
                 sensor.sensorId = dt.Rows[i]["camId"].ToString();
                 sensor.stream = new Uri($"{Request.Scheme}://{Request.Host}/" + _configuration["VirtualVideoImage:path"] + @"/" + sensor.sensorId + ".jpg").ToString();
                 sensor.lastDataTime = "";
@@ -941,11 +942,11 @@ public class SensorController : ControllerBase
         SqlHelper sqlhelper = new SqlHelper(_configuration.GetConnectionString("Water2022"));
         List<SqlParameter> lstParameter = new List<SqlParameter>();
         lstParameter.Add(new SqlParameter("stationName", stationName));
-        
+
         try
         {
             DataTable dt = sqlhelper.ExecuteStoreProcedureQuery("sp_AllSensorsByStationName", lstParameter.ToArray());
-           
+
             for (int i = 0; i < dt.Rows.Count; i++)
             {
                 var row = dt.Rows[i];
@@ -1026,7 +1027,7 @@ public class SensorController : ControllerBase
                 sensor.stationNameA = dt.Rows[i]["stationnameA"].ToString(); ;
                 sensor.sensorNameA = dt.Rows[i]["camName"].ToString(); ;
                 sensor.sensorId = dt.Rows[i]["camId"].ToString();
-                sensor.stream= new Uri($"{Request.Scheme}://{Request.Host}/" + _configuration["VirtualVideoImage:Path"] + @"/" + sensor.sensorId+".jpg").ToString();
+                sensor.stream = new Uri($"{Request.Scheme}://{Request.Host}/" + _configuration["VirtualVideoImage:Path"] + @"/" + sensor.sensorId + ".jpg").ToString();
                 sensor.lastDataTime = "";
                 sensor.lastDataTimePrev = "";
                 sensor.value1 = 0;
@@ -1069,7 +1070,7 @@ public class SensorController : ControllerBase
         else
         {
             string[] datas1 = parameters.Split(',');
-            
+
             for (int i = 0; i < datas1.Length; i++)
             {
                 string[] datas2 = datas1[i].Split(';');
@@ -1082,12 +1083,12 @@ public class SensorController : ControllerBase
                     sensorTypes += datas2[1] + ",";
                 }
             }
-            
+
             if (areas.Length > 2)
             {
                 areas = areas.Substring(0, areas.Length - 1);
             }
-            
+
             if (sensorTypes.Length > 2)
             {
                 sensorTypes = sensorTypes.Substring(0, sensorTypes.Length - 1);
@@ -1099,12 +1100,12 @@ public class SensorController : ControllerBase
         string? conn = _configuration.GetConnectionString("Water2022");
         SqlHelper sqlHelper = new SqlHelper(conn); ;
         var lstParam = new List<SqlParameter>();
-        lstParam.Add(new SqlParameter("areaid", areas==""?DBNull.Value:areas));
-        lstParam.Add(new SqlParameter("sensortype", sensorTypes=="" ? DBNull.Value:sensorTypes));
+        lstParam.Add(new SqlParameter("areaid", areas == "" ? DBNull.Value : areas));
+        lstParam.Add(new SqlParameter("sensortype", sensorTypes == "" ? DBNull.Value : sensorTypes));
         int userType = userGroupId;
         lstParam.Add(new SqlParameter("userType", userType));
         dt = sqlHelper.ExecuteStoreProcedureQuery("sp_SensorQuery2022", lstParam.ToArray());
-        
+
         for (int i = 0; i < dt.Rows.Count; i++)
         {
             WaterSensorQuery data = new WaterSensorQuery();
@@ -1184,9 +1185,61 @@ public class SensorController : ControllerBase
             data.more = "詳細資料..";
             lstDatas.Add(data);
         }
-        
+
         return JsonConvert.SerializeObject(lstDatas);
     }
+
+    private class AlarmLines
+    {
+        public string ColumnName, Label;
+        public Func<SensorChartParameter, string> GetBackgroundColor, GetBorderColor;
+    }
+
+    private static AlarmLines[] AlarmLinesDef =
+    [
+        new()
+        {
+            ColumnName = "HiLimit01",
+            Label = "三級警戒(高)",
+            GetBackgroundColor = p => p.backgroundColorLevel3,
+            GetBorderColor = p => p.borderColorLevel3,
+        },
+        new()
+        {
+            ColumnName = "HiLimit02",
+            Label = "二級警戒(高)",
+            GetBackgroundColor = p => p.backgroundColorLevel2,
+            GetBorderColor = p => p.borderColorLevel2,
+        },
+        new()
+        {
+            ColumnName = "HiLimit03",
+            Label = "一級警戒(高)",
+            GetBackgroundColor = p => p.backgroundColorLevel1,
+            GetBorderColor = p => p.borderColorLevel1,
+        },
+        new()
+        {
+            ColumnName = "LoLimit01",
+            Label = "三級警戒(低)",
+            GetBackgroundColor = p => p.backgroundColorLevel3,
+            GetBorderColor = p => p.borderColorLevel3,
+        },
+        new()
+        {
+            ColumnName = "LoLimit02",
+            Label = "二級警戒(低)",
+            GetBackgroundColor = p => p.backgroundColorLevel2,
+            GetBorderColor = p => p.borderColorLevel2,
+        },
+        new()
+        {
+            ColumnName = "LoLimit03",
+            Label = "一級警戒(低)",
+            GetBackgroundColor = p => p.backgroundColorLevel1,
+            GetBorderColor = p => p.borderColorLevel1,
+        },
+    ];
 
     [Authorize]
     [HttpPost]
@@ -1197,7 +1250,7 @@ public class SensorController : ControllerBase
         string begin = param.begin;
         string end = param.end;
         int duration = param.duration;
-        if (duration < 10)duration = 10;
+        if (duration < 10) duration = 10;
         var st = new SensorQueryStation();
         st.chart.lstData.Add(new ListData());
         string? conn = _configuration.GetConnectionString("Water2022");
@@ -1208,217 +1261,145 @@ public class SensorController : ControllerBase
         lstParam.Add(new SqlParameter("@date2", end));
         lstParam.Add(new SqlParameter("@duration", duration));
 
-        DataTable dt = sqlHelper.ExecuteStoreProcedureQuery("sp_SensorChart", lstParam.ToArray());
-        bool bValue2 = false;
-        bool bValue3 = false;
+        var dt = sqlHelper.ExecuteStoreProcedureQuery("sp_SensorChart", lstParam.ToArray());
+        bool hasSecondValue = false;
+        bool hasThirdValue = false;
+
         for (int i = 0; i < dt.Rows.Count; i++)
         {
+            var row = dt.Rows[i];
+            var name = row.GetStr("SensorNameA");
+            var t = row.GetDate("RecordTime");
+            var sensorType = row.GetStr("SensorType").ToLowerInvariant();
+
             if (i == 0)
             {
-                DateTime tFirst = DateTime.Parse(dt.Rows[i]["RecordTime"].ToString());
-                DateTime tEnd = DateTime.Parse(dt.Rows[dt.Rows.Count - 1]["RecordTime"].ToString());
-                st.sensorId = dt.Rows[i]["SensorId"].ToString();
-                st.sensorName = dt.Rows[i]["SensorNameA"].ToString();
-                st.unit = dt.Rows[i]["unit"].ToString();
-                st.sensorTypeName = dt.Rows[i]["SensorTypeName"].ToString();
-                string sensorType= dt.Rows[i]["SensorType"].ToString();
-                st.chart.sensorId = dt.Rows[i]["SensorId"].ToString();
-                st.chart.main = dt.Rows[i]["areaName"].ToString() + " " + dt.Rows[i]["stationNameA"].ToString();
+                var tFirst = t;
+                var tEnd = dt.Rows[dt.Rows.Count - 1].GetDate("RecordTime");
+                st.sensorId = row["SensorId"].ToString();
+                st.sensorName = name;
+                st.unit = row["unit"].ToString();
+                st.sensorTypeName = row["SensorTypeName"].ToString();
+                st.chart.sensorId = row["SensorId"].ToString();
+                st.chart.main = row["areaName"].ToString() + " " + row["stationNameA"].ToString();
                 st.chart.xLabel = "時間";
-                if (sensorType.ToLower()=="earthquake")
-                    st.chart.yLabel = st.sensorTypeName + st.unit ;
-                else
-                    st.chart.yLabel = st.sensorTypeName + "(" + st.unit + ")";
 
-                st.chart.lstData[0].label = dt.Rows[i]["SensorNameA"].ToString();
+                st.chart.yLabel = sensorType == "earthquake"
+                    ? st.sensorTypeName + st.unit
+                    : st.sensorTypeName + "(" + st.unit + ")";
+
+                st.chart.lstData[0].label = name;
                 st.chart.lstData[0].fill = true;
-                st.chart.chartTitle = dt.Rows[i]["SensorNameA"].ToString();// + " " + dt.Rows[i]["StationNameA"].ToString();
-                
-                if (dt.Rows[i]["Value3"] != DBNull.Value)
+                st.chart.chartTitle = name;
+
+                if (row["Value3"] != DBNull.Value)
                 {
-                    bValue2 = true;
-                    bValue3 = true;
-                    st.chart.lstData[0].label = dt.Rows[i]["SensorNameA"].ToString() + "-X(" + dt.Rows[i]["XAxis"].ToString() + ")";
+                    hasSecondValue = true;
+                    hasThirdValue = true;
+                    st.chart.lstData[0].label = name + "-X(" + row["XAxis"].ToString() + ")";
                     st.chart.lstData[0].fill = true;
                     st.chart.lstData[0].backgroundColor = param.backgroundColorValue1;
                     st.chart.lstData[0].borderColor = param.borderColorValue1;
 
                     st.chart.lstData.Add(new ListData());
-                    st.chart.lstData[1].label = dt.Rows[i]["SensorNameA"].ToString() + "-Y(" + dt.Rows[i]["YAxis"].ToString() + ")";
+                    st.chart.lstData[1].label = name + "-Y(" + row["YAxis"].ToString() + ")";
                     st.chart.lstData[1].fill = true;
                     st.chart.lstData[1].backgroundColor = param.backgroundColorValue2;
                     st.chart.lstData[1].borderColor = param.borderColorValue2;
 
                     st.chart.lstData.Add(new ListData());
-                    st.chart.lstData[2].label = dt.Rows[i]["SensorNameA"].ToString() + "-Z(" + dt.Rows[i]["ZAxis"].ToString() + ")"; ;
+                    st.chart.lstData[2].label = name + "-Z(" + row["ZAxis"].ToString() + ")"; ;
                     st.chart.lstData[2].fill = true;
                     st.chart.lstData[2].backgroundColor = param.backgroundColorValue3;
                     st.chart.lstData[2].borderColor = param.borderColorValue3;
                 }
-                else if (dt.Rows[i]["Value2"] != DBNull.Value)
+                else if (row["Value2"] != DBNull.Value)
                 {
-                    bValue2 = true;
-                    st.chart.lstData[0].label = dt.Rows[i]["SensorNameA"].ToString() + "-X(" + dt.Rows[i]["XAxis"].ToString() + ")"; ;
+                    hasSecondValue = true;
+                    st.chart.lstData[0].label = name + "-X(" + row["XAxis"].ToString() + ")"; ;
                     st.chart.lstData[0].fill = true;
                     st.chart.lstData[0].backgroundColor = param.backgroundColorValue1;
                     st.chart.lstData[0].borderColor = param.borderColorValue1;
 
                     st.chart.lstData.Add(new ListData());
-                    st.chart.lstData[1].label = dt.Rows[i]["SensorNameA"].ToString() + "-Y(" + dt.Rows[i]["YAxis"].ToString() + ")"; ;
+                    st.chart.lstData[1].label = name + "-Y(" + row["YAxis"].ToString() + ")"; ;
                     st.chart.lstData[1].fill = true;
                     st.chart.lstData[1].backgroundColor = param.backgroundColorValue2;
                     st.chart.lstData[1].borderColor = param.borderColorValue2;
                 }
                 else
                 {
-                    if (sensorType.ToLower() == "earthquake" || sensorType.ToLower() == "slope")
-                        st.chart.lstData[0].label = dt.Rows[i]["SensorNameA"].ToString() + "-X";
-                    else
-                        st.chart.lstData[0].label = dt.Rows[i]["SensorNameA"].ToString();
+                    var addAxisLabel = sensorType == "earthquake" || sensorType == "slope";
+                    st.chart.lstData[0].label = addAxisLabel ? $"{name}-X" : name;
                     st.chart.lstData[0].fill = true;
                     st.chart.lstData[0].backgroundColor = param.backgroundColorValue1;
                     st.chart.lstData[0].borderColor = param.borderColorValue1;
+                }
 
-                }
-                if (dt.Rows[i]["HiLimit01"]!=DBNull.Value)
+                AddAlarmLines(param, st, row, tFirst, tEnd);
+
+                if (sensorType == "crack")
                 {
-                    st.chart.lstData.Add(new ListData());
-                    Data wdAlarm = new Data();
-                    wdAlarm.x = tFirst;
-                    wdAlarm.y = double.Parse(dt.Rows[i]["HiLimit01"].ToString());
-                    st.chart.lstData[st.chart.lstData.Count - 1].label = "三級警戒(高)";
-                    st.chart.lstData[st.chart.lstData.Count - 1].data.Add(wdAlarm);
-                    st.chart.lstData[st.chart.lstData.Count - 1].fill=true;
-                    st.chart.lstData[st.chart.lstData.Count - 1].backgroundColor = param.backgroundColorLevel3;
-                    st.chart.lstData[st.chart.lstData.Count - 1].borderColor = param.borderColorLevel3;
-                    wdAlarm = new Data();
-                    wdAlarm.x = tEnd;
-                    wdAlarm.y = double.Parse(dt.Rows[i]["HiLimit01"].ToString());
-                    st.chart.lstData[st.chart.lstData.Count - 1].data.Add(wdAlarm);
-                }
-                if (dt.Rows[i]["HiLimit02"] != DBNull.Value)
-                {
-                    st.chart.lstData.Add(new ListData());
-                    Data wdAlarm = new Data();
-                    wdAlarm.x = tFirst;
-                    wdAlarm.y = double.Parse(dt.Rows[i]["HiLimit02"].ToString());
-                    st.chart.lstData[st.chart.lstData.Count - 1].label = "二級警戒(高)";
-                    st.chart.lstData[st.chart.lstData.Count - 1].data.Add(wdAlarm);
-                    st.chart.lstData[st.chart.lstData.Count - 1].fill = true;
-                    st.chart.lstData[st.chart.lstData.Count - 1].backgroundColor = param.backgroundColorLevel2;
-                    st.chart.lstData[st.chart.lstData.Count - 1].borderColor = param.borderColorLevel2;
-                    wdAlarm = new Data();
-                    wdAlarm.x = tEnd;
-                    wdAlarm.y = double.Parse(dt.Rows[i]["HiLimit02"].ToString());
-                    st.chart.lstData[st.chart.lstData.Count - 1].data.Add(wdAlarm);
-                }
-                if (dt.Rows[i]["HiLimit03"] != DBNull.Value)
-                {
-                    st.chart.lstData.Add(new ListData());
-                    Data wdAlarm = new Data();
-                    wdAlarm.x = tFirst;
-                    wdAlarm.y = double.Parse(dt.Rows[i]["HiLimit03"].ToString());
-                    st.chart.lstData[st.chart.lstData.Count - 1].label = "一級警戒(高)";
-                    st.chart.lstData[st.chart.lstData.Count - 1].data.Add(wdAlarm);
-                    st.chart.lstData[st.chart.lstData.Count - 1].fill = true;
-                    st.chart.lstData[st.chart.lstData.Count - 1].backgroundColor = param.backgroundColorLevel1;
-                    st.chart.lstData[st.chart.lstData.Count - 1].borderColor = param.borderColorLevel1;
-                    wdAlarm = new Data();
-                    wdAlarm.x = tEnd;
-                    wdAlarm.y = double.Parse(dt.Rows[i]["HiLimit03"].ToString());
-                    st.chart.lstData[st.chart.lstData.Count - 1].data.Add(wdAlarm);
-                }
-                if (dt.Rows[i]["LoLimit01"] != DBNull.Value)
-                {
-                    st.chart.lstData.Add(new ListData());
-                    Data wdAlarm = new Data();
-                    wdAlarm.x = tFirst;
-                    wdAlarm.y = double.Parse(dt.Rows[i]["LoLimit01"].ToString());
-                    st.chart.lstData[st.chart.lstData.Count - 1].label = "三級警戒(低)";
-                    st.chart.lstData[st.chart.lstData.Count - 1].data.Add(wdAlarm);
-                    st.chart.lstData[st.chart.lstData.Count - 1].fill = true;
-                    st.chart.lstData[st.chart.lstData.Count - 1].backgroundColor = param.backgroundColorLevel3;
-                    st.chart.lstData[st.chart.lstData.Count - 1].borderColor = param.borderColorLevel3;
-                    wdAlarm = new Data();
-                    wdAlarm.x = tEnd;
-                    wdAlarm.y = double.Parse(dt.Rows[i]["LoLimit01"].ToString());
-                    st.chart.lstData[st.chart.lstData.Count - 1].data.Add(wdAlarm);
-                }
-                if (dt.Rows[i]["LoLimit02"] != DBNull.Value)
-                {
-                    st.chart.lstData.Add(new ListData());
-                    Data wdAlarm = new Data();
-                    wdAlarm.x = tFirst;
-                    wdAlarm.y = double.Parse(dt.Rows[i]["LoLimit02"].ToString());
-                    st.chart.lstData[st.chart.lstData.Count - 1].label = "二級警戒(低)";
-                    st.chart.lstData[st.chart.lstData.Count - 1].data.Add(wdAlarm);
-                    st.chart.lstData[st.chart.lstData.Count - 1].fill = true;
-                    st.chart.lstData[st.chart.lstData.Count - 1].backgroundColor = param.backgroundColorLevel2;
-                    st.chart.lstData[st.chart.lstData.Count - 1].borderColor = param.borderColorLevel2;
-                    wdAlarm = new Data();
-                    wdAlarm.x = tEnd;
-                    wdAlarm.y = double.Parse(dt.Rows[i]["LoLimit02"].ToString());
-                    st.chart.lstData[st.chart.lstData.Count - 1].data.Add(wdAlarm);
-                }
-                if (dt.Rows[i]["LoLimit03"] != DBNull.Value)
-                {
-                    st.chart.lstData.Add(new ListData());
-                    Data wdAlarm = new Data();
-                    wdAlarm.x = tFirst;
-                    wdAlarm.y = double.Parse(dt.Rows[i]["LoLimit03"].ToString());
-                    st.chart.lstData[st.chart.lstData.Count - 1].label = "一級警戒(低)";
-                    st.chart.lstData[st.chart.lstData.Count - 1].data.Add(wdAlarm);
-                    st.chart.lstData[st.chart.lstData.Count - 1].fill = true;
-                    st.chart.lstData[st.chart.lstData.Count - 1].backgroundColor = param.backgroundColorLevel1;
-                    st.chart.lstData[st.chart.lstData.Count - 1].borderColor = param.borderColorLevel1;
-                    wdAlarm = new Data();
-                    wdAlarm.x = tEnd;
-                    wdAlarm.y = double.Parse(dt.Rows[i]["LoLimit03"].ToString());
-                    st.chart.lstData[st.chart.lstData.Count - 1].data.Add(wdAlarm);
-                }
-                if (dt.Rows[i]["SensorType"].ToString().ToLower() == "crack")
-                {
-                    st.chart.lstData.Add(new ListData());
-                    Data wdInitValue = new Data();
-                    wdInitValue.x = tFirst;
-                    wdInitValue.y = double.Parse(dt.Rows[i]["InitValue"].ToString());
-                    st.chart.lstData[st.chart.lstData.Count - 1].label = "初始值";
-                    st.chart.lstData[st.chart.lstData.Count - 1].data.Add(wdInitValue);
-                    st.chart.lstData[st.chart.lstData.Count - 1].fill = true;
-                    st.chart.lstData[st.chart.lstData.Count - 1].backgroundColor = param.backgroundColorLevel1;
-                    st.chart.lstData[st.chart.lstData.Count - 1].borderColor = param.borderColorLevel1;
-                    wdInitValue = new Data();
-                    wdInitValue.x = tEnd;
-                    wdInitValue.y = double.Parse(dt.Rows[i]["InitValue"].ToString());
-                    st.chart.lstData[st.chart.lstData.Count - 1].data.Add(wdInitValue);
+                    var y = row.GetDouble("InitValue");
+
+                    var line = new ListData()
+                    {
+                        label = "初始值",
+                        data = [new(tFirst, y), new(tEnd, y)],
+                        fill = true,
+                        backgroundColor = param.backgroundColorLevel1,
+                        borderColor = param.borderColorLevel1,
+                    };
+
+                    st.chart.lstData.Add(line);
                 }
             }
-            Data wd = new Data();
-            wd.y = double.Parse(dt.Rows[i]["value1"].ToString());
-            wd.x = DateTime.Parse(dt.Rows[i]["RecordTime"].ToString());
+
+            var wd = new Data(t, double.Parse(row["value1"].ToString()));
             st.chart.lstData[0].data.Add(wd);
             st.chart.lstData[0].fill = true;
-            if (bValue2)
+
+            if (hasSecondValue)
             {
                 wd = new Data();
-                wd.y = double.Parse(dt.Rows[i]["value2"].ToString());
-                wd.x = DateTime.Parse(dt.Rows[i]["RecordTime"].ToString());
+                wd.y = double.Parse(row["value2"].ToString());
+                wd.x = t;
                 st.chart.lstData[1].data.Add(wd);
-                //st.chart.lstData[1].label = "一級警戒(低)";
                 st.chart.lstData[1].fill = true;
             }
-            if (bValue3)
+
+            if (hasThirdValue)
             {
                 wd = new Data();
-                wd.y = double.Parse(dt.Rows[i]["value3"].ToString());
-                wd.x = DateTime.Parse(dt.Rows[i]["RecordTime"].ToString());
+                wd.y = double.Parse(row["value3"].ToString());
+                wd.x = t;
                 st.chart.lstData[2].data.Add(wd);
-                //st.chart.lstData[1].label = "一級警戒(低)";
                 st.chart.lstData[2].fill = true;
             }
         }
 
         return JsonConvert.SerializeObject(st.chart);
+    }
+
+    private static void AddAlarmLines(SensorChartParameter param, SensorQueryStation st, 
+        DataRow row, DateTime tFirst, DateTime tEnd)
+    {
+        foreach (var def in AlarmLinesDef)
+        {
+            if (row.IsNull(def.ColumnName)) continue;
+            var y = (double)row.GetDecimal(def.ColumnName);
+
+            var line = new ListData()
+            {
+                label = def.Label,
+                data = [new(tFirst, y), new(tEnd, y)],
+                fill = true,
+                backgroundColor = def.GetBackgroundColor(param),
+                borderColor = def.GetBorderColor(param),
+            };
+
+            st.chart.lstData.Add(line);
+        }
     }
 
     [Authorize]
@@ -1431,7 +1412,7 @@ public class SensorController : ControllerBase
             string? conn = _configuration.GetConnectionString("Water2022");
             SqlHelper sqlHelper = new SqlHelper(conn);
             sqlHelper.ExecuteNonQuery("update events set recovertime='" + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + "' where sensorid='" + sensorId + "' and recovertime is null");
-        }       
+        }
         catch (Exception ex)
         {
             return BadRequest(ex.Message);
@@ -1442,7 +1423,7 @@ public class SensorController : ControllerBase
     [Authorize]
     [HttpPost]
     [Route("GetWaterSensorDataByFuzzy")]
-    public IActionResult GetWaterSensorDataByFuzzy(string? areaId, string? areaName, string? stationId, 
+    public IActionResult GetWaterSensorDataByFuzzy(string? areaId, string? areaName, string? stationId,
         string? stationName, string? timeBegin, string? timeEnd, bool? isAlarm)
     {
         try
@@ -1454,13 +1435,13 @@ public class SensorController : ControllerBase
             List<SqlParameter> lstParam = new List<SqlParameter>();
 
 
-            lstParam.Add(new SqlParameter("@AreaId", String.IsNullOrEmpty(areaId) ? DBNull.Value:areaId));
-            lstParam.Add(new SqlParameter("@AreaName", String.IsNullOrEmpty(areaName) ? DBNull.Value :areaName));
-            lstParam.Add(new SqlParameter("@StationId", String.IsNullOrEmpty(stationId) ? DBNull.Value :stationId));
-            lstParam.Add(new SqlParameter("@StationName", String.IsNullOrEmpty(stationName) ? DBNull.Value :stationName));
-            lstParam.Add(new SqlParameter("@begin", String.IsNullOrEmpty(timeBegin) ? DBNull.Value :timeBegin));
+            lstParam.Add(new SqlParameter("@AreaId", String.IsNullOrEmpty(areaId) ? DBNull.Value : areaId));
+            lstParam.Add(new SqlParameter("@AreaName", String.IsNullOrEmpty(areaName) ? DBNull.Value : areaName));
+            lstParam.Add(new SqlParameter("@StationId", String.IsNullOrEmpty(stationId) ? DBNull.Value : stationId));
+            lstParam.Add(new SqlParameter("@StationName", String.IsNullOrEmpty(stationName) ? DBNull.Value : stationName));
+            lstParam.Add(new SqlParameter("@begin", String.IsNullOrEmpty(timeBegin) ? DBNull.Value : timeBegin));
             lstParam.Add(new SqlParameter("@end", String.IsNullOrEmpty(timeEnd) ? DBNull.Value : timeEnd));
-            lstParam.Add(new SqlParameter("@isAlarm", isAlarm==null ? DBNull.Value : isAlarm));
+            lstParam.Add(new SqlParameter("@isAlarm", isAlarm == null ? DBNull.Value : isAlarm));
             dt = sqlHelper.ExecuteStoreProcedureQuery("sp_SensorQueryFuzzy2", lstParam.ToArray());
             for (int i = 0; i < dt.Rows.Count; i++)
             {
@@ -1515,9 +1496,9 @@ public class SensorController : ControllerBase
             }
             return Ok(lstDatas.ToList());
         }
-        catch(Exception ex)
+        catch (Exception ex)
         {
-            return BadRequest(ex.Message);  
+            return BadRequest(ex.Message);
         }
     }
 }
