@@ -812,7 +812,6 @@ public class SensorController : ControllerBase
         List<SensorMoreData> lstWaters = new List<SensorMoreData>();
         List<SensorMoreData> lstGates = new List<SensorMoreData>();
         List<SensorMoreData> lstOthers = new List<SensorMoreData>();
-        string jsonStation = "";
 
         SqlHelper sqlhelper = new SqlHelper(_configuration.GetConnectionString("Water2022"));
         List<SqlParameter> lstParameter = new List<SqlParameter>();
@@ -1199,20 +1198,11 @@ public class SensorController : ControllerBase
         string end = param.end;
         int duration = param.duration;
         if (duration < 10)duration = 10;
-        
-        var arrColor = new string[] 
-        { 
-            "#231F20", "#FFC200", "#F44937", "#16F27E", "#FC9775", "#5A69A6", 
-            "#231F20", "#FFC200", "#F44937", "#16F27E", "#FC9775", "#5A69A6", 
-            "#231F20", "#FFC200", "#F44937", "#16F27E", "#FC9775", "#5A69A6", 
-            "#231F20", "#FFC200", "#F44937", "#16F27E", "#FC9775", "#5A69A6" 
-        };
-
         var st = new SensorQueryStation();
         st.chart.lstData.Add(new ListData());
         string? conn = _configuration.GetConnectionString("Water2022");
-        SqlHelper sqlHelper = new SqlHelper(conn);
-        List<SqlParameter> lstParam = new List<SqlParameter>();
+        var sqlHelper = new SqlHelper(conn);
+        var lstParam = new List<SqlParameter>();
         lstParam.Add(new SqlParameter("@sensorid", sensorId));
         lstParam.Add(new SqlParameter("@date1", begin));
         lstParam.Add(new SqlParameter("@date2", end));

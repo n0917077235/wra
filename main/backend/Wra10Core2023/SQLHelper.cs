@@ -11,8 +11,6 @@ namespace SQLHelper
 
         public SQLHelper(string connStr)
         {
-            //string connStr = System.Configuration.ConfigurationManager.ConnectionStrings[ConnectionString].ConnectionString;
-            // string connStr = "";
             conn = new SqlConnection(connStr);
         }
 
