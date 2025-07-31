@@ -75,9 +75,7 @@ export default class MapUtil {
 
         return new ol.style.Icon({
             scale,
-            anchor: [10, 33],
-            anchorXUnits: 'pixels',
-            anchorYUnits: 'pixels',
+            anchor: [0.5, 1],
             src: url
         });
     }

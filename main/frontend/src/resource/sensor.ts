@@ -133,7 +133,6 @@ export interface SensorGeneralQueryDataResponse {
 export async function apiGetSensorGeneralQueryData(
   payload: string,
 ): Promise<SensorGeneralQueryDataResponse[]> {
-   // alert(payload);
   const response = await apiClient.post<SensorGeneralQueryDataResponse[]>(
     `/Sensor/GetSensorGeneralQueryData?userGroupId=0&parameters=${payload}`,
     {},
