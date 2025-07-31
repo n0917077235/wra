@@ -105,7 +105,7 @@ export default class InfoWindowUtil {
         s.areaID = f.get('areaID');
         s.sensorType = f.get('sensorType');
         s.sensorId = f.get('id');
-        console.log(unit)
+        
         if (s.sensorType === 'Slope') {
             let v1 = f.get('lastValue1');
             let v2 = f.get('lastValue2');

@@ -180,12 +180,13 @@ import { apiGetGps, apiGetIsoseismal } from '@/resource/geojson';
 import MapUtil from '@/resource/map/mapUtil';
 import LineHighlight from '@/resource/map/lineHighlight';
 import InfoWindowUtil from '@/resource/map/infoWindowUtil';
-import { apiGetSensorMoreDataByStationName } from '@/resource/sensor';
+import { apiGetSensorMoreDataByStationName, apiGetSensorGeneralQueryData } from '@/resource/sensor';
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { useStore } from 'vuex';
 import Popup from './Popup.vue';
 import LayerMap from '@/resource/map/layerMap';
 import SensorDef from '@/resource/sensorDef';
+import SensorProps from '@/resource/map/sensorProps';
 
 interface Props {
     title?: string;
@@ -553,6 +554,7 @@ function ColorCode() {
     }
     return finalCode;
 }
+
 function toggleLayerGroup(groupId) {
     const content = document.getElementById(groupId);
     if (content == null) return;
@@ -682,7 +684,6 @@ async function toggleLayer(layerGroup) {
     }
 }
 
-var zi = 0;
 let layers = new LayerMap();
 
 // Returns null if data is not available.
@@ -725,10 +726,17 @@ async function getLayers(layerId, funcName) {
     return [await apiGetGps(funcName)];
 }
 
+async function getSensorGeneralInfo(layerId) {
+    let item = SensorProps.find(layerId);
+    if (item === undefined) return [];
+    return await apiGetSensorGeneralQueryData([], [item.sensorType]);
+}
+
 async function addLayer(layerId, funcName, layerGroup = null) {
     if (layerGroup === null) layerGroup = layerId;
     let map = pMap.value;
-    let myLayers = await getLayers(layerId, funcName);
+    let tasks = [getLayers(layerId, funcName), getSensorGeneralInfo(layerId)];
+    let [myLayers, sensorInfo] = await Promise.all(tasks);
 
     try {
         let activeLayer = myLayers[0];
@@ -744,7 +752,7 @@ async function addLayer(layerId, funcName, layerGroup = null) {
         let vectorLayer = new ol.layer.Vector({
             source: vectorSource,
             zIndex: layerProps.zIndex,
-            style: MapUtil.styleFunction(layerProps, () => showValues.value, activeLayer),
+            style: MapUtil.styleFunction(layerProps, () => showValues.value, sensorInfo),
         });
 
         map.addLayer(vectorLayer);
