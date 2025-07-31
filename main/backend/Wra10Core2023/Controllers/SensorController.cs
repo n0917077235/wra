@@ -1119,8 +1119,8 @@ public class SensorController : ControllerBase
 
             if (data.sensorType.ToLower() == "slope")
             {
-
                 double differ2 = value2 - value2Prev;
+
                 if (differ2 > 0)
                 {
                     direction2 = "images/up128.png";
@@ -1130,13 +1130,13 @@ public class SensorController : ControllerBase
                 {
                     direction2 = "images/remove128.png";
                     data.differ2 = 0;
-
                 }
                 else
                 {
                     direction2 = "images/down128.png";
                     data.differ2 = -1;
                 }
+
                 data.value += " , " + value2.ToString("0.00") + " " + data.unit;
                 data.direction += " , " + direction2;
             }
