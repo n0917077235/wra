@@ -4,7 +4,7 @@
             <toggle-logo></toggle-logo>
             <div class="text-[14px] sm:text-[18px]">{{ routerName }}</div>
 
-            <!-- 1130920 Äµ§i«ö¶s¡A·í¦³²§±`®ÉÅã¥Ü -->
+            <!-- 1130920 è­¦å‘ŠæŒ‰éˆ•ï¼Œç•¶æœ‰ç•°å¸¸æ™‚é¡¯ç¤º -->
             <el-button v-show="shouldShowButton" @click="showWarningPanel" style="height:40px;margin-left: 300px; padding: 5px 10px; font-size: 12px;">
                 <img src="@/assets/image/alarm.png" alt="Button Image" style="width: 100%; height: 35px; margin-right: 0px;">
             </el-button>
@@ -39,24 +39,24 @@ const routerName = computed<string>(() => {
   return (route.matched[1]?.meta?.routerName || '') as string;
 });
 
-    // ±±¨îÄµ§i°T®§ªºÅã¥Ü
-    const shouldShowButton = ref(false);  // ±±¨îÄµ§i«ö¶sªºÅã¥Ü
-    const showAlarmMsg = ref(false);      // ±±¨îÄµ§i¹ï¸Ü®ØªºÅã¥Ü
+    // æ§åˆ¶è­¦å‘Šè¨Šæ¯çš„é¡¯ç¤º
+    const shouldShowButton = ref(false);  // æ§åˆ¶è­¦å‘ŠæŒ‰éˆ•çš„é¡¯ç¤º
+    const showAlarmMsg = ref(false);      // æ§åˆ¶è­¦å‘Šå°è©±æ¡†çš„é¡¯ç¤º
     const warningButton = ref<HTMLElement | null>(null);
 
-    // Äµ§i°T®§ªº¤º®e
-    const warningMessage = ref('Äµ§i: ·í«e¦³²§±`¨Æ¥ó»İ­n³B²z¡I');
+    // è­¦å‘Šè¨Šæ¯çš„å…§å®¹
+    const warningMessage = ref('è­¦å‘Š: ç•¶å‰æœ‰ç•°å¸¸äº‹ä»¶éœ€è¦è™•ç†ï¼');
     function isMobileDevice() {
         const mobileDevice = ['Android', 'webOS', 'iPhone', 'iPad', 'iPod', 'BlackBerry', 'Windows Phone']
         let isMobileDevice = mobileDevice.some(e => navigator.userAgent.match(e))
         return isMobileDevice
     }
-    // ÀË¬d¬O§_»İ­nÅã¥ÜÄµ§i«ö¶s¡]¼ÒÀÀ±ø¥ó¡^
+    // æª¢æŸ¥æ˜¯å¦éœ€è¦é¡¯ç¤ºè­¦å‘ŠæŒ‰éˆ•ï¼ˆæ¨¡æ“¬æ¢ä»¶ï¼‰
     async function checkForAlarms() {
         //1131025 do not show in phone
         if (isMobileDevice()) return;
         //alert("in");
-        /* ¼ÒÀÀ±ø¥óÀË¬d¡A¦pªG¦³²§±`¡A´NÅã¥Ü«ö¶s
+        /* æ¨¡æ“¬æ¢ä»¶æª¢æŸ¥ï¼Œå¦‚æœæœ‰ç•°å¸¸ï¼Œå°±é¡¯ç¤ºæŒ‰éˆ•
             alert("in");
             alert(alarmrtn.length);
             let alarms = alarmrtn.filter(item => item.status !== '');
@@ -76,7 +76,7 @@ const routerName = computed<string>(() => {
 
     };
 
-    // ·í«ö¤UÄµ§i«ö¶s®ÉÄ²µo¡AÅã¥ÜÄµ§i°T®§ªº¹ï¸Ü®Ø
+    // ç•¶æŒ‰ä¸‹è­¦å‘ŠæŒ‰éˆ•æ™‚è§¸ç™¼ï¼Œé¡¯ç¤ºè­¦å‘Šè¨Šæ¯çš„å°è©±æ¡†
     const showWarningPanel = () => {
         //alert("showWarningPanel");
         setTimeout(() => {
@@ -109,12 +109,12 @@ const routerName = computed<string>(() => {
 
             }
         }, 100);
-        // ¼u¥Xµøµ¡
+        // å½ˆå‡ºè¦–çª—
         showAlarmMsg.value = true;
     };
 
     onMounted(() => {
-        checkForAlarms(); // ¼ÒÀÀÀË¬d¬O§_¦³Äµ§i¡A¨M©w¬O§_Åã¥Ü«ö¶s
+        checkForAlarms(); // æ¨¡æ“¬æª¢æŸ¥æ˜¯å¦æœ‰è­¦å‘Šï¼Œæ±ºå®šæ˜¯å¦é¡¯ç¤ºæŒ‰éˆ•
         document.getElementsByClassName("closeBtn2")[0]?.addEventListener('click', function () {
             const modal = document.getElementById("alarmbox");
             if (modal) {
@@ -150,9 +150,9 @@ const routerName = computed<string>(() => {
 
     .closeBtn2 {
         position: relative;
-        top: 0px; /* ¶ZÂ÷³»³¡ªº¶ZÂ÷¡A¥i¥H®Ú¾Ú»İ­n½Õ¾ã */
-        left: 0px; /* ¾a¥k¹ï»ô¡A¶ZÂ÷¥kÃäªº¶ZÂ÷¡A¥i¥H®Ú¾Ú»İ­n½Õ¾ã */
-        font-size: 24px; /* ½Õ¾ã«ö¶s¤j¤p */
-        cursor: pointer; /* ¹«¼ĞÄa°±®ÉÅã¥Ü¤â«¬ */
+        top: 0px; /* è·é›¢é ‚éƒ¨çš„è·é›¢ï¼Œå¯ä»¥æ ¹æ“šéœ€è¦èª¿æ•´ */
+        left: 0px; /* é å³å°é½Šï¼Œè·é›¢å³é‚Šçš„è·é›¢ï¼Œå¯ä»¥æ ¹æ“šéœ€è¦èª¿æ•´ */
+        font-size: 24px; /* èª¿æ•´æŒ‰éˆ•å¤§å° */
+        cursor: pointer; /* é¼ æ¨™æ‡¸åœæ™‚é¡¯ç¤ºæ‰‹å‹ */
     }
 </style>

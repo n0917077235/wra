@@ -52,8 +52,7 @@ const submit = async (data: {
 }): Promise<void> => {
   loading.value = true;
   try {
-    let payload = getPayload(data.groups, data.sensors);
-    const response = await apiGetSensorGeneralQueryData(payload);
+    const response = await apiGetSensorGeneralQueryData(data.groups, data.sensors);
     if (!response) return;
     tableData.value = response;
   } catch (error) {

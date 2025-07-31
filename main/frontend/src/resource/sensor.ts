@@ -6,39 +6,39 @@ export interface WaterSensorAreaResponse {
 }
 
 export interface SensorGeneralQueryDataResponse {
-    areaName: string;
-    stationName: string;
-    sensorId: string;
-    sensorType: string;
-    sensorTypeName: string;
-    sensorName: string;
-    sensorStatus: string;
-    lastDataTime: string;
-    gps: string;
-    gpsLink: string;
-    value: string;
-    differ1: string;
-    differ2: string;
-    direction: string;
-    more: string;
-    serialNo: string;
-    unit: string;
-    x: string;
-    y: string;
-    fIndex: string;
-    eventTag: string;
-    eqGrade: string;
-    status: string;
-    userType: string;
+  areaName: string;
+  stationName: string;
+  sensorId: string;
+  sensorType: string;
+  sensorTypeName: string;
+  sensorName: string;
+  sensorStatus: string;
+  lastDataTime: string;
+  gps: string;
+  gpsLink: string;
+  value: string;
+  differ1: string;
+  differ2: string;
+  direction: string;
+  more: string;
+  serialNo: string;
+  unit: string;
+  x: string;
+  y: string;
+  fIndex: string;
+  eventTag: string;
+  eqGrade: string;
+  status: string;
+  userType: string;
 }
 export async function apiGetWaterSensorArea(): Promise<
-    WaterSensorAreaResponse[]
+  WaterSensorAreaResponse[]
 > {
-    const response = await apiClient.get<WaterSensorAreaResponse[]>(
-        '/Sensor/GetWaterSensorArea',
-        {},
-    );
-    return response.data;
+  const response = await apiClient.get<WaterSensorAreaResponse[]>(
+    '/Sensor/GetWaterSensorArea',
+    {},
+  );
+  return response.data;
 }
 
 
@@ -52,18 +52,15 @@ export async function apiGetWaterSensorAreaCCTV(): Promise<
   return response.data;
 }
 
-//1130920 還須修改
 export async function apiGetWaterEmbankAlarm(): Promise<
-    SensorGeneralQueryDataResponse[]
-    > {
-    //alert("apiGetWaterEmbankAlarm");
-    const response = await apiClient.post<SensorGeneralQueryDataResponse[]>(
-        "Sensor/GetSensorGeneralQueryData?parameters=%2523%2523",
-        {},
-    );
-    //alert(response);
-    //alert(response.data);
-    return response.data;
+  SensorGeneralQueryDataResponse[]
+> {
+  const response = await apiClient.post<SensorGeneralQueryDataResponse[]>(
+    "Sensor/GetSensorGeneralQueryData?parameters=none",
+    {},
+  );
+  
+  return response.data;
 }
 
 export interface CameraByAreaIdResponse {
@@ -110,12 +107,12 @@ export interface SensorGeneralQueryDataResponse {
   sensorType: string;
   sensorTypeName: string;
   sensorName: string;
-  sensorStatus: string ;
+  sensorStatus: string;
   lastDataTime: string;
-  gps: string ;
-  gpsLink: string ;
-    value: string;
-    differ1: string;
+  gps: string;
+  gpsLink: string;
+  value: string;
+  differ1: string;
   differ2: string;
   direction: string;
   more: string;
@@ -131,12 +128,16 @@ export interface SensorGeneralQueryDataResponse {
 }
 
 export async function apiGetSensorGeneralQueryData(
-  payload: string,
+  areas: string[], sensorTypes: string[]
 ): Promise<SensorGeneralQueryDataResponse[]> {
+  let json = JSON.stringify({ areas, sensorTypes });
+  let payload = encodeURIComponent(json);
+
   const response = await apiClient.post<SensorGeneralQueryDataResponse[]>(
     `/Sensor/GetSensorGeneralQueryData?userGroupId=0&parameters=${payload}`,
     {},
   );
+
   return response.data;
 }
 
@@ -197,13 +198,13 @@ export async function apiGetSensorChartData(
 }
 
 export async function apiGetSensorMoreDataByStationName(
-    payload: string,
+  payload: string,
 ): Promise<string> {
-    const encodedText = encodeURIComponent(payload);
-    const response = await apiClient.post<string>(
-        `/Sensor/GetSensorMoreDataByStationName?stationName=${encodedText}`,
-        {},
-    );
+  const encodedText = encodeURIComponent(payload);
+  const response = await apiClient.post<string>(
+    `/Sensor/GetSensorMoreDataByStationName?stationName=${encodedText}`,
+    {},
+  );
 
-    return response.data;
+  return response.data;
 }

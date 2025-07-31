@@ -1060,58 +1060,21 @@ public class SensorController : ControllerBase
     public string GetSensorGeneralQueryData(int userGroupId, string parameters)
     {
         var lstDatas = new List<WaterSensorQuery>();
-        string areas = "";
-        string sensorTypes = "";
-        if (parameters == "##")
-        {
-            areas = "";
-            sensorTypes = "";
-        }
-        else
-        {
-            string[] datas1 = parameters.Split(',');
-
-            for (int i = 0; i < datas1.Length; i++)
-            {
-                string[] datas2 = datas1[i].Split(';');
-                if (datas2[0] == "0")
-                {
-                    areas += datas2[1] + ",";
-                }
-                else if (datas2[0] == "1")
-                {
-                    sensorTypes += datas2[1] + ",";
-                }
-            }
-
-            if (areas.Length > 2)
-            {
-                areas = areas.Substring(0, areas.Length - 1);
-            }
-
-            if (sensorTypes.Length > 2)
-            {
-                sensorTypes = sensorTypes.Substring(0, sensorTypes.Length - 1);
-            }
-        }
-
-        lstDatas.Clear();
-        DataTable dt = null;
+        var (areas, sensorTypes) = ParseParameters(parameters);
         string? conn = _configuration.GetConnectionString("Water2022");
-        SqlHelper sqlHelper = new SqlHelper(conn); ;
+        var sqlHelper = new SqlHelper(conn); ;
         var lstParam = new List<SqlParameter>();
         lstParam.Add(new SqlParameter("areaid", areas == "" ? DBNull.Value : areas));
         lstParam.Add(new SqlParameter("sensortype", sensorTypes == "" ? DBNull.Value : sensorTypes));
         int userType = userGroupId;
         lstParam.Add(new SqlParameter("userType", userType));
-        dt = sqlHelper.ExecuteStoreProcedureQuery("sp_SensorQuery2022", lstParam.ToArray());
+        var dt = sqlHelper.ExecuteStoreProcedureQuery("sp_SensorQuery2022", lstParam.ToArray());
 
         for (int i = 0; i < dt.Rows.Count; i++)
         {
             WaterSensorQuery data = new WaterSensorQuery();
             data.userType = userType;
             data.serialNo = (i + 1).ToString();
-            //data.fIndex = int.Parse(dt.Rows[i]["f_index"].ToString());
             data.sensorId = dt.Rows[i]["sensorid"].ToString();
             data.areaName = dt.Rows[i]["areaname"].ToString();
             data.stationName = dt.Rows[i]["stationnameA"].ToString();
@@ -1134,6 +1097,7 @@ public class SensorController : ControllerBase
             double.TryParse(dt.Rows[i]["lastValue2Prev"].ToString(), out value2Prev);
             double differ1 = value1 - value1Prev;
             string direction1 = "", direction2 = "";
+
             if (differ1 > 0)
             {
                 direction1 = "images/up128.png";
@@ -1187,6 +1151,14 @@ public class SensorController : ControllerBase
         }
 
         return JsonConvert.SerializeObject(lstDatas);
+    }
+
+    private static (string areas, string sensorTypes) ParseParameters(string parameters)
+    {
+        if (parameters == "none") return ("", "");
+        var t = JToken.Parse(parameters);
+        var f = (string key)=>string.Join(",", t[key].ToObject<string[]>());
+        return (f("areas"), f("sensorTypes"));
     }
 
     private class AlarmLines
@@ -1381,7 +1353,7 @@ public class SensorController : ControllerBase
         return JsonConvert.SerializeObject(st.chart);
     }
 
-    private static void AddAlarmLines(SensorChartParameter param, SensorQueryStation st, 
+    private static void AddAlarmLines(SensorChartParameter param, SensorQueryStation st,
         DataRow row, DateTime tFirst, DateTime tEnd)
     {
         foreach (var def in AlarmLinesDef)
