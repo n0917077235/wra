@@ -979,11 +979,11 @@ const addLayer = async (layerId: string, funcName: string) => {
             }
             //alert(type + " " + titleset);
             if (layerId == 'layer21') {
-                if (lastValue.toString() == "0") {
+                if (lastValue1.toString() == "0") {
                     //alert("000");
                     url = require('@/assets/image/blackdoorclose.png');
                 } else url = require('@/assets/image/blackdooropen.png');;
-                value = lastValue.toString() + unit;
+                value = lastValue1.toString() + unit;
             } else if (layerId == 'layer5') {
                 value = lastValue1 + unit;//titleset = titleset + " lastValue1:" + lastValue1;
             } else if (layerId == 'layer6') {
