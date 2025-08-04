@@ -1,13 +1,13 @@
 import LayerProps from './layerProps';
-import MathUtil from '../mathUtil';
 import SensorDef from '../sensorDef';
 import SensorProps from './sensorProps';
 import GateImages from './gateImages';
+import InfoWindowUtil from './infoWindowUtil';
 
 export default class MapUtil {
     static _eqIntensities = ['1', '2', '3', '4', '5.1', '5.9', '6.1', '6.9', '7'];
     static sensorLayers = ['layer5', 'layer6', 'layer7', SensorDef.SLOPE,
-        'layer10', 'layer11', 'layer21'];
+        SensorDef.PLANNING_LEVEL, 'layer10', 'layer11', 'layer21'];
 
     static _roundTo(num, decimal) {
         let y = Math.pow(10, decimal);
@@ -18,29 +18,36 @@ export default class MapUtil {
         return MapUtil._roundTo(Number(feature.get(key)), 2);
     }
 
+    static _getValue(layerId, values, unit) {
+        if (layerId == SensorDef.SLOPE) {
+            return InfoWindowUtil.createValueText('Slope', values, unit);
+        }
+
+        if (layerId == SensorDef.PLANNING_LEVEL) {
+            return InfoWindowUtil.createValueText('PlanningLevel', values, unit);
+        }
+
+        if (layerId == 'layer11') {
+            return InfoWindowUtil.createValueText('Gate', values, unit);
+        }
+
+        if (['layer5', 'layer6', 'layer7', 'layer10', 'layer21'].includes(layerId)) {
+            return InfoWindowUtil.createValueText('', [values[0]], unit);
+        }
+
+        return '';
+    }
+
     static _getFeatureProps(layerProps, feature, sensorInfo) {
         let unit = layerProps.unit;
         let layerId = layerProps.layerId;
-        let lastValue = MapUtil._getNumber(feature, "lastValue");
         let lastValue1 = MapUtil._getNumber(feature, "lastValue1");
         let lastValue2 = MapUtil._getNumber(feature, "lastValue2");
-        let value = "";
+        let value = MapUtil._getValue(layerId, [lastValue1, lastValue2], unit);
         let imageIndex = 0;
 
-        if (layerId == 'layer5') {
-            value = lastValue1 + unit;
-        } else if (layerId == 'layer6') {
-            value = lastValue1 + unit;
-        } else if (layerId == 'layer7') {
-            value = lastValue1 + unit;
-        } else if (layerId == 'layer10') {
-            // 水位計
-            value = lastValue1 + unit;
-        } else if (layerId == SensorDef.SLOPE) {
-            value = lastValue1 + unit + ", " + lastValue2 + unit;
-        } else if (layerId == 'layer11') {
+        if (layerId == 'layer11') {
             // Gate opening
-            value = MapUtil._mapGateOpening(lastValue1, unit);
             imageIndex = GateImages.getImageIndex(lastValue1, feature, sensorInfo);
         } else if (layerId == 'layer12') {
             let intensity = feature.get('intensity');
@@ -48,7 +55,6 @@ export default class MapUtil {
             if (index >= 0) imageIndex = index;
         } else if (layerId == 'layer21') {
             imageIndex = lastValue1 <= 5 ? 0 : 1;
-            value = lastValue1.toString() + unit;
         }
 
         let s = MapUtil._findSensorImageIndex(layerId, feature, sensorInfo);
@@ -71,13 +77,6 @@ export default class MapUtil {
         if (status === '停用' || status === '缺測') return 1;
         if (status === '警戒') return 2;
         return 0;
-    }
-
-    static _mapGateOpening(val, unit) {
-        if (val == -888) return " 無此設備 ";
-        if (val == -999 || val == -998) return " 異常 ";
-        let v = MathUtil.bound(val, 0, 100);
-        return `${v}${unit}`;
     }
 
     static _selectIcon(layerProps, fp) {
@@ -204,6 +203,7 @@ export default class MapUtil {
             case 'layer7':
             case 'layer8':
             case SensorDef.SLOPE:
+            case SensorDef.PLANNING_LEVEL:
             case 'layer10':
                 let item = SensorProps.find(layerId);
                 urls.push(...SensorProps.getIconUrls(item));

@@ -1,16 +1,13 @@
-﻿using GeoJSON.Net.CoordinateReferenceSystem;
-using GeoJSON.Net.Feature;
+﻿using GeoJSON.Net.Feature;
 using GeoJSON.Net.Geometry;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using Org.BouncyCastle.Bcpg.Sig;
 using System.Data;
 using Wra10Core2023.Models;
 using Wra10Core2023.Util;
-using FeatureCollection = GeoJSON.Net.Feature.FeatureCollection;
 using Point = GeoJSON.Net.Geometry.Point;
 using SqlHelper = Wra10Core2023.Util.SQLHelper;
 
@@ -121,8 +118,7 @@ public class GeoJsonController : ControllerBase
             return new Feature(geometry, properties);
         });
 
-        var json = ToFeatureCollectionJson(pointList);
-        return json;
+        return ToFeatureCollectionJson(pointList);
     }
 
     [Authorize]
@@ -130,9 +126,10 @@ public class GeoJsonController : ControllerBase
     [Route("GetSensorGps")]
     public string GetSensorGps(string sensorType)
     {
-        var collection = new FeatureCollection() { CRS = new NamedCRS("EPSG:31370") };
         var sqlHelper = new SqlHelper(_configuration.GetConnectionString("Water2022"));
-        var dt = GetSensorGpsTable(sqlHelper, sensorType);
+        var type = sensorType.ToLowerInvariant();
+        if (type == "planninglevel") return PlanningLevel.GetGeoJson();
+        var dt = GetSensorGpsTable(sqlHelper, type);
 
         var pointList = dt.Rows.Cast<DataRow>().Select(row =>
         {
@@ -154,14 +151,12 @@ public class GeoJsonController : ControllerBase
             return new Feature(geometry, properties);
         });
 
-        var json = ToFeatureCollectionJson(pointList);
-        return json;
+        return ToFeatureCollectionJson(pointList);
     }
 
     private static DataTable GetSensorGpsTable(SqlHelper sqlHelper, string sensorType)
     {
-        var type = sensorType.ToLowerInvariant();
-        var sType = type == "waterlevel2" ? "waterlevel" : type;
+        var sType = sensorType == "waterlevel2" ? "waterlevel" : sensorType;
 
         var common = @"
                 Select a.sensorid, sensorNameA, a.SensorType, a.AreaID, b.x, b.y, lastvalue1
@@ -173,7 +168,7 @@ public class GeoJsonController : ControllerBase
                 and disablestate <> 1
                 ";
 
-        var extra = type switch
+        var extra = sensorType switch
         {
             "gate" => "and a.areaid not in ('A12','A13')",
             "waterlevel" => "and a.importflag not like 'em%'",
@@ -186,7 +181,7 @@ public class GeoJsonController : ControllerBase
         return dt;
     }
 
-    private static string ToFeatureCollectionJson(IEnumerable<Feature> pointList)
+    public static string ToFeatureCollectionJson(IEnumerable<Feature> pointList)
     {
         var o = new
         {
@@ -202,7 +197,6 @@ public class GeoJsonController : ControllerBase
     [Route("GetTansuiGps")]
     public string GetTansuiGps()
     {
-        var collection = new FeatureCollection() { CRS = new NamedCRS("EPSG:31370") };
         SqlHelper sqlHelper = new SqlHelper(_configuration.GetConnectionString("Water2022"));
         string cmd = @"Select stationid,stationnamea,x,y from Stations where isnull(x,0)!=0 and isnull(y,0)!=0 and areaid<>'A08' and isnull( importflag,'') <> 'EMBank' and isnull(importflag,'') <> 'EM2022'";
         DataTable dt = sqlHelper.ExecuteQuery(cmd);
@@ -231,12 +225,11 @@ public class GeoJsonController : ControllerBase
     public string GetAdslGps()
     {
         string gpsId = "GPS06";
-        var collection = new FeatureCollection() { CRS = new NamedCRS("EPSG:31370") };
         SqlHelper sqlHelper = new SqlHelper(_configuration.GetConnectionString("Water2022"));
         string cmd = @"Select sequence,objectid, GpsID as stationid,layername as stationname,lng as x,lat as y from gpslayersub where gpsid='" + gpsId + "' and isnull(lat,1)!=0 and isnull(lng,0)!=0 and isnull(mark,1)=1 order by layername,sequence";
         DataTable dt = sqlHelper.ExecuteQuery(cmd);
-        //List<CommonGps> lstGps = new List<CommonGps>();
         var pointList = new List<Feature>();
+
         for (int i = 0; i < dt.Rows.Count; i++)
         {
             var geometry = new Point(new Position(double.Parse(dt.Rows[i]["y"].ToString()), double.Parse(dt.Rows[i]["x"].ToString())));
@@ -248,7 +241,6 @@ public class GeoJsonController : ControllerBase
             };
             var feature = new Feature(geometry, properties);
             pointList.Add(feature);
-            //collection.Features.Add(feature);
         }
 
 
@@ -267,7 +259,6 @@ public class GeoJsonController : ControllerBase
     public string Get4GGps()
     {
         string gpsId = "GPS07";
-        var collection = new FeatureCollection() { CRS = new NamedCRS("EPSG:31370") };
         SqlHelper sqlHelper = new SqlHelper(_configuration.GetConnectionString("Water2022"));
         string cmd = @"Select sequence,objectid, GpsID as stationid,layername as stationname,lng as x,lat as y from gpslayersub where gpsid='" + gpsId + "' and isnull(lat,1)!=0 and isnull(lng,0)!=0 and isnull(mark,1)=1 order by layername,sequence";
         DataTable dt = sqlHelper.ExecuteQuery(cmd);
@@ -286,7 +277,6 @@ public class GeoJsonController : ControllerBase
             pointList.Add(feature);
         }
 
-
         string json = JsonConvert.SerializeObject(pointList);
         json = @"{
   ""type"": ""FeatureCollection"",
@@ -301,7 +291,6 @@ public class GeoJsonController : ControllerBase
     [Route("GetCCTVGpsByArea")]
     public string GetCCTVGpsByArea(string? areaId)
     {
-        var collection = new FeatureCollection() { CRS = new NamedCRS("EPSG:31370") };
         SqlHelper sqlHelper = new SqlHelper(_configuration.GetConnectionString("Water2022"));
         string cmd = @"select camid,camname,a.x,a.y,streamMain from Cameras a 
        inner join stations b on a.StationID=b.StationID 
@@ -337,7 +326,6 @@ public class GeoJsonController : ControllerBase
     [Route("GetBankGps")]
     public string GetBankGps()
     {
-        var collection = new FeatureCollection() { CRS = new NamedCRS("EPSG:31370") };
         var sqlHelper = new SqlHelper(_configuration.GetConnectionString("Water2022"));
         string cmd = @"Select stationid,stationnamea,x,y from Stations where isnull(x,0)!=0 and isnull(y,0)!=0 and importflag like 'EM%'";
         DataTable dt = sqlHelper.ExecuteQuery(cmd);
@@ -371,7 +359,6 @@ public class GeoJsonController : ControllerBase
     [Route("GetStationGps")]
     public string GetStationsGps()
     {
-        var collection = new FeatureCollection() { CRS = new NamedCRS("EPSG:31370") };
         SqlHelper sqlHelper = new SqlHelper(_configuration.GetConnectionString("Water2022"));
         string cmd = @"Select stationid,stationnamea,x,y from Stations where isnull(x,0)!=0 and isnull(y,0)!=0";
         DataTable dt = sqlHelper.ExecuteQuery(cmd);
@@ -405,7 +392,6 @@ public class GeoJsonController : ControllerBase
     public string GetDamPointGps()
     {
         string? gpsId = "GPS03";
-        var collection = new FeatureCollection() { CRS = new NamedCRS("EPSG:31370") };
         SqlHelper sqlHelper = new SqlHelper(_configuration.GetConnectionString("Water2022"));
         string cmd = @"Select sequence,objectid, GpsID as stationid,layername as stationname,lng as x,lat as y from gpslayersub where gpsid='" + gpsId + "' and isnull(lat,1)!=0 and isnull(lng,0)!=0 and isnull(mark,1)=1 order by layername,sequence";
         DataTable dt = sqlHelper.ExecuteQuery(cmd);
@@ -433,13 +419,11 @@ public class GeoJsonController : ControllerBase
         return json;
     }
 
-
     [Authorize]
     [HttpGet]
     [Route("GetYansantziGps")]
     public string GetYansantziGps()
     {
-        var collection = new FeatureCollection() { CRS = new NamedCRS("EPSG:31370") };
         SqlHelper sqlHelper = new SqlHelper(_configuration.GetConnectionString("Water2022"));
         string cmd = @"Select stationid,stationnameA,x,y from Stations where isnull(x,0)!=0 and isnull(y,0)!=0 and stationid='ST0077'";
         DataTable dt = sqlHelper.ExecuteQuery(cmd);
@@ -471,7 +455,6 @@ public class GeoJsonController : ControllerBase
     [Route("GetCCTVGps")]
     public string GetCCTVGps()
     {
-        var collection = new FeatureCollection() { CRS = new NamedCRS("EPSG:31370") };
         SqlHelper sqlHelper = new SqlHelper(_configuration.GetConnectionString("Water2022"));
         string cmd = @"select camid,camname,a.x,a.y,streamMain from Cameras a 
        inner join stations b on a.StationID=b.StationID 

@@ -1007,8 +1007,8 @@ const addLayer = async (layerId: string, funcName: string) => {
                         value = lastValue1 + unit;
                     };
                 } else value = "0" + unit;
-                if (lastValue1 > 0) url = require('@/assets/image/reddooropen.png');
-                else url = require('@/assets/image/reddoorclose.png');
+                if (lastValue1 > 0) url = require('@/assets/image/gates/reddooropen.png');
+                else url = require('@/assets/image/gates/reddoorclose.png');
             } else if (layerId == 'layer24') {
                 zi = 2;
             } else if (layerId == 'layer25') {

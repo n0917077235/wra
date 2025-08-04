@@ -38,6 +38,12 @@ export default class SensorProps {
             unit: 'm',
             sensorType: 'WaterLevel',
         },
+        {
+            layerId: SensorDef.PLANNING_LEVEL,
+            dot: 'cyan-dot',
+            unit: 'm',
+            sensorType: 'PlanningLevel',
+        },
     ];
 
     static find(layerId) {

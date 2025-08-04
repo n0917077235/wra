@@ -89,7 +89,15 @@
                             style="float:right; margin-right:5px;">
                     </label>
                     <br>
-                    <label><input type="checkbox" id="layer11" @click="toggleLayer('layer11')">
+                    <label>
+                        <input type="checkbox" id="layer27" @click="toggleLayer('layer27')">
+                        規劃科水位計
+                        <img src="@/assets/image/cyan-dot_.png" width="20" height="20"
+                            style="float:right; margin-right:5px;">
+                    </label>
+                    <br>
+                    <label>
+                        <input type="checkbox" id="layer11" @click="toggleLayer('layer11')">
                         閘門開度計
                         <img src="@/assets/image/gates/reddooropen.png" width="20" height="20"
                             style="float:right; margin-right:5px;">
@@ -622,6 +630,9 @@ async function toggleLayer(layerGroup) {
                 break;
             case SensorDef.SLOPE:
                 await addLayer(layerGroup, "/GeoJson/GetSensorGps?sensorType=slope");
+                break;
+            case SensorDef.PLANNING_LEVEL:
+                await addLayer(layerGroup, "/GeoJson/GetSensorGps?sensorType=planninglevel");
                 break;
             case 'layer10':
                 await addLayer(layerGroup, "/GeoJson/GetSensorGps?sensorType=waterlevel");
