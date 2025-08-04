@@ -91,7 +91,7 @@
                     <br>
                     <label><input type="checkbox" id="layer11" @click="toggleLayer('layer11')">
                         閘門開度計
-                        <img src="@/assets/image/reddooropen.png" width="20" height="20"
+                        <img src="@/assets/image/gates/reddooropen.png" width="20" height="20"
                             style="float:right; margin-right:5px;">
                     </label>
                     <br>
@@ -727,6 +727,10 @@ async function getLayers(layerId, funcName) {
 }
 
 async function getSensorGeneralInfo(layerId) {
+    if (layerId === 'layer11') {
+        return await apiGetSensorGeneralQueryData([], ['gate']);
+    }
+
     let item = SensorProps.find(layerId);
     if (item === undefined) return [];
     return await apiGetSensorGeneralQueryData([], [item.sensorType]);

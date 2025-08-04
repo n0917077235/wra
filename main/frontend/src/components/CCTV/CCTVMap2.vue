@@ -57,7 +57,7 @@
                             src="@/assets/image/red-dot_.png" width="20" height="20"
                             style="float:right; margin-right:5px;"></label><br>
                     <label><input type="checkbox" id="layer11" @click="toggleLayer('layer11')"> 閘門開度計<img
-                            src="@/assets/image/reddooropen.png" width="20" height="20"
+                            src="@/assets/image/gates/reddooropen.png" width="20" height="20"
                             style="float:right; margin-right:5px;"></label><br>
                     <label><input type="checkbox" id="layer12" @click="toggleLayer('layer12')"> 等震度圖<img
                             src="@/assets/image/intensityblack.png" width="20" height="20"
@@ -916,8 +916,8 @@ const addLayer = async (layerId: string, funcName: string) => {
                 unit = " M";
                 break;
             case 'layer11':
-                url = require('@/assets/image/reddoorclose.png');
-                url2 = require('@/assets/image/reddooropen.png');
+                url = require('@/assets/image/gates/reddoorclose.png');
+                url2 = require('@/assets/image/gates/reddooropen.png');
                 unit = " %";
                 break;
             case 'layer2':

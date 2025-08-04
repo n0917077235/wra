@@ -2,6 +2,7 @@ import LayerProps from './layerProps';
 import MathUtil from '../mathUtil';
 import SensorDef from '../sensorDef';
 import SensorProps from './sensorProps';
+import GateImages from './gateImages';
 
 export default class MapUtil {
     static _eqIntensities = ['1', '2', '3', '4', '5.1', '5.9', '6.1', '6.9', '7'];
@@ -40,7 +41,7 @@ export default class MapUtil {
         } else if (layerId == 'layer11') {
             // Gate opening
             value = MapUtil._mapGateOpening(lastValue1, unit);
-            imageIndex = lastValue1 <= 5 ? 0 : 1;
+            imageIndex = GateImages.getImageIndex(lastValue1, feature, sensorInfo);
         } else if (layerId == 'layer12') {
             let intensity = feature.get('intensity');
             let index = MapUtil._eqIntensities.indexOf(intensity);
@@ -59,6 +60,11 @@ export default class MapUtil {
     static _findSensorImageIndex(layerId, feature, sensorInfo) {
         let item = SensorProps.find(layerId);
         if (item === undefined) return null;
+        return MapUtil._getSensorStatus(feature, sensorInfo);
+    }
+
+    // Returns: null | 0 | 1 | 2
+    static _getSensorStatus(feature, sensorInfo) {
         let m = sensorInfo.find(x => x.sensorId === feature.get('id'));
         if (m === undefined) return null;
         let status = m.status;
@@ -69,7 +75,7 @@ export default class MapUtil {
 
     static _mapGateOpening(val, unit) {
         if (val == -888) return " 無此設備 ";
-        if (val == -999) return " 異常 ";
+        if (val == -999 || val == -998) return " 異常 ";
         let v = MathUtil.bound(val, 0, 100);
         return `${v}${unit}`;
     }
@@ -204,8 +210,8 @@ export default class MapUtil {
                 if (item.unit) unit = ' ' + item.unit;
                 break;
             case 'layer11':
-                urls.push(require('@/assets/image/reddoorclose.png'));
-                urls.push(require('@/assets/image/reddooropen.png'));
+                let images = GateImages.images;
+                urls.push(...images.map(x => require(`@/assets/image/gates/${x}`)));
                 unit = " %";
                 break;
             case 'layer12':

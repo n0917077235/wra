@@ -7,7 +7,6 @@
         public string? Token { get; set; }
     }
 
-    
     public class LoginModel
     {
         public string? Username { get; set; }
