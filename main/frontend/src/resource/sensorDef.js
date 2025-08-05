@@ -4,6 +4,8 @@ let SensorDef = {
     EMBANKMENT_STATION: 'layer3',
     CAMERA_STATION: 'layer4',
     SLOPE: 'layer9',                 // 傾斜
+    LEVEL: 'layer10',                // 水位計
+    GATE: 'layer11',                 // 閘門
     PLANNING_LEVEL: 'layer27',       // 規劃課水位計
 };
 

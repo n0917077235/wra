@@ -6,8 +6,13 @@ import InfoWindowUtil from './infoWindowUtil';
 
 export default class MapUtil {
     static _eqIntensities = ['1', '2', '3', '4', '5.1', '5.9', '6.1', '6.9', '7'];
-    static sensorLayers = ['layer5', 'layer6', 'layer7', SensorDef.SLOPE,
-        SensorDef.PLANNING_LEVEL, 'layer10', 'layer11', 'layer21'];
+
+    static sensorLayers = ['layer5', 'layer6', 'layer7', 'layer8',
+        SensorDef.SLOPE,
+        SensorDef.PLANNING_LEVEL, 
+        SensorDef.LEVEL, 
+        SensorDef.GATE, 
+        'layer21'];
 
     static _roundTo(num, decimal) {
         let y = Math.pow(10, decimal);
@@ -27,11 +32,11 @@ export default class MapUtil {
             return InfoWindowUtil.createValueText('PlanningLevel', values, unit);
         }
 
-        if (layerId == 'layer11') {
+        if (layerId == SensorDef.GATE) {
             return InfoWindowUtil.createValueText('Gate', values, unit);
         }
 
-        if (['layer5', 'layer6', 'layer7', 'layer10', 'layer21'].includes(layerId)) {
+        if (['layer5', 'layer6', 'layer7', 'layer8', SensorDef.LEVEL, 'layer21'].includes(layerId)) {
             return InfoWindowUtil.createValueText('', [values[0]], unit);
         }
 
@@ -46,7 +51,7 @@ export default class MapUtil {
         let value = MapUtil._getValue(layerId, [lastValue1, lastValue2], unit);
         let imageIndex = 0;
 
-        if (layerId == 'layer11') {
+        if (layerId == SensorDef.GATE) {
             // Gate opening
             imageIndex = GateImages.getImageIndex(lastValue1, feature, sensorInfo);
         } else if (layerId == 'layer12') {
@@ -204,12 +209,12 @@ export default class MapUtil {
             case 'layer8':
             case SensorDef.SLOPE:
             case SensorDef.PLANNING_LEVEL:
-            case 'layer10':
+            case SensorDef.LEVEL:
                 let item = SensorProps.find(layerId);
                 urls.push(...SensorProps.getIconUrls(item));
                 if (item.unit) unit = ' ' + item.unit;
                 break;
-            case 'layer11':
+            case SensorDef.GATE:
                 let images = GateImages.images;
                 urls.push(...images.map(x => require(`@/assets/image/gates/${x}`)));
                 unit = " %";

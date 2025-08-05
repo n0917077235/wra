@@ -23,7 +23,7 @@ export default class SensorProps {
         {
             layerId: 'layer8',
             dot: 'green-dot',
-            unit: '',
+            unit: 'cm/s²',
             sensorType: 'Earthquake',
         },
         {
@@ -33,7 +33,7 @@ export default class SensorProps {
             sensorType: 'Slope',
         },
         {
-            layerId: 'layer10', // 水位
+            layerId: SensorDef.LEVEL,
             dot: 'red-dot',
             unit: 'm',
             sensorType: 'WaterLevel',

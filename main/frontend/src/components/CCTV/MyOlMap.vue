@@ -634,10 +634,10 @@ async function toggleLayer(layerGroup) {
             case SensorDef.PLANNING_LEVEL:
                 await addLayer(layerGroup, "/GeoJson/GetSensorGps?sensorType=planninglevel");
                 break;
-            case 'layer10':
+            case SensorDef.LEVEL:
                 await addLayer(layerGroup, "/GeoJson/GetSensorGps?sensorType=waterlevel");
                 break;
-            case 'layer11':
+            case SensorDef.GATE:
                 await addLayer(layerGroup, "/GeoJson/GetSensorGps?sensorType=gate");
                 break;
             case 'layer12':
@@ -738,7 +738,7 @@ async function getLayers(layerId, funcName) {
 }
 
 async function getSensorGeneralInfo(layerId) {
-    if (layerId === 'layer11') {
+    if (layerId === SensorDef.GATE) {
         return await apiGetSensorGeneralQueryData([], ['gate']);
     }
 
