@@ -23,18 +23,14 @@
                 <h4 v-on:click="toggleLayerGroup('monitoringStations')"> {{ monitoringStationsExpanded ? '-' : '+' }}
                     監測站圖層 </h4>
                 <div id="monitoringStations" class="layer-group-content" style="display:block">
-                    <label><input type="checkbox" id="layer1" @click="toggleLayer('layer1')" checked> 淡水河水門監測站<img
-                            alt="淡水河水門監測站" id="imgg1" src="@/assets/image/Station_WaterGate_.png" width="20" height="20"
-                            style="float:right; margin-right:5px;"></label><br>
-                    <label><input type="checkbox" id="layer2" @click="toggleLayer('layer2')" checked> 員山子分洪監測站<img
-                            alt="員山子分洪監測站" id="imgg2" src="@/assets/image/Station_FloodDiversion_.png" width="20"
-                            height="20" style="float:right; margin-right:5px;"></label><br>
-                    <label><input type="checkbox" id="layer3" @click="toggleLayer('layer3')" checked> 堤防安全監測站<img
-                            alt="堤防安全監測站" id="imgg3" src="@/assets/image/Station_BankSafty_.png" width="20" height="20"
-                            style="float:right; margin-right:5px;"></label><br>
-                    <label><input type="checkbox" id="layer4" @click="toggleLayer('layer4')"> 影像監視站<img id="imgg4"
-                            alt="影像監視站" src="@/assets/image/Station_CCTV_.png" width="20" height="20"
-                            style="float:right; margin-right:5px;"></label><br>
+                    <div v-for="x in getStationLayerLines()">
+                        <label>
+                            <input type="checkbox" :id="x.layerId" @click="toggleLayer(x.layerId)"
+                                :checked="x.defaultVisible">
+                            {{ x.text }}
+                            <img :alt="x.text" :src="x.icon" width="20" height="20" class="icon">
+                        </label>
+                    </div>
                 </div>
             </div>
             <hr>
@@ -49,67 +45,13 @@
                     </label>
                 </h4>
                 <div id="SenserMaps" class="layer-group-content">
-                    <label>
-                        <input type="checkbox" id="layer5" @click="toggleLayer('layer5')">
-                        沉陷計
-                        <img src="@/assets/image/pink-dot_.png" width="20" height="20"
-                            style="float:right; margin-right:5px;">
-                    </label>
-                    <br>
-                    <label>
-                        <input type="checkbox" id="layer6" @click="toggleLayer('layer6')">
-                        高灘地水位計
-                        <img src="@/assets/image/yellow-dot_.png" width="20" height="20"
-                            style="float:right; margin-right:5px;">
-                    </label>
-                    <br>
-                    <label>
-                        <input type="checkbox" id="layer7" @click="toggleLayer('layer7')">
-                        裂縫計
-                        <img src="@/assets/image/purple-dot_.png" width="20" height="20"
-                            style="float:right; margin-right:5px;">
-                    </label>
-                    <br>
-                    <label>
-                        <input type="checkbox" id="layer8" @click="toggleLayer('layer8')">
-                        地震儀<img src="@/assets/image/green-dot_.png" width="20" height="20"
-                            style="float:right; margin-right:5px;">
-                    </label>
-                    <br>
-                    <label>
-                        <input type="checkbox" id="layer9" @click="toggleLayer('layer9')">
-                        傾斜計
-                        <img src="@/assets/image/orange-dot_.png" width="20" height="20"
-                            style="float:right; margin-right:5px;">
-                    </label>
-                    <br>
-                    <label>
-                        <input type="checkbox" id="layer10" @click="toggleLayer('layer10')">
-                        水位計<img src="@/assets/image/red-dot_.png" width="20" height="20"
-                            style="float:right; margin-right:5px;">
-                    </label>
-                    <br>
-                    <label>
-                        <input type="checkbox" id="layer27" @click="toggleLayer('layer27')">
-                        規劃科水位計
-                        <img src="@/assets/image/cyan-dot_.png" width="20" height="20"
-                            style="float:right; margin-right:5px;">
-                    </label>
-                    <br>
-                    <label>
-                        <input type="checkbox" id="layer11" @click="toggleLayer('layer11')">
-                        閘門開度計
-                        <img src="@/assets/image/gates/reddooropen.png" width="20" height="20"
-                            style="float:right; margin-right:5px;">
-                    </label>
-                    <br>
-                    <label>
-                        <input type="checkbox" id="layer12" @click="toggleLayer('layer12')">
-                        等震度圖
-                        <img src="@/assets/image/intensityblack.png" width="20" height="20"
-                            style="float:right; margin-right:5px;">
-                    </label>
-                    <br>
+                    <div v-for="x in getSensorLayerLines()">
+                        <label>
+                            <input type="checkbox" :id="x.layerId" @click="toggleLayer(x.layerId)">
+                            {{ x.text }}
+                            <img :alt="x.text" :src="x.icon" width="20" height="20" class="icon">
+                        </label>
+                    </div>
                 </div>
             </div>
             <hr>
@@ -176,8 +118,6 @@
                         src="@/assets/image/red.png" width="20" height="20"
                         style="float:right; margin-right:5px;"></label><br>
             </div>
-
-            <!-- 可新增更多圖層組 -->
         </div>
         <Popup :overlay="popup.overlay" :content="popup.content" @initialized="onPopupInit"></Popup>
     </div>
@@ -214,8 +154,6 @@ const CameraArea = computed(() => store2.state.image.currentCameraArea);
 const pMap = ref();
 const markerPoint = ref();
 const pTGMarker = ref();
-var pTGMarker2;
-var pTGLine = ref();
 const el = document.getElementsByClassName('el');
 const monitoringStationsExpanded = ref(true);
 const SenserMapsExpanded = ref(false);
@@ -232,11 +170,7 @@ const popup = ref({
 const changedItems = ref([]);
 
 onMounted(() => {
-    //if (typeof TGOS !== 'undefined') {
     store2.dispatch('drawings/loadDrawings'); // 使用命名空間調用 action
-    //} else {
-    //    alert('TGOS API 未加載');
-    //}
     init();
     toggleLayer(LayerDef.TANSUI_STATION);
     toggleLayer(LayerDef.YANSANTZI_STATION);
@@ -244,6 +178,29 @@ onMounted(() => {
     toggleLayer("layer18");
     toggleLayer("layer19");
 });
+
+function getStationLayerLines() {
+    return StationProps.all;
+}
+
+function getSensorLayerLines() {
+    let sensors = SensorProps.all
+        .filter(x => x.layerId !== LayerDef.SLIDING_DOOR)
+        .map(x => ({
+            layerId: x.layerId,
+            text: x.text,
+            icon: SensorProps.getIconUrls(x)[0],
+        }));
+
+    return [
+        ...sensors,
+        {
+            layerId: 'layer12',
+            text: '等震度圖',
+            icon: require('@/assets/image/intensityblack.png'),
+        },
+    ];
+}
 
 function cleardrawed() {
     const savedDrawings = store2.state.drawings.drawings;
@@ -300,9 +257,7 @@ watch(
     },
     { deep: true, immediate: true },
 );
-const products = ref(null);
-var lists: string[];
-//manu收合
+
 const menuVisible = ref(true);
 
 function toggleMenu() {
@@ -609,7 +564,7 @@ async function toggleLayer(layerGroup) {
         let toAdd = getLayerGeojsonUrls(layerGroup);
 
         for (let x of toAdd) {
-            await addLayer(x.layerId, x.url);
+            await addLayer(x.layerId, x.url, layerGroup);
         }
     }
 }
@@ -766,10 +721,10 @@ function toggleShowValues() {
 }
 
 function refreshSensorLayers() {
-    let layers = SensorProps.getAllLayers();
+    let all = SensorProps.getAllLayers();
 
     for (let k of layers.keys()) {
-        if (layers.includes(k)) {
+        if (all.includes(k)) {
             for (let x of layers.get(k)) {
                 x.getSource().changed();
             }
@@ -877,15 +832,8 @@ function updateWnd(x: number, y: number, title?: string): void {
     width: 90%;
 }
 
-.closeBtn3 {
-    position: relative;
-    top: 0px;
-    /* 距離頂部的距離，可以根據需要調整 */
-    left: 0px;
-    /* 靠右對齊，距離右邊的距離，可以根據需要調整 */
-    font-size: 24px;
-    /* 調整按鈕大小 */
-    cursor: pointer;
-    /* 鼠標懸停時顯示手型 */
+.icon {
+    float: right;
+    margin-right: 5px;
 }
 </style>

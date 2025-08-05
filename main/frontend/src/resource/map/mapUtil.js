@@ -33,15 +33,13 @@ export default class MapUtil {
         return { imageIndex, value };
     }
 
-    // Returns null if not applicable
+    // Returns 0 if not found
     static _findSensorImageIndex(layerId, lastValue1, feature, sensorInfo) {
         if (layerId == LayerDef.GATE) {
             return GateImages.getImageIndex(lastValue1, feature, sensorInfo);
         }
 
-        if (layerId == 'layer21') {
-            return lastValue1 <= 5 ? 0 : 1;
-        }
+        if (layerId == LayerDef.SLIDING_GATE) return lastValue1 <= 5 ? 0 : 1;
 
         if (layerId == 'layer12') {
             let intensity = feature.get('intensity');
@@ -51,7 +49,7 @@ export default class MapUtil {
 
         let item = SensorProps.find(layerId);
         if (item === undefined) return 0;
-        return MapUtil._getSensorStatus(feature, sensorInfo);
+        return MapUtil._getSensorStatus(feature, sensorInfo) ?? 0;
     }
 
     // Returns: null | 0 | 1 | 2

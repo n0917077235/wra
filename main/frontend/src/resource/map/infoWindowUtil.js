@@ -126,11 +126,11 @@ export default class InfoWindowUtil {
         let v = values.slice(0, count);
 
         if (sensorType === 'PlanningLevel') {
-            return InfoWindowUtil._mapPlanningLevel(v, unit);
+            return InfoWindowUtil._mapPlanningLevel(v[0], unit);
         }
 
         if (sensorType === 'Gate') {
-            return InfoWindowUtil._mapGateOpening(v, unit);
+            return InfoWindowUtil._mapGateOpening(v[0], unit);
         }
 
         return v.map(x => MathUtil.toFixed(x, 3) + unit).join(', ');
