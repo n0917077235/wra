@@ -1,18 +1,11 @@
 import LayerProps from './layerProps';
-import SensorDef from '../sensorDef';
+import LayerDef from '../LayerDef';
 import SensorProps from './sensorProps';
 import GateImages from './gateImages';
 import InfoWindowUtil from './infoWindowUtil';
 
 export default class MapUtil {
     static _eqIntensities = ['1', '2', '3', '4', '5.1', '5.9', '6.1', '6.9', '7'];
-
-    static sensorLayers = ['layer5', 'layer6', 'layer7', 'layer8',
-        SensorDef.SLOPE,
-        SensorDef.PLANNING_LEVEL, 
-        SensorDef.LEVEL, 
-        SensorDef.GATE, 
-        'layer21'];
 
     static _roundTo(num, decimal) {
         let y = Math.pow(10, decimal);
@@ -24,23 +17,9 @@ export default class MapUtil {
     }
 
     static _getValue(layerId, values, unit) {
-        if (layerId == SensorDef.SLOPE) {
-            return InfoWindowUtil.createValueText('Slope', values, unit);
-        }
-
-        if (layerId == SensorDef.PLANNING_LEVEL) {
-            return InfoWindowUtil.createValueText('PlanningLevel', values, unit);
-        }
-
-        if (layerId == SensorDef.GATE) {
-            return InfoWindowUtil.createValueText('Gate', values, unit);
-        }
-
-        if (['layer5', 'layer6', 'layer7', 'layer8', SensorDef.LEVEL, 'layer21'].includes(layerId)) {
-            return InfoWindowUtil.createValueText('', [values[0]], unit);
-        }
-
-        return '';
+        let item = SensorProps.find(layerId);
+        if (item === undefined) return '';
+        return InfoWindowUtil.createValueText(item.sensorType, values, unit);
     }
 
     static _getFeatureProps(layerProps, feature, sensorInfo) {
@@ -49,28 +28,28 @@ export default class MapUtil {
         let lastValue1 = MapUtil._getNumber(feature, "lastValue1");
         let lastValue2 = MapUtil._getNumber(feature, "lastValue2");
         let value = MapUtil._getValue(layerId, [lastValue1, lastValue2], unit);
-        let imageIndex = 0;
-
-        if (layerId == SensorDef.GATE) {
-            // Gate opening
-            imageIndex = GateImages.getImageIndex(lastValue1, feature, sensorInfo);
-        } else if (layerId == 'layer12') {
-            let intensity = feature.get('intensity');
-            let index = MapUtil._eqIntensities.indexOf(intensity);
-            if (index >= 0) imageIndex = index;
-        } else if (layerId == 'layer21') {
-            imageIndex = lastValue1 <= 5 ? 0 : 1;
-        }
-
-        let s = MapUtil._findSensorImageIndex(layerId, feature, sensorInfo);
-        if (s !== null) imageIndex = s;
+        let imageIndex = MapUtil._findSensorImageIndex(layerId, lastValue1, feature, sensorInfo);
         return { imageIndex, value };
     }
 
     // Returns null if not applicable
-    static _findSensorImageIndex(layerId, feature, sensorInfo) {
+    static _findSensorImageIndex(layerId, lastValue1, feature, sensorInfo) {
+        if (layerId == LayerDef.GATE) {
+            return GateImages.getImageIndex(lastValue1, feature, sensorInfo);
+        }
+
+        if (layerId == 'layer21') {
+            return lastValue1 <= 5 ? 0 : 1;
+        }
+
+        if (layerId == 'layer12') {
+            let intensity = feature.get('intensity');
+            let index = MapUtil._eqIntensities.indexOf(intensity);
+            return index >= 0 ? index : 0;
+        }
+
         let item = SensorProps.find(layerId);
-        if (item === undefined) return null;
+        if (item === undefined) return 0;
         return MapUtil._getSensorStatus(feature, sensorInfo);
     }
 
@@ -112,7 +91,7 @@ export default class MapUtil {
     }
 
     static _getText(layerProps, fp) {
-        if (!MapUtil.sensorLayers.includes(layerProps.layerId)) return undefined;
+        if (!SensorProps.getAllLayers().includes(layerProps.layerId)) return undefined;
         return fp.value;
     }
 
@@ -190,80 +169,66 @@ export default class MapUtil {
         let urls = [];
         let zi = 50;
 
-        switch (layerId) {
-            case 'layer1':
-                urls.push(require('@/assets/image/Station_WaterGate_.png'));
-                break;
-            case 'layer2':
-                urls.push(require('@/assets/image/Station_FloodDiversion_.png'));
-                break;
-            case 'layer3':
-                urls.push(require('@/assets/image/Station_BankSafty_.png'));
-                break;
-            case 'layer4':
-                urls.push(require('@/assets/image/Station_CCTV_.png'));
-                break;
-            case 'layer5':
-            case 'layer6':
-            case 'layer7':
-            case 'layer8':
-            case SensorDef.SLOPE:
-            case SensorDef.PLANNING_LEVEL:
-            case SensorDef.LEVEL:
-                let item = SensorProps.find(layerId);
-                urls.push(...SensorProps.getIconUrls(item));
-                if (item.unit) unit = ' ' + item.unit;
-                break;
-            case SensorDef.GATE:
-                let images = GateImages.images;
-                urls.push(...images.map(x => require(`@/assets/image/gates/${x}`)));
-                unit = " %";
-                break;
-            case 'layer12':
-                let imgs = MapUtil._eqIntensities.map(x => require(`@/assets/image/intensity${x}.png`));
-                urls.push(...imgs);
-                break;
-            case 'layer13':
-                strokecolor = "#663300"
-                break;
-            case 'layer14':
-                urls.push(require('@/assets/image/ADSL.png'));
-                break;
-            case 'layer15':
-                urls.push(require('@/assets/image/4G_.png'));
-                break;
-            case 'layer16':
-                strokecolor = "#660000"
-                break;
-            case 'layer17': //109
-                strokecolor = "#009900"
-                break;
-            case 'layer18': //河川排水水道
-                strokecolor = "#666600";
-                break;
-            case 'layer19': //堤防管理里程
-                urls.push(require('@/assets/image/green-dot_.png'));
-                break;
-            case 'layer21':
-                unit = " %"
-                urls.push(require('@/assets/image/blackdoorclose.png'));
-                urls.push(require('@/assets/image/blackdooropen.png'));
-                break;
-            case 'layer24':
-                strokecolor = "#FFFF00"
-                zi = 2;
-                strokew = 3;
-                break;
-            case 'layer25':
-                strokecolor = "#CC0000"
-                zi = 1;
-                strokew = 6;
-                break;
-            case 'layer26':
-                strokecolor = "#00CC00"
-                zi = 0;
-                strokew = 9;
-                break;
+        let item = SensorProps.find(layerId);
+
+        if (item !== undefined) {
+            urls.push(...SensorProps.getIconUrls(item));
+            if (item.unit) unit = ' ' + item.unit;
+        } else {
+            switch (layerId) {
+                case 'layer1':
+                    urls.push(require('@/assets/image/Station_WaterGate_.png'));
+                    break;
+                case 'layer2':
+                    urls.push(require('@/assets/image/Station_FloodDiversion_.png'));
+                    break;
+                case 'layer3':
+                    urls.push(require('@/assets/image/Station_BankSafty_.png'));
+                    break;
+                case 'layer4':
+                    urls.push(require('@/assets/image/Station_CCTV_.png'));
+                    break;
+                case 'layer12':
+                    let imgs = MapUtil._eqIntensities.map(x => require(`@/assets/image/intensity${x}.png`));
+                    urls.push(...imgs);
+                    break;
+                case 'layer13':
+                    strokecolor = "#663300"
+                    break;
+                case 'layer14':
+                    urls.push(require('@/assets/image/ADSL.png'));
+                    break;
+                case 'layer15':
+                    urls.push(require('@/assets/image/4G_.png'));
+                    break;
+                case 'layer16':
+                    strokecolor = "#660000"
+                    break;
+                case 'layer17': //109
+                    strokecolor = "#009900"
+                    break;
+                case 'layer18': //河川排水水道
+                    strokecolor = "#666600";
+                    break;
+                case 'layer19': //堤防管理里程
+                    urls.push(require('@/assets/image/green-dot_.png'));
+                    break;
+                case 'layer24':
+                    strokecolor = "#FFFF00"
+                    zi = 2;
+                    strokew = 3;
+                    break;
+                case 'layer25':
+                    strokecolor = "#CC0000"
+                    zi = 1;
+                    strokew = 6;
+                    break;
+                case 'layer26':
+                    strokecolor = "#00CC00"
+                    zi = 0;
+                    strokew = 9;
+                    break;
+            }
         }
 
         let p = new LayerProps();

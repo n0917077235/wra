@@ -1,15 +1,14 @@
 import LineHighlight from "./lineHighlight";
 import { apiGetSensorMoreDataByStationName } from '@/resource/sensor';
 import SensorItem from "./sensorItem";
-import MapUtil from './mapUtil';
-import SensorDef from "../sensorDef";
 import MathUtil from '../mathUtil';
+import SensorProps from "./sensorProps";
 
 export default class InfoWindowUtil {
     static _stationLayers = ['layer1', 'layer2', 'layer3', 'layer4'];
 
     static _supportedlayers() {
-        return InfoWindowUtil._stationLayers.concat(MapUtil.sensorLayers);
+        return InfoWindowUtil._stationLayers.concat(SensorProps.getAllLayers());
     }
 
     // layerItems: { layerProps, map, popup }
@@ -50,7 +49,7 @@ export default class InfoWindowUtil {
         let name = n.name;
         let layerId = layerItems.layerProps.layerId;
 
-        if (MapUtil.sensorLayers.includes(layerId)) {
+        if (SensorProps.getAllLayers().includes(layerId)) {
             return InfoWindowUtil._getSingleSensor(layerItems, name, f);
         }
 
@@ -96,6 +95,7 @@ export default class InfoWindowUtil {
             } else {
                 s.valueText = InfoWindowUtil.createValueText(sType, [x.value1], unit);
             }
+            
             return s;
         }).filter(x => x !== null);
     }

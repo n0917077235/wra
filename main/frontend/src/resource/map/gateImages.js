@@ -17,4 +17,7 @@ export default class GateImages {
         return s * 2 + open;
     }
 
+    static getImageUrls(){
+        return GateImages.images.map(x => require(`@/assets/image/gates/${x}`));
+    }
 }
