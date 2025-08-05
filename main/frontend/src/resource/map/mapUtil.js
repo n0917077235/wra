@@ -1,8 +1,9 @@
 import LayerProps from './layerProps';
-import LayerDef from '../LayerDef';
+import LayerDef from '../layerDef';
 import SensorProps from './sensorProps';
 import GateImages from './gateImages';
 import InfoWindowUtil from './infoWindowUtil';
+import StationProps from './stationProps';
 
 export default class MapUtil {
     static _eqIntensities = ['1', '2', '3', '4', '5.1', '5.9', '6.1', '6.9', '7'];
@@ -169,25 +170,16 @@ export default class MapUtil {
         let urls = [];
         let zi = 50;
 
-        let item = SensorProps.find(layerId);
+        let sensor = SensorProps.find(layerId);
+        let station = StationProps.find(layerId);
 
-        if (item !== undefined) {
-            urls.push(...SensorProps.getIconUrls(item));
-            if (item.unit) unit = ' ' + item.unit;
+        if (sensor !== undefined) {
+            urls.push(...SensorProps.getIconUrls(sensor));
+            if (sensor.unit) unit = ' ' + sensor.unit;
+        } else if (station !== undefined) {
+            urls.push(station.icon);
         } else {
             switch (layerId) {
-                case 'layer1':
-                    urls.push(require('@/assets/image/Station_WaterGate_.png'));
-                    break;
-                case 'layer2':
-                    urls.push(require('@/assets/image/Station_FloodDiversion_.png'));
-                    break;
-                case 'layer3':
-                    urls.push(require('@/assets/image/Station_BankSafty_.png'));
-                    break;
-                case 'layer4':
-                    urls.push(require('@/assets/image/Station_CCTV_.png'));
-                    break;
                 case 'layer12':
                     let imgs = MapUtil._eqIntensities.map(x => require(`@/assets/image/intensity${x}.png`));
                     urls.push(...imgs);

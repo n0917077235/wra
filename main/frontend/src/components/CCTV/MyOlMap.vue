@@ -193,8 +193,9 @@ import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { useStore } from 'vuex';
 import Popup from './Popup.vue';
 import LayerMap from '@/resource/map/layerMap';
-import LayerDef from '@/resource/LayerDef';
+import LayerDef from '@/resource/layerDef';
 import SensorProps from '@/resource/map/sensorProps';
+import StationProps from '@/resource/map/stationProps';
 
 interface Props {
     title?: string;
@@ -616,12 +617,10 @@ async function toggleLayer(layerGroup) {
 function getLayerGeojsonUrls(layerGroup) {
     let single = url => [{ layerId: layerGroup, url }];
     let byFile = file => `/GeoJson/GetGeoJsonDataByFileName?fileName=${file}`;
-    let item = SensorProps.find(layerGroup);
-    if (item !== undefined) return single(item.geojsonUrl);
-    if (layerGroup === LayerDef.TANSUI_STATION) return single("/GeoJson/GetTansuiGps");
-    if (layerGroup === LayerDef.YANSANTZI_STATION) return single("/GeoJson/GetYansantziGps");
-    if (layerGroup === LayerDef.EMBANKMENT_STATION) return single("/GeoJson/GetBankGps");
-    if (layerGroup === LayerDef.CAMERA_STATION) return single("/GeoJson/GetCCTVGps");
+    let sensor = SensorProps.find(layerGroup);
+    if (sensor !== undefined) return single(sensor.geojsonUrl);
+    let station = StationProps.find(layerGroup);
+    if (station !== undefined) return single(station.geojsonUrl);
 
     if (layerGroup === 'layer12') return single("/Earthquake/GetEQEventRangeIntensity");
     // also: 等震度圖 await addLayer(layerId, "等震度圖");
@@ -649,7 +648,7 @@ function getLayerGeojsonUrls(layerGroup) {
     if (layerGroup === 'layer22') return [];
     //自訂圖層 await addLayer(layerId, "/GeoJson/GetAdslGps");
 
-    if (layerGroup === 'layer23') return single(byFile("GPS05.json");
+    if (layerGroup === 'layer23') return single(byFile("GPS05.json"));
     if (layerGroup === 'layer26') return single(byFile("a河川區域線.geojson"));
     if (layerGroup === 'layer25') return single(byFile("b用地範圍線.geojson"));
     if (layerGroup === 'layer24') return single(byFile("c治理計畫線.geojson"));

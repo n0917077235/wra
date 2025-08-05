@@ -3,12 +3,12 @@ import { apiGetSensorMoreDataByStationName } from '@/resource/sensor';
 import SensorItem from "./sensorItem";
 import MathUtil from '../mathUtil';
 import SensorProps from "./sensorProps";
+import LayerDef from "../layerDef";
+import StationProps from "./stationProps";
 
 export default class InfoWindowUtil {
-    static _stationLayers = ['layer1', 'layer2', 'layer3', 'layer4'];
-
     static _supportedlayers() {
-        return InfoWindowUtil._stationLayers.concat(SensorProps.getAllLayers());
+        return StationProps.getAllLayers().concat(SensorProps.getAllLayers());
     }
 
     // layerItems: { layerProps, map, popup }
@@ -22,7 +22,9 @@ export default class InfoWindowUtil {
     static _handle(event, layerItems) {
         let map = layerItems.map;
         let first = null;
-        let layerFilter = layer => ol.util.getUid(layer) === ol.util.getUid(layerItems.vectorLayer);
+
+        let layerFilter = layer =>
+            ol.util.getUid(layer) === ol.util.getUid(layerItems.vectorLayer);
 
         map.forEachFeatureAtPixel(event.pixel, f => {
             if (first === null) first = f;
@@ -53,8 +55,7 @@ export default class InfoWindowUtil {
             return InfoWindowUtil._getSingleSensor(layerItems, name, f);
         }
 
-        if (layerId === 'layer4') {
-            //  cctv
+        if (layerId === LayerDef.CAMERA_STATION) {
             return {
                 mode: 'camera',
                 name,
@@ -89,13 +90,7 @@ export default class InfoWindowUtil {
             s.areaID = x.areaID;
             s.sensorType = sType;
             s.sensorId = x.sensorId;
-
-            if (s.sensorType === 'Slope') {
-                s.valueText = InfoWindowUtil.createValueText(sType, [x.value1, x.value2], unit);
-            } else {
-                s.valueText = InfoWindowUtil.createValueText(sType, [x.value1], unit);
-            }
-            
+            s.valueText = InfoWindowUtil.createValueText(sType, [x.value1, x.value2], unit);
             return s;
         }).filter(x => x !== null);
     }
@@ -109,37 +104,39 @@ export default class InfoWindowUtil {
         s.sensorType = f.get('sensorType');
         s.sensorId = f.get('id');
 
-        if (s.sensorType === 'Slope') {
-            let v1 = f.get('lastValue1');
-            let v2 = f.get('lastValue2');
-            s.valueText = InfoWindowUtil.createValueText(s.sensorType, [v1, v2], unit);
-        } else {
-            s.valueText = InfoWindowUtil.createValueText(s.sensorType, [f.get('lastValue1')], unit);
-        }
+        let values = [f.get('lastValue1'), f.get('lastValue2')];
+        s.valueText = InfoWindowUtil.createValueText(s.sensorType, values, unit);
 
         return {
             mode: 'sensor',
             name,     // string | null | undefined
             sensors: [s],
             cameras: [],
-
         };
     }
 
+    static _getValueCount(sensorType) {
+        let m = SensorProps.all.find(x => x.sensorType === sensorType);
+        if (m === undefined) return 1;
+        return m.valueCount;
+    }
+
     static createValueText(sensorType, values, unit) {
+        let count = InfoWindowUtil._getValueCount(sensorType);
+        let v = values.slice(0, count);
+
         if (sensorType === 'PlanningLevel') {
-            return InfoWindowUtil._mapPlanningLevel(values[0], unit);
+            return InfoWindowUtil._mapPlanningLevel(v, unit);
         }
 
         if (sensorType === 'Gate') {
-            return InfoWindowUtil._mapGateOpening(values[0], unit);
+            return InfoWindowUtil._mapGateOpening(v, unit);
         }
 
-        return values.map(x => MathUtil.toFixed(x, 3) + unit).join(', ');
+        return v.map(x => MathUtil.toFixed(x, 3) + unit).join(', ');
     }
 
     static _mapGateOpening(val, unit) {
-        console.log(val)
         if (val == -888) return " 無此設備 ";
         if (val == -999 || val == -998) return " 異常 ";
         let v = MathUtil.bound(val, 0, 100);

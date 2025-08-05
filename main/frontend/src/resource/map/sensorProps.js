@@ -1,4 +1,4 @@
-import LayerDef from '../LayerDef';
+import LayerDef from '../layerDef';
 import GateImages from './gateImages';
 
 export default class SensorProps {
@@ -10,6 +10,7 @@ export default class SensorProps {
             unit: 'mm',
             sensorType: 'Sink',
             geojsonUrl: '/GeoJson/GetSensorGps?sensorType=sink',
+            valueCount: 1,
         },
         {
             layerId: 'layer6', // 高水位
@@ -18,6 +19,7 @@ export default class SensorProps {
             unit: 'm',
             sensorType: 'WaterLevel',
             geojsonUrl: '/GeoJson/GetSensorGps?sensorType=waterlevel2',
+            valueCount: 1,
         },
         {
             layerId: 'layer7', // 裂縫
@@ -25,7 +27,8 @@ export default class SensorProps {
             getIcons: null,
             unit: 'mm',
             sensorType: 'Crack',
-            geojsonUrl: '/GeoJson/GetSensorGps?sensorType=crack'
+            geojsonUrl: '/GeoJson/GetSensorGps?sensorType=crack',
+            valueCount: 1,
         },
         {
             layerId: LayerDef.EARTHQUAKE,
@@ -34,6 +37,7 @@ export default class SensorProps {
             unit: 'cm/s²',
             sensorType: 'Earthquake',
             geojsonUrl: '/GeoJson/GetSensorGps?sensorType=earthquake',
+            valueCount: 1,
         },
         {
             layerId: LayerDef.SLOPE,
@@ -42,6 +46,7 @@ export default class SensorProps {
             unit: '°',
             sensorType: 'Slope',
             geojsonUrl: '/GeoJson/GetSensorGps?sensorType=slope',
+            valueCount: 2,
         },
         {
             layerId: LayerDef.LEVEL,
@@ -50,6 +55,7 @@ export default class SensorProps {
             unit: 'm',
             sensorType: 'WaterLevel',
             geojsonUrl: '/GeoJson/GetSensorGps?sensorType=waterlevel',
+            valueCount: 1,
         },
         {
             layerId: LayerDef.PLANNING_LEVEL,
@@ -58,6 +64,7 @@ export default class SensorProps {
             unit: 'm',
             sensorType: 'PlanningLevel',
             geojsonUrl: '/GeoJson/GetSensorGps?sensorType=planninglevel',
+            valueCount: 1,
         },
         {
             layerId: LayerDef.GATE,
@@ -66,6 +73,7 @@ export default class SensorProps {
             unit: '%',
             sensorType: 'Gate',
             geojsonUrl: '/GeoJson/GetSensorGps?sensorType=gate',
+            valueCount: 1,
         },
         {
             layerId: 'layer21',
@@ -77,6 +85,7 @@ export default class SensorProps {
             unit: '%',
             sensorType: 'Gate',
             geojsonUrl: '/GeoJson/GetTaipeiGateGps',
+            valueCount: 1,
         },
     ];
 
