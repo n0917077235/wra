@@ -8,6 +8,36 @@ import StationProps from './stationProps';
 export default class MapUtil {
     static _eqIntensities = ['1', '2', '3', '4', '5.1', '5.9', '6.1', '6.9', '7'];
 
+    static _lineProps = {
+        'layer13': {
+            color: "#663300",
+        },
+        'layer16': {
+            color: "#660000",
+        },
+        'layer17': {
+            color: "#009900",
+        },
+        'layer18': {
+            color: "#666600",
+        },
+        'layer24': {
+            color: "#FFFF00",
+            zIndex: 2,
+            strokew: 3,
+        },
+        'layer25': {
+            color: "#CC0000",
+            zIndex: 1,
+            strokew: 6,
+        },
+        'layer26': {
+            color: "#00CC00",
+            zIndex: 0,
+            strokew: 9,
+        },
+    };
+
     static _roundTo(num, decimal) {
         let y = Math.pow(10, decimal);
         return Math.round((num + Number.EPSILON) * y) / y;
@@ -163,11 +193,7 @@ export default class MapUtil {
 
     static async getLayerProps(layerId) {
         let unit = "";
-        let strokew = 3;
-        let strokecolor = "#BB0000";
         let urls = [];
-        let zi = 50;
-
         let sensor = SensorProps.find(layerId);
         let station = StationProps.find(layerId);
 
@@ -176,57 +202,25 @@ export default class MapUtil {
             if (sensor.unit) unit = ' ' + sensor.unit;
         } else if (station !== undefined) {
             urls.push(station.icon);
-        } else {
-            switch (layerId) {
-                case 'layer12':
-                    let imgs = MapUtil._eqIntensities.map(x => require(`@/assets/image/intensity${x}.png`));
-                    urls.push(...imgs);
-                    break;
-                case 'layer13':
-                    strokecolor = "#663300"
-                    break;
-                case 'layer14':
-                    urls.push(require('@/assets/image/ADSL.png'));
-                    break;
-                case 'layer15':
-                    urls.push(require('@/assets/image/4G_.png'));
-                    break;
-                case 'layer16':
-                    strokecolor = "#660000"
-                    break;
-                case 'layer17': //109
-                    strokecolor = "#009900"
-                    break;
-                case 'layer18': //河川排水水道
-                    strokecolor = "#666600";
-                    break;
-                case 'layer19': //堤防管理里程
-                    urls.push(require('@/assets/image/green-dot_.png'));
-                    break;
-                case 'layer24':
-                    strokecolor = "#FFFF00"
-                    zi = 2;
-                    strokew = 3;
-                    break;
-                case 'layer25':
-                    strokecolor = "#CC0000"
-                    zi = 1;
-                    strokew = 6;
-                    break;
-                case 'layer26':
-                    strokecolor = "#00CC00"
-                    zi = 0;
-                    strokew = 9;
-                    break;
-            }
+        } else if (layerId === 'layer12') {
+            let imgs = MapUtil._eqIntensities.map(x => require(`@/assets/image/intensity${x}.png`));
+            urls.push(...imgs);
+        } else if (layerId === 'layer14') {
+            urls.push(require('@/assets/image/ADSL.png'));
+        } else if (layerId === 'layer15') {
+            urls.push(require('@/assets/image/4G_.png'));
+        } else if (layerId === 'layer19') {
+            //堤防管理里程
+            urls.push(require('@/assets/image/green-dot_.png'));
         }
 
+        let m = MapUtil._lineProps[layerId];
         let p = new LayerProps();
         p.layerId = layerId;
         p.unit = unit;
-        p.strokew = strokew;
-        p.strokecolor = strokecolor;
-        p.zIndex = zi;
+        p.strokew = m?.strokew ?? 3;
+        p.strokecolor = m?.color ?? "#BB0000";
+        p.zIndex = m?.zIndex ?? 50;
         p.urls = urls;
         p.images = [];
 
