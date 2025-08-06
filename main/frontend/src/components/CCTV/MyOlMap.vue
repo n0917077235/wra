@@ -7,16 +7,11 @@
         </div>
         <div id="layerControl">
             <div id="baseMaps" class="layer-content">
-                <label>
-                    <input type="checkbox" id="MapType1" :checked="mapType == '1'" @click="changeMapType('1')">
-                    衛星圖
-                </label>
-                <br>
-                <label>
-                    <input type="checkbox" id="MapType2" :checked="mapType == '2'" @click="changeMapType('2')">
-                    電子地圖
-                </label>
-                <br>
+                <div v-for="(text, i) in mapTypeTexts">
+                    <input type="radio" :id="'__map_id'+i" :value="i" v-model="mapType" 
+                        @change="updateMapType"/>
+                    <label :for="'__map_id'+i">&nbsp;{{ text }}</label>
+                </div>
             </div>
             <hr>
             <div class="layer-group">
@@ -271,6 +266,8 @@ function toggleMenu() {
     }
 }
 
+let mapTypeTexts = ['Google地圖', '衛星圖', '國土測繪地圖'];
+
 // 地圖模式類型
 let mapSources = [
     // roadmap
@@ -281,30 +278,23 @@ let mapSources = [
     // satellite
     new ol.source.XYZ({
         url: 'https://mt1.google.com/vt/lyrs=y&hl=zh-TW&x={x}&y={y}&z={z}'
-    })
+    }),
+
+    // NLSC map
+    new ol.source.XYZ({
+        url: "https://wmts.nlsc.gov.tw/wmts/EMAP5/default/EPSG:3857/{z}/{y}/{x}.png"
+    }),
 ];
 
 let gmapLayer = new ol.layer.Tile({
     source: mapSources[0]
 });
 
-const mapType = ref('2');
-const changeMapType = (tp: string) => {
-    if (mapType.value == tp) {
-        var element = document.getElementById('MapType' + tp) as HTMLInputElement;
-        element.checked = true;
-    } else {
-        // 根據地圖模式切換 TGOS 地圖類型
-        mapType.value = tp;
-        if (tp == '1') {
-            // 切換為衛星圖
-            gmapLayer.setSource(mapSources[1]);
-        }
-        else if (tp == '2') {
-            // 切換為電子地圖
-            gmapLayer.setSource(mapSources[0]);
-        }
-    }
+const mapType = ref(0);
+
+function updateMapType() {
+    // mapType.value = v;
+    gmapLayer.setSource(mapSources[mapType.value]);
 };
 
 function onPopupInit(e) {
