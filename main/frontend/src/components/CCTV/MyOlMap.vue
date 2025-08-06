@@ -772,7 +772,7 @@ function updateWnd(x: number, y: number, title?: string): void {
     background: white;
     padding: 10px;
     border: 1px solid #ccc;
-    width: 250px;
+    width: 275px;
     max-height: calc(100vh - 155px);
     /* 限制選單高度，防止溢出視窗 */
     overflow-y: auto;
