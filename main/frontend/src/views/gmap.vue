@@ -5,7 +5,7 @@
 </template>
 
 <script setup lang="ts">
-import MyOlMap from '@/components/CCTV/MyOlMap.vue';
+import MyOlMap from '@/components/Map/MyOlMap.vue';
 </script>
 
 <style lang="scss" scoped>

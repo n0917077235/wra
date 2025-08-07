@@ -1,25 +1,26 @@
 using Microsoft.AspNetCore;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileProviders;
-using Microsoft.OpenApi.Models;
-using System.IO;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
-using System.Text;
-using Microsoft.AspNetCore.Authorization;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using Wra10Core2023.Controllers;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.Extensions.Configuration;
-using System;
 using Microsoft.Extensions.FileProviders.Physical;
-using Microsoft.AspNetCore.Authentication.Cookies;
-using Wra10Core2023.Models;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.SwaggerGen;
+using System;
+using System.IdentityModel.Tokens.Jwt;
+using System.IO;
+using System.Reflection;
+using System.Security.Claims;
+using System.Text;
+using Wra10Core2023.Controllers;
+using Wra10Core2023.Models;
 
 namespace Wra10Core2023;
 
@@ -36,12 +37,13 @@ public class Program
     public class Startup
     {
         string myPolicy = "myPolicy";
+        public IConfiguration Configuration { get; }
+
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
         }
 
-        public IConfiguration Configuration { get; }
         public void ConfigureServices(IServiceCollection services)
         {
             /*
@@ -141,6 +143,7 @@ public class Program
                         In = ParameterLocation.Header,
                         Description = "JWT Authorization"
                     });
+
                 c.AddSecurityRequirement(
                     new OpenApiSecurityRequirement
                     {
@@ -182,12 +185,14 @@ public class Program
                     };
                 });*/
             }
+            
+            var assemblyDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+            var webPageDir = Path.Combine(assemblyDir, "WebPage");
 
             app.UseFileServer(new FileServerOptions
             {
-                FileProvider = new PhysicalFileProvider(
-                Path.Combine(Directory.GetCurrentDirectory(), "WebPage")),
-                RequestPath = "/WebPage",
+                FileProvider = new PhysicalFileProvider(webPageDir),
+                RequestPath = "/Webpage",
                 EnableDefaultFiles = true
             });
 
@@ -238,10 +243,12 @@ public class Program
                 FileProvider = new PhysicalFileProvider(Configuration["VideoImage:Path"])
             });
             */
+
+            var filesDir = Path.Combine(assemblyDir, "Files");
+
             app.UseStaticFiles(new StaticFileOptions
             {
-                FileProvider = new PhysicalFileProvider(
-                Path.Combine(Directory.GetCurrentDirectory(), "Files")),
+                FileProvider = new PhysicalFileProvider(filesDir),
                 RequestPath = "/Files",
             });
         }

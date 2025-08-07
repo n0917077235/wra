@@ -26,7 +26,7 @@ const routes: Array<RouteRecordRaw> = [
         path: 'gmap',
         name: 'gmap',
         component: () =>
-          import(/* webpackChunkName: "gmap" */ '@/views/GIS/gmap.vue'),
+          import(/* webpackChunkName: "gmap" */ '@/views/gmap.vue'),
         meta: {
           clearMainPadding: 1,
             routerName: '監測站總覽',
