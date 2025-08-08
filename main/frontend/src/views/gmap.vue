@@ -1,11 +1,11 @@
 <template>
   <div id="app">
-    <CCTVMap :title="''"></CCTVMap>
+    <MyOlMap :title="''"></MyOlMap>
   </div>
 </template>
 
 <script setup lang="ts">
-import CCTVMap from '@/components/CCTV/CCTVMap2.vue';
+import MyOlMap from '@/components/Map/MyOlMap.vue';
 </script>
 
 <style lang="scss" scoped>

@@ -44,7 +44,7 @@ export interface EQEventDetailResponse {
     lstY: string[];
     lstZ: string[];
 }
-//11309 н╫зям░  GetEQEventRangeIntensity
+
 export async function apiGetEQEventRange(
   payload: EarthquakeBySearchPayload,
 ): Promise<EQEventRangeResponse[]> {
@@ -52,8 +52,10 @@ export async function apiGetEQEventRange(
       `/Earthquake/GetEQEventRangeIntensity?year=${payload.year}&month=${payload.month}&intensity=${payload.intensity}`,
     {},
   );
+  
   return response.data;
 }
+
 export async function apiGetEQEvent(
   payload: EarthquakeByRange,
 ): Promise<EQEventResponse[]> {
@@ -61,6 +63,7 @@ export async function apiGetEQEvent(
     `/Earthquake/GetEQEvent?range=${payload.range}&eventTime=${payload.eventTime}`,
     {},
   );
+
   return response.data;
 }
 
@@ -71,8 +74,10 @@ export async function apiGetEQEventNew(
         `/Earthquake/GetEQEventNew?range=${payload.range}&eventTime=${payload.eventTime}&intensity=${payload.intensity}`,
         {},
     );
+
     return response.data;
 }
+
 export async function apiGetEQEventDetail(
     payload: EarthquakeBySensorId,
 ): Promise<EQEventDetailResponse> {
@@ -80,7 +85,6 @@ export async function apiGetEQEventDetail(
         `/Earthquake/GetEQEventDetail?sensorId=${payload.sensorId}&eventTag=${payload.eventTag}`,
         {},
     );
-    //alert(`/Earthquake/GetEQEventDetail?sensorId=${payload.sensorId}&eventTag=${payload.eventTag}`);
-    //alert(response.data);
+    
     return response.data;
 }

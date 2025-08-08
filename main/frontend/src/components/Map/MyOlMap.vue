@@ -7,34 +7,25 @@
         </div>
         <div id="layerControl">
             <div id="baseMaps" class="layer-content">
-                <label>
-                    <input type="checkbox" id="MapType1" :checked="mapType == '1'" @click="changeMapType('1')">
-                    衛星圖
-                </label>
-                <br>
-                <label>
-                    <input type="checkbox" id="MapType2" :checked="mapType == '2'" @click="changeMapType('2')">
-                    電子地圖
-                </label>
-                <br>
+                <div v-for="(text, i) in mapTypeTexts">
+                    <input type="radio" :id="'__map_id'+i" :value="i" v-model="mapType" 
+                        @change="updateMapType"/>
+                    <label :for="'__map_id'+i">&nbsp;{{ text }}</label>
+                </div>
             </div>
             <hr>
             <div class="layer-group">
                 <h4 v-on:click="toggleLayerGroup('monitoringStations')"> {{ monitoringStationsExpanded ? '-' : '+' }}
                     監測站圖層 </h4>
                 <div id="monitoringStations" class="layer-group-content" style="display:block">
-                    <label><input type="checkbox" id="layer1" @click="toggleLayer('layer1')" checked> 淡水河水門監測站<img
-                            alt="淡水河水門監測站" id="imgg1" src="@/assets/image/Station_WaterGate_.png" width="20" height="20"
-                            style="float:right; margin-right:5px;"></label><br>
-                    <label><input type="checkbox" id="layer2" @click="toggleLayer('layer2')" checked> 員山子分洪監測站<img
-                            alt="員山子分洪監測站" id="imgg2" src="@/assets/image/Station_FloodDiversion_.png" width="20"
-                            height="20" style="float:right; margin-right:5px;"></label><br>
-                    <label><input type="checkbox" id="layer3" @click="toggleLayer('layer3')" checked> 堤防安全監測站<img
-                            alt="堤防安全監測站" id="imgg3" src="@/assets/image/Station_BankSafty_.png" width="20" height="20"
-                            style="float:right; margin-right:5px;"></label><br>
-                    <label><input type="checkbox" id="layer4" @click="toggleLayer('layer4')"> 影像監視站<img id="imgg4"
-                            alt="影像監視站" src="@/assets/image/Station_CCTV_.png" width="20" height="20"
-                            style="float:right; margin-right:5px;"></label><br>
+                    <div v-for="x in getStationLayerLines()">
+                        <label>
+                            <input type="checkbox" :id="x.layerId" @click="toggleLayer(x.layerId)"
+                                :checked="x.defaultVisible">
+                            {{ x.text }}
+                            <img :alt="x.text" :src="x.icon" width="20" height="20" class="icon">
+                        </label>
+                    </div>
                 </div>
             </div>
             <hr>
@@ -49,59 +40,13 @@
                     </label>
                 </h4>
                 <div id="SenserMaps" class="layer-group-content">
-                    <label>
-                        <input type="checkbox" id="layer5" @click="toggleLayer('layer5')">
-                        沉陷計
-                        <img src="@/assets/image/pink-dot_.png" width="20" height="20"
-                            style="float:right; margin-right:5px;">
-                    </label>
-                    <br>
-                    <label>
-                        <input type="checkbox" id="layer6" @click="toggleLayer('layer6')">
-                        高灘地水位計
-                        <img src="@/assets/image/yellow-dot_.png" width="20" height="20"
-                            style="float:right; margin-right:5px;">
-                    </label>
-                    <br>
-                    <label>
-                        <input type="checkbox" id="layer7" @click="toggleLayer('layer7')">
-                        裂縫計
-                        <img src="@/assets/image/purple-dot_.png" width="20" height="20"
-                            style="float:right; margin-right:5px;">
-                    </label>
-                    <br>
-                    <label>
-                        <input type="checkbox" id="layer8" @click="toggleLayer('layer8')">
-                        地震儀<img src="@/assets/image/green-dot_.png" width="20" height="20"
-                            style="float:right; margin-right:5px;">
-                    </label>
-                    <br>
-                    <label>
-                        <input type="checkbox" id="layer9" @click="toggleLayer('layer9')">
-                        傾斜計
-                        <img src="@/assets/image/orange-dot_.png" width="20" height="20"
-                            style="float:right; margin-right:5px;">
-                    </label>
-                    <br>
-                    <label>
-                        <input type="checkbox" id="layer10" @click="toggleLayer('layer10')">
-                        水位計<img src="@/assets/image/red-dot_.png" width="20" height="20"
-                            style="float:right; margin-right:5px;">
-                    </label>
-                    <br>
-                    <label><input type="checkbox" id="layer11" @click="toggleLayer('layer11')">
-                        閘門開度計
-                        <img src="@/assets/image/reddooropen.png" width="20" height="20"
-                            style="float:right; margin-right:5px;">
-                    </label>
-                    <br>
-                    <label>
-                        <input type="checkbox" id="layer12" @click="toggleLayer('layer12')">
-                        等震度圖
-                        <img src="@/assets/image/intensityblack.png" width="20" height="20"
-                            style="float:right; margin-right:5px;">
-                    </label>
-                    <br>
+                    <div v-for="x in getSensorLayerLines()">
+                        <label>
+                            <input type="checkbox" :id="x.layerId" @click="toggleLayer(x.layerId)">
+                            {{ x.text }}
+                            <img :alt="x.text" :src="x.icon" width="20" height="20" class="icon">
+                        </label>
+                    </div>
                 </div>
             </div>
             <hr>
@@ -168,8 +113,6 @@
                         src="@/assets/image/red.png" width="20" height="20"
                         style="float:right; margin-right:5px;"></label><br>
             </div>
-
-            <!-- 可新增更多圖層組 -->
         </div>
         <Popup :overlay="popup.overlay" :content="popup.content" @initialized="onPopupInit"></Popup>
     </div>
@@ -185,8 +128,9 @@ import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { useStore } from 'vuex';
 import Popup from './Popup.vue';
 import LayerMap from '@/resource/map/layerMap';
-import SensorDef from '@/resource/sensorDef';
+import LayerDef from '@/resource/layerDef';
 import SensorProps from '@/resource/map/sensorProps';
+import StationProps from '@/resource/map/stationProps';
 
 interface Props {
     title?: string;
@@ -205,8 +149,6 @@ const CameraArea = computed(() => store2.state.image.currentCameraArea);
 const pMap = ref();
 const markerPoint = ref();
 const pTGMarker = ref();
-var pTGMarker2;
-var pTGLine = ref();
 const el = document.getElementsByClassName('el');
 const monitoringStationsExpanded = ref(true);
 const SenserMapsExpanded = ref(false);
@@ -223,18 +165,37 @@ const popup = ref({
 const changedItems = ref([]);
 
 onMounted(() => {
-    //if (typeof TGOS !== 'undefined') {
     store2.dispatch('drawings/loadDrawings'); // 使用命名空間調用 action
-    //} else {
-    //    alert('TGOS API 未加載');
-    //}
     init();
-    toggleLayer(SensorDef.TANSUI_STATION);
-    toggleLayer(SensorDef.YANSANTZI_STATION);
-    toggleLayer(SensorDef.EMBANKMENT_STATION);
+    toggleLayer(LayerDef.TANSUI_STATION);
+    toggleLayer(LayerDef.YANSANTZI_STATION);
+    toggleLayer(LayerDef.EMBANKMENT_STATION);
     toggleLayer("layer18");
     toggleLayer("layer19");
 });
+
+function getStationLayerLines() {
+    return StationProps.all;
+}
+
+function getSensorLayerLines() {
+    let sensors = SensorProps.all
+        .filter(x => x.layerId !== LayerDef.SLIDING_DOOR)
+        .map(x => ({
+            layerId: x.layerId,
+            text: x.text,
+            icon: SensorProps.getIconUrls(x)[0],
+        }));
+
+    return [
+        ...sensors,
+        {
+            layerId: 'layer12',
+            text: '等震度圖',
+            icon: require('@/assets/image/intensityblack.png'),
+        },
+    ];
+}
 
 function cleardrawed() {
     const savedDrawings = store2.state.drawings.drawings;
@@ -291,9 +252,7 @@ watch(
     },
     { deep: true, immediate: true },
 );
-const products = ref(null);
-var lists: string[];
-//manu收合
+
 const menuVisible = ref(true);
 
 function toggleMenu() {
@@ -307,6 +266,8 @@ function toggleMenu() {
     }
 }
 
+let mapTypeTexts = ['Google地圖', '衛星圖', '國土測繪地圖'];
+
 // 地圖模式類型
 let mapSources = [
     // roadmap
@@ -317,30 +278,23 @@ let mapSources = [
     // satellite
     new ol.source.XYZ({
         url: 'https://mt1.google.com/vt/lyrs=y&hl=zh-TW&x={x}&y={y}&z={z}'
-    })
+    }),
+
+    // NLSC map
+    new ol.source.XYZ({
+        url: "https://wmts.nlsc.gov.tw/wmts/EMAP5/default/EPSG:3857/{z}/{y}/{x}.png"
+    }),
 ];
 
 let gmapLayer = new ol.layer.Tile({
     source: mapSources[0]
 });
 
-const mapType = ref('2');
-const changeMapType = (tp: string) => {
-    if (mapType.value == tp) {
-        var element = document.getElementById('MapType' + tp) as HTMLInputElement;
-        element.checked = true;
-    } else {
-        // 根據地圖模式切換 TGOS 地圖類型
-        mapType.value = tp;
-        if (tp == '1') {
-            // 切換為衛星圖
-            gmapLayer.setSource(mapSources[1]);
-        }
-        else if (tp == '2') {
-            // 切換為電子地圖
-            gmapLayer.setSource(mapSources[0]);
-        }
-    }
+const mapType = ref(0);
+
+function updateMapType() {
+    // mapType.value = v;
+    gmapLayer.setSource(mapSources[mapType.value]);
 };
 
 function onPopupInit(e) {
@@ -584,7 +538,9 @@ function toggleLayerGroup(groupId) {
 
 const markers = Array<TGOS.TGMarker>();
 
-// 切換圖層
+// Toogle the visibility of a layer group.
+// A layer group can represent one or several layers.
+// For example, layer group 'layer13' corresponds to 'layer13_1', 'layer13_2', etc
 async function toggleLayer(layerGroup) {
     var el = document.getElementById(layerGroup);
     let map = pMap.value;
@@ -594,94 +550,54 @@ async function toggleLayer(layerGroup) {
         // Layer already exists. Toggle visibility.
         myLayers.forEach(x => x.setVisible(el.checked));
     } else if (el.checked) {
-        //無資料則新增
-        switch (layerGroup) {
-            case SensorDef.TANSUI_STATION:
-                await addLayer(layerGroup, "/GeoJson/GetTansuiGps");
-                break;
-            case SensorDef.YANSANTZI_STATION:
-                await addLayer(layerGroup, "/GeoJson/GetYansantziGps");
-                break;
-            case SensorDef.EMBANKMENT_STATION:
-                await addLayer(layerGroup, "/GeoJson/GetBankGps");
-                break;
-            case SensorDef.CAMERA_STATION:
-                await addLayer(layerGroup, "/GeoJson/GetCCTVGps");
-                break;
-            case 'layer5':
-                await addLayer(layerGroup, "/GeoJson/GetSensorGps?sensorType=sink");
-                break;
-            case 'layer6':
-                await addLayer(layerGroup, "/GeoJson/GetSensorGps?sensorType=waterlevel2");
-                break;
-            case 'layer7':
-                await addLayer(layerGroup, "/GeoJson/GetSensorGps?sensorType=crack");
-                break;
-            case 'layer8':
-                await addLayer(layerGroup, "/GeoJson/GetSensorGps?sensorType=earthquake");
-                break;
-            case SensorDef.SLOPE:
-                await addLayer(layerGroup, "/GeoJson/GetSensorGps?sensorType=slope");
-                break;
-            case 'layer10':
-                await addLayer(layerGroup, "/GeoJson/GetSensorGps?sensorType=waterlevel");
-                break;
-            case 'layer11':
-                await addLayer(layerGroup, "/GeoJson/GetSensorGps?sensorType=gate");
-                break;
-            case 'layer12':
-                await addLayer(layerGroup, "/Earthquake/GetEQEventRangeIntensity")
-                // 等震度圖 await addLayer(layerId, "等震度圖");
-                break;
-            case 'layer13':
-                let baseUrl = '/GeoJson/GetGeoJsonDataByFileName?fileName=';
-                await addLayer(layerGroup + '_1', `${baseUrl}三重.json`, layerGroup);
-                await addLayer(layerGroup + '_2', `${baseUrl}基隆.json`, layerGroup);
-                await addLayer(layerGroup + '_3', `${baseUrl}新店.json`, layerGroup);
-                await addLayer(layerGroup + '_4', `${baseUrl}板橋.json`, layerGroup);
-                await addLayer(layerGroup + '_5', `${baseUrl}汐止.json`, layerGroup);
-                break;
-            case 'layer14':
-                await addLayer(layerGroup, "/GeoJson/GetAdslGps");
-                break;
-            case 'layer15':
-                await addLayer(layerGroup, "/GeoJson/Get4GGps");
-                break;
-            case 'layer16':
-                await addLayer(layerGroup, "/GeoJson/GetGeoJsonDataByFileName?fileName=GPS08.json");
-                break;
-            case 'layer17':
-                await addLayer(layerGroup, "/GeoJson/GetGeoJsonDataByFileName?fileName=GPS01.json");
-                break;
-            case 'layer18':
-                await addLayer(layerGroup, "/GeoJson/GetGeoJsonDataByFileName?fileName=GPS02.json");
-                break;
-            case 'layer19':
-                await addLayer(layerGroup, "/GeoJson/GetDamPointGps");
-                break;
-            case 'layer20':
-                await addLayer(layerGroup, "/GeoJson/GetGeoJsonDataByFileName?fileName=GPS04.json");
-                break;
-            case 'layer21':
-                await addLayer(layerGroup, "/GeoJson/GetTaipeiGateGps");
-                break;
-            case 'layer22':
-                //自訂圖層 await addLayer(layerId, "/GeoJson/GetAdslGps");
-                break;
-            case 'layer23':
-                await addLayer(layerGroup, "/GeoJson/GetGeoJsonDataByFileName?fileName=GPS05.json");
-                break;
-            case 'layer26':
-                await addLayer(layerGroup, "/GeoJson/GetGeoJsonDataByFileName?fileName=a河川區域線.geojson");
-                break;
-            case 'layer25':
-                await addLayer(layerGroup, "/GeoJson/GetGeoJsonDataByFileName?fileName=b用地範圍線.geojson");
-                break;
-            case 'layer24':
-                await addLayer(layerGroup, "/GeoJson/GetGeoJsonDataByFileName?fileName=c治理計畫線.geojson");
-                break;
+        // Add layer
+        let toAdd = getLayerGeojsonUrls(layerGroup);
+
+        for (let x of toAdd) {
+            await addLayer(x.layerId, x.url, layerGroup);
         }
     }
+}
+
+function getLayerGeojsonUrls(layerGroup) {
+    let single = url => [{ layerId: layerGroup, url }];
+    let byFile = file => `/GeoJson/GetGeoJsonDataByFileName?fileName=${file}`;
+    let sensor = SensorProps.find(layerGroup);
+    if (sensor !== undefined) return single(sensor.geojsonUrl);
+    let station = StationProps.find(layerGroup);
+    if (station !== undefined) return single(station.geojsonUrl);
+
+    if (layerGroup === 'layer12') return single("/Earthquake/GetEQEventRangeIntensity");
+    // also: 等震度圖 await addLayer(layerId, "等震度圖");
+
+    if (layerGroup === 'layer13') {
+        let baseUrl = '/GeoJson/GetGeoJsonDataByFileName?fileName=';
+
+        return [
+            { layerId: layerGroup + '_1', url: byFile("三重.json") },
+            { layerId: layerGroup + '_2', url: byFile("基隆.json") },
+            { layerId: layerGroup + '_3', url: byFile("新店.json") },
+            { layerId: layerGroup + '_4', url: byFile("板橋.json") },
+            { layerId: layerGroup + '_5', url: byFile("汐止.json") },
+        ];
+    }
+
+    if (layerGroup === 'layer14') return single("/GeoJson/GetAdslGps");
+    if (layerGroup === 'layer15') return single("/GeoJson/Get4GGps");
+    if (layerGroup === 'layer16') return single(byFile("GPS08.json"));
+    if (layerGroup === 'layer17') return single(byFile("GPS01.json"));
+    if (layerGroup === 'layer18') return single(byFile("GPS02.json"));
+    if (layerGroup === 'layer19') return single("/GeoJson/GetDamPointGps");
+    if (layerGroup === 'layer20') return single(byFile("GPS04.json"));
+
+    if (layerGroup === 'layer22') return [];
+    //自訂圖層 await addLayer(layerId, "/GeoJson/GetAdslGps");
+
+    if (layerGroup === 'layer23') return single(byFile("GPS05.json"));
+    if (layerGroup === 'layer26') return single(byFile("a河川區域線.geojson"));
+    if (layerGroup === 'layer25') return single(byFile("b用地範圍線.geojson"));
+    if (layerGroup === 'layer24') return single(byFile("c治理計畫線.geojson"));
+    return [];
 }
 
 let layers = new LayerMap();
@@ -795,8 +711,10 @@ function toggleShowValues() {
 }
 
 function refreshSensorLayers() {
+    let all = SensorProps.getAllLayers();
+
     for (let k of layers.keys()) {
-        if (MapUtil.sensorLayers.includes(k)) {
+        if (all.includes(k)) {
             for (let x of layers.get(k)) {
                 x.getSource().changed();
             }
@@ -844,7 +762,7 @@ function updateWnd(x: number, y: number, title?: string): void {
     background: white;
     padding: 10px;
     border: 1px solid #ccc;
-    width: 250px;
+    width: 275px;
     max-height: calc(100vh - 155px);
     /* 限制選單高度，防止溢出視窗 */
     overflow-y: auto;
@@ -904,15 +822,8 @@ function updateWnd(x: number, y: number, title?: string): void {
     width: 90%;
 }
 
-.closeBtn3 {
-    position: relative;
-    top: 0px;
-    /* 距離頂部的距離，可以根據需要調整 */
-    left: 0px;
-    /* 靠右對齊，距離右邊的距離，可以根據需要調整 */
-    font-size: 24px;
-    /* 調整按鈕大小 */
-    cursor: pointer;
-    /* 鼠標懸停時顯示手型 */
+.icon {
+    float: right;
+    margin-right: 5px;
 }
 </style>

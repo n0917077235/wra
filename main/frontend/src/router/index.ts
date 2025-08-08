@@ -23,24 +23,13 @@ const routes: Array<RouteRecordRaw> = [
         },
       },
       {
-        path: 'gis',
-        name: 'gis',
-        component: () =>
-          import(/* webpackChunkName: "gis" */ '@/views/GIS/tgosMap.vue'),
-        meta: {
-          clearMainPadding: 1,
-            routerName: '監測站總覽 (TGOS)',
-            requiresAuth: true
-        },
-      },
-      {
         path: 'gmap',
         name: 'gmap',
         component: () =>
-          import(/* webpackChunkName: "gmap" */ '@/views/GIS/gmap.vue'),
+          import(/* webpackChunkName: "gmap" */ '@/views/gmap.vue'),
         meta: {
           clearMainPadding: 1,
-            routerName: '監測站總覽 (Google)',
+            routerName: '監測站總覽',
             requiresAuth: true
         },
       },

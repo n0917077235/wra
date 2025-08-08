@@ -1,0 +1,6 @@
+icon/cursor.png: https://www.flaticon.com/free-icon/cursor_1828365?term=pointer&page=1&position=4&origin=search&related_id=1828365
+icon/text.png: https://www.flaticon.com/free-icon/text_3856192?term=text&page=1&position=12&origin=search&related_id=3856192
+icon/circle.png: https://www.flaticon.com/free-icon/dry-clean_481078?term=circle&page=1&position=1&origin=search&related_id=481078
+icon/delete.png: https://www.flaticon.com/free-icon/delete_8567781?term=delete&page=3&position=65&origin=search&related_id=8567781
+icon/save.png: https://www.flaticon.com/free-icon/save_4743125?term=save+file&page=1&position=7&origin=search&related_id=4743125
+icon/folder.png: https://www.flaticon.com/free-icon/folder_73581?term=open+file&page=1&position=2&origin=search&related_id=73581

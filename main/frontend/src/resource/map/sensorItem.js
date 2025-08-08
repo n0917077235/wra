@@ -7,6 +7,7 @@ export default class SensorItem {
     sensorId;
 
     getSensorPageUrl() {
+        if (this.sensorType === 'PlanningLevel') return null;
         let a = encodeURIComponent(this.areaID);
         let s = encodeURIComponent(this.sensorType);
         let sid = encodeURIComponent(this.sensorId);
