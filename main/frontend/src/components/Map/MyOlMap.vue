@@ -114,7 +114,9 @@
                         style="float:right; margin-right:5px;"></label><br>
             </div>
         </div>
+        <map-toolbar></map-toolbar>
         <Popup :overlay="popup.overlay" :content="popup.content" @initialized="onPopupInit"></Popup>
+        <!-- <MapToolbar></MapToolbar> -->
     </div>
 </template>
 <script lang="ts" setup>
@@ -127,6 +129,7 @@ import { apiGetSensorMoreDataByStationName, apiGetSensorGeneralQueryData } from 
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { useStore } from 'vuex';
 import Popup from './Popup.vue';
+import MapToolbar from './MapToolbar.vue';
 import LayerMap from '@/resource/map/layerMap';
 import LayerDef from '@/resource/layerDef';
 import SensorProps from '@/resource/map/sensorProps';
