@@ -84,6 +84,14 @@ public class GeoJsonController : ControllerBase
 
     [HttpGet]
     [Authorize(AuthenticationSchemes = "Bearer")]
+    [Route("GetDrawing")]
+    public string GetDrawing()
+    {
+        return ToFeatureCollectionJson([]);
+    }
+
+    [HttpGet]
+    [Authorize(AuthenticationSchemes = "Bearer")]
     [Route("GetTaipeiGateGps")]
     public string GetTaipeiGateGps()
     {

@@ -1,4 +1,6 @@
-﻿export default class MapMeasure {
+﻿import LayerDef from "../layerDef.js";
+
+export default class MapMeasure {
   map;
 
   /**
@@ -47,11 +49,17 @@
   type = 'none';
   source = new ol.source.Vector();
   vector;
+  layers;
+  changesUnsaved;
 
-  constructor() {
+  constructor(map, layers, changesUnsaved) {
     this.vector = new ol.layer.Vector({
       source: this.source,
     });
+
+    this.attachMap(map);
+    this.layers = layers;
+    this.changesUnsaved = changesUnsaved;
   }
 
   attachMap(map) {
@@ -67,7 +75,7 @@
   // 'length' || 'area' || 'none'
   setType(type) {
     this.type = type;
-    if (this.draw) this.map.removeInteraction(this.draw);
+    this.map.getInteractions().clear();
 
     if (type === 'none') {
       this.hideResult();
@@ -132,9 +140,8 @@
       color: 'rgba(255, 255, 255, 0.2)',
     }),
     stroke: new ol.style.Stroke({
-      color: 'rgba(0, 0, 0, 0.5)',
-      lineDash: [10, 10],
-      width: 2,
+      color: 'rgba(255, 0, 255, 0.5)',
+      width: 4,
     }),
     image: new ol.style.Circle({
       radius: 5,
@@ -186,7 +193,7 @@
       });
     });
 
-    this.draw.on('drawend', () => {
+    this.draw.on('drawend', e => {
       this.measureTooltipElement.className = 'ol-tooltip ol-tooltip-static';
       this.measureTooltip.setOffset([0, -7]);
 
@@ -198,7 +205,32 @@
       this.measureTooltipElement = null;
       this.createMeasureTooltip();
       ol.Observable.unByKey(listener);
+
+      this.addToLayer(e.feature);
     });
+  }
+
+  _getLayer() {
+    let allLayers = this.layers.get(LayerDef.DRAWING);
+    if (allLayers.length === 0) return null;
+    return allLayers[0];
+  }
+
+  addToLayer(feature) {
+    let layer = this._getLayer();
+    if (layer === null) return;
+    layer.getSource().addFeature(feature);
+    this.changesUnsaved.value = true;
+  }
+
+  save() {
+    let layer = this._getLayer();
+    if (layer === null) return;
+    let features = layer.getSource().getFeatures();
+    let parser = new ol.format.GeoJSON();
+    let geojson = parser.writeFeaturesObject(features, { featureProjection: 'EPSG:3857' });
+    console.log(geojson);
+    alert('saved');
   }
 
   hideResult() {

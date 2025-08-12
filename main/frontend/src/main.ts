@@ -5,6 +5,7 @@ import store from './store';
 
 import { install } from '@/plugins';
 
+import '@/styles/element/ol.scss';
 import '@/styles/element/index.scss';
 import '@/styles/preflight.scss';
 import '@/styles/tailwind.scss';

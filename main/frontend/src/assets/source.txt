@@ -4,3 +4,4 @@ image/map/circle.png: https://www.flaticon.com/free-icon/dry-clean_481078?term=c
 image/map/delete.png: https://www.flaticon.com/free-icon/delete_8567781?term=delete&page=3&position=65&origin=search&related_id=8567781
 image/map/save.png: https://www.flaticon.com/free-icon/save_4743125?term=save+file&page=1&position=7&origin=search&related_id=4743125
 image/map/folder.png: https://www.flaticon.com/free-icon/folder_73581?term=open+file&page=1&position=2&origin=search&related_id=73581
+image/map/icon_map: https://www.flaticon.com/free-icon/maps-and-flags_446075?term=marker&page=1&position=6&origin=search&related_id=446075
