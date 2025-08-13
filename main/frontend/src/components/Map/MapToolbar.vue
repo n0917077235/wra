@@ -5,19 +5,20 @@
             <img v-else :src="getIconUrl(x.icon)" @click="x.action">
         </div>
     </div>
+    <DrawingMenu :mode="fileMode" :load="load" :save="save" @closed="onMenuClose"></DrawingMenu>
 </template>
 
 <script setup lang="ts">
 import { onMounted, computed, ref, defineProps } from 'vue';
 import MapMeasure from '@/resource/map/mapMeasure';
+import DrawingMenu from './DrawingMenu.vue';
+import FileMode from '@/resource/map/fileMode.js';
 
 let editing = ref(false);
 let changesUnsaved = ref(false);
-const props = defineProps(['map', 'layers']);
-
-let measure = new MapMeasure(props.map, props.layers, changesUnsaved);
-
-// const emit = defineEmits(['initialized']);
+let fileMode = ref(FileMode.HIDDEN);
+let props = defineProps(['map', 'layers']);
+let measure = new MapMeasure(props.map, props.layers, changesUnsaved, fileMode);
 
 let items = [
     { icon: 'cursor.png', action: () => measure.setType('none') },
@@ -29,8 +30,8 @@ let items = [
     { icon: 'text.png', isEditor: true, action: () => { } },
     { icon: 'delete.png', isEditor: true, action: () => { } },
     { isDivider: true },
-    { icon: 'folder.png', action: () => { } },
-    { icon: 'save.png', action: () => measure.save() },
+    { icon: 'folder.png', action: () => { fileMode.value = FileMode.OPEN } },
+    { icon: 'save.png', action: () => { fileMode.value = FileMode.SAVE } },
 ];
 
 function getIconUrl(icon) {
@@ -50,7 +51,18 @@ onMounted(() => {
     });
 });
 
+function onMenuClose() {
+    fileMode.value = FileMode.HIDDEN;
+}
 
+function save(name) {
+    measure.save(name);
+}
+
+function load(name) {
+    measure.load(name);
+    fileMode.value = FileMode.HIDDEN;
+}
 </script>
 
 <style lang="scss" scoped>

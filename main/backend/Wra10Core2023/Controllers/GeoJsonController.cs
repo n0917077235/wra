@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
+using Microsoft.EntityFrameworkCore.SqlServer.Query.Internal;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Data;
@@ -84,6 +85,14 @@ public class GeoJsonController : ControllerBase
     {
         string geoJsonData = await System.IO.File.ReadAllTextAsync(filePath);
         return geoJsonData;
+    }
+
+    [HttpGet]
+    [Authorize(AuthenticationSchemes = "Bearer")]
+    [Route("GetEmpty")]
+    public string GetEmpty()
+    {
+        return ToFeatureCollectionJson([]);
     }
 
     [HttpGet]

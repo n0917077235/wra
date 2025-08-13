@@ -52,8 +52,9 @@ export default class MapMeasure {
   vector;
   layers;
   changesUnsaved;
+  fileMode;
 
-  constructor(map, layers, changesUnsaved) {
+  constructor(map, layers, changesUnsaved, fileMode) {
     this.vector = new ol.layer.Vector({
       source: this.source,
     });
@@ -61,6 +62,7 @@ export default class MapMeasure {
     this.attachMap(map);
     this.layers = layers;
     this.changesUnsaved = changesUnsaved;
+    this.fileMode = fileMode;
   }
 
   attachMap(map) {
@@ -224,7 +226,23 @@ export default class MapMeasure {
     this.changesUnsaved.value = true;
   }
 
-  async save() {
+  async load(name) {
+    let layer = this._getLayer();
+    if (layer === null) return;
+    let source = layer.getSource();
+    source.clear();
+    let n = encodeURIComponent(name);
+    let res = await apiClient.get(`/GeoJson/GetDrawing?name=${n}`);
+
+    let features = new ol.format.GeoJSON().readFeatures(res.data, {
+      dataProjection: 'EPSG:4326',
+      featureProjection: 'EPSG:3857'
+    });
+
+    source.addFeatures(features);
+  }
+
+  async save(name) {
     let layer = this._getLayer();
     if (layer === null) return;
     let features = layer.getSource().getFeatures();
@@ -232,7 +250,7 @@ export default class MapMeasure {
     let obj = parser.writeFeaturesObject(features, { featureProjection: 'EPSG:3857' });
 
     let data = {
-      name: 'my123',
+      name,
       geojson: JSON.stringify(obj),
     };
 

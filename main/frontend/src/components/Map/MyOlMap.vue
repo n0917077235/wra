@@ -1,6 +1,5 @@
 <template>
     <div id="app" class="app-container">
-        <el-tag v-if="title">{{ title }}</el-tag>
         <div id="olmap" class="cctv-map"></div>
         <div id="menuToggle" @click="toggleMenu">
             <img src="@/assets/image/layers.png">
@@ -106,7 +105,7 @@
                 <label><input type="checkbox" id="layer21" @click="toggleLayer('layer21')"> 雙北橫移門即時啟閉<img
                         src='@/assets/image/blackdooropen.png' width="20" height="20"
                         style="float:right; margin-right:5px;"></label><br>
-                <label><input type="checkbox" id="layer22" @click="toggleLayer('layer22')"> 自訂圖層 </label>
+                <label><input type="checkbox" id="layer22" @click="toggleLayer('layer22')"> 我的標記 </label>
                 <br>
                 <label><input type="checkbox" id="layer23" @click="toggleLayer('layer23')"> 堤防護岸<img
                         src="@/assets/image/red.png" width="20" height="20"
@@ -134,7 +133,6 @@ import SensorProps from '@/resource/map/sensorProps';
 import StationProps from '@/resource/map/stationProps';
 
 const store2 = useStore();
-const CameraArea = computed(() => store2.state.image.currentCameraArea);
 const pMap = ref();
 const el = document.getElementsByClassName('el');
 const monitoringStationsExpanded = ref(true);
@@ -185,14 +183,6 @@ function getSensorLayerLines() {
         },
     ];
 }
-
-watch(CameraArea.value, () => {
-    updateWnd(
-        CameraArea.value.x,
-        CameraArea.value.y,
-        CameraArea.value.stationNameA,
-    );
-});
 
 function toggleMenu() {
     menuVisible.value = !menuVisible.value;
@@ -381,7 +371,7 @@ function getLayerGeojsonUrls(layerGroup) {
     if (layerGroup === 'layer18') return single(byFile("GPS02.json"));
     if (layerGroup === 'layer19') return single("/GeoJson/GetDamPointGps");
     if (layerGroup === 'layer20') return single(byFile("GPS04.json"));
-    if (layerGroup === LayerDef.DRAWING) return single("/GeoJson/GetDrawing");
+    if (layerGroup === LayerDef.DRAWING) return single("/GeoJson/GetEmpty");
     if (layerGroup === 'layer23') return single(byFile("GPS05.json"));
     if (layerGroup === 'layer26') return single(byFile("a河川區域線.geojson"));
     if (layerGroup === 'layer25') return single(byFile("b用地範圍線.geojson"));
@@ -507,11 +497,6 @@ function refreshSensorLayers() {
             }
         }
     }
-}
-
-function updateWnd(x: number, y: number, title?: string): void {
-    let map = pMap.value;
-    MapUtil.setCenter(map, y, x);
 }
 </script>
 
