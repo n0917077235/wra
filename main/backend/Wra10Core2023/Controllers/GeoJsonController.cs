@@ -1,11 +1,15 @@
 ﻿using GeoJSON.Net.Feature;
 using GeoJSON.Net.Geometry;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Data;
+using System.Drawing;
+using System.Security.Claims;
+using System.Threading.Tasks;
 using Wra10Core2023.Models;
 using Wra10Core2023.Util;
 using Point = GeoJSON.Net.Geometry.Point;
@@ -85,9 +89,47 @@ public class GeoJsonController : ControllerBase
     [HttpGet]
     [Authorize(AuthenticationSchemes = "Bearer")]
     [Route("GetDrawing")]
-    public string GetDrawing()
+    public string GetDrawing(string name)
     {
-        return ToFeatureCollectionJson([]);
+        Drawings.CreateTableIfNeeded(_configuration);
+        var userId = HttpContext.GetUserName();
+        return Drawings.Get(_configuration, userId, name);
+    }
+
+    [HttpGet]
+    [Authorize(AuthenticationSchemes = "Bearer")]
+    [Route("ListDrawings")]
+    public string ListDrawings()
+    {
+        Drawings.CreateTableIfNeeded(_configuration);
+        var userId = HttpContext.GetUserName();
+        var all = Drawings.GetNames(_configuration, userId);
+        return JToken.FromObject(all).ToString();
+    }
+
+    [HttpPut]
+    [Authorize(AuthenticationSchemes = "Bearer")]
+    [Route("SetDrawing")]
+    public async Task SetDrawing()
+    {
+        var json = await Request.Body.ReadAllTextAsync();
+        var t = JToken.Parse(json);
+        var userId = HttpContext.GetUserName();
+        var name = t.GetStr("name");
+        var geojson = t.GetStr("geojson");
+        Drawings.Update(_configuration, userId, name, geojson);
+    }
+
+    [HttpDelete]
+    [Authorize(AuthenticationSchemes = "Bearer")]
+    [Route("DeleteDrawing")]
+    public async Task DeleteDrawing()
+    {
+        var json = await Request.Body.ReadAllTextAsync();
+        var t = JToken.Parse(json);
+        var userId = HttpContext.GetUserName();
+        var name = t.GetStr("name");
+        Drawings.Delete(_configuration, userId, name);
     }
 
     [HttpGet]
@@ -95,7 +137,7 @@ public class GeoJsonController : ControllerBase
     [Route("GetTaipeiGateGps")]
     public string GetTaipeiGateGps()
     {
-        var sqlHelper = new SqlHelper(_configuration.GetConnectionString("Water2022"));
+        var sqlHelper = _configuration.MainDB();
         var query = @"
             Select a.AreaID, a.SensorType, b.AreaName, SensorNameA, a.x, a.y
             , LastDataTime ,CAST(LastValue1 AS INT) AS LastValue1
@@ -134,7 +176,7 @@ public class GeoJsonController : ControllerBase
     [Route("GetSensorGps")]
     public string GetSensorGps(string sensorType)
     {
-        var sqlHelper = new SqlHelper(_configuration.GetConnectionString("Water2022"));
+        var sqlHelper = _configuration.MainDB();
         var type = sensorType.ToLowerInvariant();
         if (type == "planninglevel") return PlanningLevel.GetGeoJson();
         var dt = GetSensorGpsTable(sqlHelper, type);
@@ -205,7 +247,7 @@ public class GeoJsonController : ControllerBase
     [Route("GetTansuiGps")]
     public string GetTansuiGps()
     {
-        SqlHelper sqlHelper = new SqlHelper(_configuration.GetConnectionString("Water2022"));
+        var sqlHelper = _configuration.MainDB();
         string cmd = @"Select stationid,stationnamea,x,y from Stations where isnull(x,0)!=0 and isnull(y,0)!=0 and areaid<>'A08' and isnull( importflag,'') <> 'EMBank' and isnull(importflag,'') <> 'EM2022'";
         DataTable dt = sqlHelper.ExecuteQuery(cmd);
         var pointList = new List<Feature>();
@@ -233,7 +275,7 @@ public class GeoJsonController : ControllerBase
     public string GetAdslGps()
     {
         string gpsId = "GPS06";
-        SqlHelper sqlHelper = new SqlHelper(_configuration.GetConnectionString("Water2022"));
+        var sqlHelper = _configuration.MainDB();
         string cmd = @"Select sequence,objectid, GpsID as stationid,layername as stationname,lng as x,lat as y from gpslayersub where gpsid='" + gpsId + "' and isnull(lat,1)!=0 and isnull(lng,0)!=0 and isnull(mark,1)=1 order by layername,sequence";
         DataTable dt = sqlHelper.ExecuteQuery(cmd);
         var pointList = new List<Feature>();
@@ -267,7 +309,7 @@ public class GeoJsonController : ControllerBase
     public string Get4GGps()
     {
         string gpsId = "GPS07";
-        SqlHelper sqlHelper = new SqlHelper(_configuration.GetConnectionString("Water2022"));
+        var sqlHelper = _configuration.MainDB();
         string cmd = @"Select sequence,objectid, GpsID as stationid,layername as stationname,lng as x,lat as y from gpslayersub where gpsid='" + gpsId + "' and isnull(lat,1)!=0 and isnull(lng,0)!=0 and isnull(mark,1)=1 order by layername,sequence";
         DataTable dt = sqlHelper.ExecuteQuery(cmd);
         var pointList = new List<Feature>();
@@ -299,7 +341,7 @@ public class GeoJsonController : ControllerBase
     [Route("GetCCTVGpsByArea")]
     public string GetCCTVGpsByArea(string? areaId)
     {
-        SqlHelper sqlHelper = new SqlHelper(_configuration.GetConnectionString("Water2022"));
+        var sqlHelper = _configuration.MainDB();
         string cmd = @"select camid,camname,a.x,a.y,streamMain from Cameras a 
        inner join stations b on a.StationID=b.StationID 
                            where isnull(a.X,0)!=0 and isnull(a.y,0)!=0 and areaId=@areaId order by channel";// and station!=10096";
@@ -334,7 +376,7 @@ public class GeoJsonController : ControllerBase
     [Route("GetBankGps")]
     public string GetBankGps()
     {
-        var sqlHelper = new SqlHelper(_configuration.GetConnectionString("Water2022"));
+        var sqlHelper = _configuration.MainDB();
         string cmd = @"Select stationid,stationnamea,x,y from Stations where isnull(x,0)!=0 and isnull(y,0)!=0 and importflag like 'EM%'";
         DataTable dt = sqlHelper.ExecuteQuery(cmd);
         var pointList = new List<Feature>();
@@ -367,7 +409,7 @@ public class GeoJsonController : ControllerBase
     [Route("GetStationGps")]
     public string GetStationsGps()
     {
-        SqlHelper sqlHelper = new SqlHelper(_configuration.GetConnectionString("Water2022"));
+        var sqlHelper = _configuration.MainDB();
         string cmd = @"Select stationid,stationnamea,x,y from Stations where isnull(x,0)!=0 and isnull(y,0)!=0";
         DataTable dt = sqlHelper.ExecuteQuery(cmd);
         var pointList = new List<Feature>();
@@ -400,7 +442,7 @@ public class GeoJsonController : ControllerBase
     public string GetDamPointGps()
     {
         string? gpsId = "GPS03";
-        SqlHelper sqlHelper = new SqlHelper(_configuration.GetConnectionString("Water2022"));
+        var sqlHelper = _configuration.MainDB();
         string cmd = @"Select sequence,objectid, GpsID as stationid,layername as stationname,lng as x,lat as y from gpslayersub where gpsid='" + gpsId + "' and isnull(lat,1)!=0 and isnull(lng,0)!=0 and isnull(mark,1)=1 order by layername,sequence";
         DataTable dt = sqlHelper.ExecuteQuery(cmd);
         var pointList = new List<Feature>();
@@ -432,7 +474,7 @@ public class GeoJsonController : ControllerBase
     [Route("GetYansantziGps")]
     public string GetYansantziGps()
     {
-        SqlHelper sqlHelper = new SqlHelper(_configuration.GetConnectionString("Water2022"));
+        var sqlHelper = _configuration.MainDB();
         string cmd = @"Select stationid,stationnameA,x,y from Stations where isnull(x,0)!=0 and isnull(y,0)!=0 and stationid='ST0077'";
         DataTable dt = sqlHelper.ExecuteQuery(cmd);
         var pointList = new List<Feature>();
@@ -463,7 +505,7 @@ public class GeoJsonController : ControllerBase
     [Route("GetCCTVGps")]
     public string GetCCTVGps()
     {
-        SqlHelper sqlHelper = new SqlHelper(_configuration.GetConnectionString("Water2022"));
+        var sqlHelper = _configuration.MainDB();
         string cmd = @"select camid,camname,a.x,a.y,streamMain from Cameras a 
        inner join stations b on a.StationID=b.StationID 
                            where isnull(a.X,0)!=0 and isnull(a.y,0)!=0 ";// and station!=10096";

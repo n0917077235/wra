@@ -186,7 +186,7 @@ const buttonState = ref('default'); // 'default', 'active', 'error'
     async function createmap() {
         producting.value = true;
         isButtonDisabled.value = true;
-        let infos = { userId: userId.value, eventTime: ruleForm.event.split('(')[0] };
+        let infos = { eventTime: ruleForm.event.split('(')[0] };
         //let infos = { userId: "kris", eventTime: "" };
         //alert(userId.value + " " + ruleForm.event.split('(')[0]);
         const rtn: GetIsoseismalResponse | null = await apiGetIsoseismal(infos);

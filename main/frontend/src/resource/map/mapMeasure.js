@@ -1,4 +1,5 @@
 ﻿import LayerDef from "../layerDef.js";
+import { apiClient } from '../index.ts';
 
 export default class MapMeasure {
   map;
@@ -223,14 +224,19 @@ export default class MapMeasure {
     this.changesUnsaved.value = true;
   }
 
-  save() {
+  async save() {
     let layer = this._getLayer();
     if (layer === null) return;
     let features = layer.getSource().getFeatures();
     let parser = new ol.format.GeoJSON();
-    let geojson = parser.writeFeaturesObject(features, { featureProjection: 'EPSG:3857' });
-    console.log(geojson);
-    alert('saved');
+    let obj = parser.writeFeaturesObject(features, { featureProjection: 'EPSG:3857' });
+
+    let data = {
+      name: 'my123',
+      geojson: JSON.stringify(obj),
+    };
+
+    await apiClient.put(`/GeoJson/SetDrawing`, data);
   }
 
   hideResult() {

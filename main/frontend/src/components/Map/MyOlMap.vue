@@ -106,8 +106,8 @@
                 <label><input type="checkbox" id="layer21" @click="toggleLayer('layer21')"> 雙北橫移門即時啟閉<img
                         src='@/assets/image/blackdooropen.png' width="20" height="20"
                         style="float:right; margin-right:5px;"></label><br>
-                <label><input type="checkbox" id="layer22" @click="toggleLayer('layer22')"> 自訂圖層 </label><button
-                    id="cleardrawed" @click="cleardrawed()"> 清除 </button> <br>
+                <label><input type="checkbox" id="layer22" @click="toggleLayer('layer22')"> 自訂圖層 </label>
+                <br>
                 <label><input type="checkbox" id="layer23" @click="toggleLayer('layer23')"> 堤防護岸<img
                         src="@/assets/image/red.png" width="20" height="20"
                         style="float:right; margin-right:5px;"></label><br>
@@ -133,23 +133,9 @@ import LayerDef from '@/resource/layerDef';
 import SensorProps from '@/resource/map/sensorProps';
 import StationProps from '@/resource/map/stationProps';
 
-interface Props {
-    title?: string;
-    x?: string;
-    y?: string;
-}
-
-const props = withDefaults(defineProps<Props>(), {
-    x: '',
-    y: '',
-});
-
 const store2 = useStore();
-const userId = computed<string>(() => store2.state.user.userId);
 const CameraArea = computed(() => store2.state.image.currentCameraArea);
 const pMap = ref();
-const markerPoint = ref();
-const pTGMarker = ref();
 const el = document.getElementsByClassName('el');
 const monitoringStationsExpanded = ref(true);
 const SenserMapsExpanded = ref(false);
@@ -157,6 +143,8 @@ const NetworkMapsExpanded = ref(false);
 const SafeManageMapsExpanded = ref(false);
 const RiverThreeMapsExpanded = ref(false);
 const showDrawingToolbar = ref(false);
+const menuVisible = ref(true);
+let layers = new LayerMap();
 
 const popup = ref({
     content: {},
@@ -167,7 +155,6 @@ const popup = ref({
 const changedItems = ref([]);
 
 onMounted(() => {
-    store2.dispatch('drawings/loadDrawings'); // 使用命名空間調用 action
     init();
     toggleLayer(LayerDef.TANSUI_STATION);
     toggleLayer(LayerDef.YANSANTZI_STATION);
@@ -199,43 +186,6 @@ function getSensorLayerLines() {
     ];
 }
 
-function cleardrawed() {
-    const savedDrawings = store2.state.drawings.drawings;
-    if (savedDrawings) {
-        store2.dispatch('drawings/clearDrawings');
-    }
-    if (dm != null) dm.clearAllGraphics();
-    pDatadrawed.setMap(null);
-    //drawSavedDrawings();
-}
-
-var pDatadrawed = new TGOS.TGData({ map: pMap.value });
-function drawSavedDrawings() {
-    pDatadrawed.setMap(null);
-    pDatadrawed = new TGOS.TGData({ map: pMap.value });
-    try {
-        const savedDrawings = store2.state.drawings.drawings;
-        if (savedDrawings) {
-            savedDrawings.forEach(drawing => {
-
-                var graphics = pDatadrawed.addGeoJson(drawing, { idPropertyName: "GEOJSON" });
-                graphics.forEach((g) => {
-                    //if (g == "undefined") alert(g);
-                    g.setProperty("strokeColor", "#FF0000");
-                    if (g['geometry']["type"].toLowerCase() == "linestring") {
-                        var style1 = {
-                            strokeColor: "#CC0000",
-                            strokeWeight: 4,
-                        };
-                        pDatadrawed.overrideStyle(g, style1);
-                    }
-                }
-                )
-            });
-        }
-    } catch (e) { alert(e); }
-}
-
 watch(CameraArea.value, () => {
     updateWnd(
         CameraArea.value.x,
@@ -243,19 +193,6 @@ watch(CameraArea.value, () => {
         CameraArea.value.stationNameA,
     );
 });
-
-watch(
-    () => props.x,
-    async () => {
-        if (props.x && props.y) {
-            await nextTick();
-            updateWnd(props.x, props.y);
-        }
-    },
-    { deep: true, immediate: true },
-);
-
-const menuVisible = ref(true);
 
 function toggleMenu() {
     menuVisible.value = !menuVisible.value;
@@ -452,12 +389,10 @@ function getLayerGeojsonUrls(layerGroup) {
     return [];
 }
 
-let layers = new LayerMap();
-
 // Returns null if data is not available.
 async function getLayers(layerId, funcName) {
     if (layerId == "layer12") {
-        let infos = { userId: userId.value, eventTime: "" };
+        let infos = { eventTime: "" };
         let v = await apiGetIsoseismal(infos);
         let layers = [];
 
@@ -577,22 +512,6 @@ function refreshSensorLayers() {
 function updateWnd(x: number, y: number, title?: string): void {
     let map = pMap.value;
     MapUtil.setCenter(map, y, x);
-
-    if (title) {
-        pTGMarker.value.setTitle(title);
-    }
-
-    markerPoint.value = new TGOS.TGPoint(x, y);
-    const markerImg = new TGOS.TGImage(
-        'https://api.tgos.tw/TGOS_API/images/marker.png',
-        new TGOS.TGSize(50, 40),
-        new TGOS.TGPoint(0, 0),
-        new TGOS.TGPoint(20, 50),
-    );
-    pTGMarker.value.setTitle(title);
-    alert(title);
-    pTGMarker.value.setPosition(markerPoint.value);
-    pTGMarker.value.setIcon(markerImg);
 }
 </script>
 
