@@ -32,7 +32,7 @@ public class Program
     }
 
     public static IWebHostBuilder CreateWebHostBuilder(string[] args) =>
-        WebHost.CreateDefaultBuilder(args).UseStartup<Startup>();
+        WebHost.CreateDefaultBuilder(args).UseStartup<Startup>()
 
     public class Startup
     {
@@ -121,6 +121,11 @@ public class Program
                 options.LogoutPath = new PathString("/authen/Logout");
             });
             */
+
+            // 加入 定時排程，取消註解就會啟動
+            // services.AddHostedService<ScheduledTask.Services.ScheduledTaskServiceCamera>();
+            // services.AddHostedService<ScheduledTask.Services.ScheduledTaskServiceEarthquake>();
+
             services.AddControllers();
             services.AddDistributedMemoryCache();
             services.AddSession(options =>
@@ -202,7 +207,7 @@ public class Program
                 // due to untrusted TLS certificates
                 app.UseHttpsRedirection();
 #endif
-
+            app.UseStaticFiles();
             app.UseRouting();
 
             app.UseCors(myPolicy);
@@ -245,7 +250,6 @@ public class Program
             */
 
             var filesDir = Path.Combine(assemblyDir, "Files");
-
             app.UseStaticFiles(new StaticFileOptions
             {
                 FileProvider = new PhysicalFileProvider(filesDir),
