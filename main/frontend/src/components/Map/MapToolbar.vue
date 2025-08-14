@@ -5,7 +5,9 @@
             <img v-else :src="getIconUrl(x.icon)" @click="x.action">
         </div>
     </div>
-    <DrawingMenu :mode="fileMode" :load="load" :save="save" @closed="onMenuClose"></DrawingMenu>
+    <DrawingMenu :mode="fileMode" :load="load" :save="save" :changesUnsaved="changesUnsaved" 
+        @closed="onMenuClose">
+    </DrawingMenu>
 </template>
 
 <script setup lang="ts">
@@ -55,13 +57,15 @@ function onMenuClose() {
     fileMode.value = FileMode.HIDDEN;
 }
 
-function save(name) {
-    measure.save(name);
+async function save(name) {
+    await measure.save(name);
+    changesUnsaved.value = false;
 }
 
-function load(name) {
-    measure.load(name);
+async function load(name) {
+    await measure.load(name);
     fileMode.value = FileMode.HIDDEN;
+    changesUnsaved.value = false;
 }
 </script>
 

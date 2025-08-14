@@ -132,12 +132,9 @@ public class GeoJsonController : ControllerBase
     [HttpDelete]
     [Authorize(AuthenticationSchemes = "Bearer")]
     [Route("DeleteDrawing")]
-    public async Task DeleteDrawing()
+    public void DeleteDrawing(string name)
     {
-        var json = await Request.Body.ReadAllTextAsync();
-        var t = JToken.Parse(json);
         var userId = HttpContext.GetUserName();
-        var name = t.GetStr("name");
         Drawings.Delete(_configuration, userId, name);
     }
 

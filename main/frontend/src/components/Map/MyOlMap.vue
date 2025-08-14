@@ -466,8 +466,6 @@ async function addLayer(layerId, funcName, layerGroup = null) {
     catch (e) {
         console.log(e);
     }
-
-    getLocation();
 }
 
 function addPopupOverlay(map) {
