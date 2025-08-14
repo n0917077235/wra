@@ -1,1 +1,6 @@
 appsettings.Development.json
+# 忽略 output 資料夾內的所有檔案
+wwwroot/output/*
+
+# 取消忽略資料夾本身
+!wwwroot/output/
