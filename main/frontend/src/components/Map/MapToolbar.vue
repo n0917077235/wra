@@ -5,8 +5,7 @@
             <img v-else :src="getIconUrl(x.icon)" @click="x.action">
         </div>
     </div>
-    <DrawingMenu :mode="fileMode" :load="load" :save="save" :changesUnsaved="changesUnsaved" 
-        @closed="onMenuClose">
+    <DrawingMenu :mode="fileMode" :load="load" :save="save" :changesUnsaved="changesUnsaved" @closed="onMenuClose">
     </DrawingMenu>
 </template>
 
@@ -34,15 +33,8 @@ let items = [
     { isDivider: true },
     { icon: 'folder.png', action: () => { fileMode.value = FileMode.OPEN } },
     { icon: 'save.png', action: () => { fileMode.value = FileMode.SAVE } },
+    { icon: 'clear.png', action: () => clear() },
 ];
-
-function getIconUrl(icon) {
-    return require(`@/assets/image/map/${icon}`);
-}
-
-function getCurrentItems() {
-    return items.filter(x => !x.isEditor || editing.value);
-}
 
 onMounted(() => {
     window.addEventListener('beforeunload', e => {
@@ -53,6 +45,13 @@ onMounted(() => {
     });
 });
 
+function getIconUrl(icon) {
+    return require(`@/assets/image/map/${icon}`);
+}
+
+function getCurrentItems() {
+    return items.filter(x => !x.isEditor || editing.value);
+}
 function onMenuClose() {
     fileMode.value = FileMode.HIDDEN;
 }
@@ -66,6 +65,11 @@ async function load(name) {
     await measure.load(name);
     fileMode.value = FileMode.HIDDEN;
     changesUnsaved.value = false;
+}
+
+function clear() {
+    if (!confirm('確認清除畫面上所有標記?')) return;
+    measure.clear();
 }
 </script>
 

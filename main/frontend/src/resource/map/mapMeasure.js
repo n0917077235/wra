@@ -226,6 +226,11 @@ export default class MapMeasure {
     this.changesUnsaved.value = true;
   }
 
+  clear() {
+    let layer = this._getLayer();
+    layer?.getSource().clear();
+  }
+
   async load(name) {
     let layer = this._getLayer();
     if (layer === null) return;
