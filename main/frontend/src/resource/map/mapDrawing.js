@@ -1,7 +1,7 @@
 ﻿import LayerDef from "../layerDef.js";
 import { apiClient } from '../index.ts';
 
-export default class MapMeasure {
+export default class MapDrawing {
   map;
 
   /**
@@ -73,22 +73,50 @@ export default class MapMeasure {
       let h = this.helpTooltipElement;
       if (h) h.classList.add('hidden');
     });
+
+    this.enableAddMarkers();
   }
 
-  // 'length' || 'area' || 'none'
+  enableAddMarkers() {
+    this.map.on('singleclick', evt => {
+      if (this.type !== 'marker' && this.type !== 'text') return;
+      let coordinate = evt.coordinate;
+      let marker = new ol.Feature(new ol.geom.Point(coordinate));
+      marker.set('pointType', 'marker');
+
+      if (this.type === 'text') {
+        let text = prompt('請輸入標記文字');
+        if (text === null) return;
+        marker.set('text', text);
+      }
+
+      let layer = this._getLayer();
+      layer?.getSource().addFeature(marker);
+    });
+  }
+
+  // type: 'length' | 'area' | 'marker' | 'text' |'none'
   setType(type) {
     this.type = type;
     this.map.getInteractions().clear();
 
-    if (type === 'none') {
+    if (type === 'none' || type === 'marker' || type === 'text') {
       this.hideResult();
+
+      // this.draw = new ol.interaction.Draw({
+      //   source: this.source,
+      //   type,
+      //   style: MapDrawing.styles,
+      // });
+
+      // this.map.addInteraction(this.draw);
     } else {
       this.addInteraction(type);
     }
   }
 
   pointerMoveHandler(evt) {
-    if (this.type === 'none' || evt.dragging) return;
+    if (this.type === 'none' || this.type === 'marker' || this.type === 'text' || evt.dragging) return;
     let helpMsg = '點選以開始量測';
 
     if (this.sketch) {
@@ -138,7 +166,7 @@ export default class MapMeasure {
     return output;
   };
 
-  style = new ol.style.Style({
+  static styles = new ol.style.Style({
     fill: new ol.style.Fill({
       color: 'rgba(255, 255, 255, 0.2)',
     }),
@@ -157,16 +185,40 @@ export default class MapMeasure {
     }),
   });
 
+  static markerStyle(text) {
+    return new ol.style.Style({
+      image: new ol.style.Icon({
+        scale: 0.65,
+        anchor: [0.5, 1],
+        src: require('@/assets/image/map/pin.png'),
+      }), 
+      text: new ol.style.Text({
+        font: '18px Calibri,sans-serif',
+        fill: new ol.style.Fill({ color: '#000' }),
+        stroke: new ol.style.Stroke({
+          color: '#fff', width: 6
+        }),
+        text
+      }),
+    });
+  }
+
+  static styleFunc(feature) {
+    if (feature.get('pointType') === 'marker') {
+      let text = feature.get('text');
+      return MapDrawing.markerStyle(text);
+    }
+
+    return MapDrawing.styles;
+  }
+
   addInteraction(t) {
     const type = t == 'area' ? 'Polygon' : 'LineString';
 
     this.draw = new ol.interaction.Draw({
       source: this.source,
       type,
-      style: feature => {
-        const geometryType = feature.getGeometry().getType();
-        if (geometryType === type || geometryType === 'Point') return this.style;
-      },
+      style: MapDrawing.styles,
     });
 
     this.map.addInteraction(this.draw);

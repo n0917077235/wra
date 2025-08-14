@@ -11,7 +11,7 @@
 
 <script setup lang="ts">
 import { onMounted, computed, ref, defineProps } from 'vue';
-import MapMeasure from '@/resource/map/mapMeasure';
+import MapDrawing from '@/resource/map/mapDrawing';
 import DrawingMenu from './DrawingMenu.vue';
 import FileMode from '@/resource/map/fileMode.js';
 
@@ -19,16 +19,15 @@ let editing = ref(false);
 let changesUnsaved = ref(false);
 let fileMode = ref(FileMode.HIDDEN);
 let props = defineProps(['map', 'layers']);
-let measure = new MapMeasure(props.map, props.layers, changesUnsaved, fileMode);
+let measure = new MapDrawing(props.map, props.layers, changesUnsaved, fileMode);
 
 let items = [
     { icon: 'cursor.png', action: () => measure.setType('none') },
-    { icon: 'icon_map.png', action: () => { } },
+    { icon: 'text.png', action: () => measure.setType('text') },
+    { icon: 'icon_map.png', action: () => measure.setType('marker') },
     { icon: 'line.png', action: () => measure.setType('line') },
     { icon: 'polygon.png', action: () => measure.setType('area') },
-    { icon: 'circle.png', action: () => { } },
     { isDivider: true, isEditor: true, },
-    { icon: 'text.png', isEditor: true, action: () => { } },
     { icon: 'delete.png', isEditor: true, action: () => { } },
     { isDivider: true },
     { icon: 'folder.png', action: () => { fileMode.value = FileMode.OPEN } },

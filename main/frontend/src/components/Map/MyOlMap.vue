@@ -222,7 +222,6 @@ let gmapLayer = new ol.layer.Tile({
 const mapType = ref(0);
 
 function updateMapType() {
-    // mapType.value = v;
     gmapLayer.setSource(mapSources[mapType.value]);
 };
 
