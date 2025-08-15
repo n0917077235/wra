@@ -11,10 +11,10 @@
             </el-button>
 
             <div id="alarmbox" class="modal">
-                <div class="modal-content"> <!-- 不要再直写 style -->
+                <div class="modal-content">
                     <el-dialog v-model="showAlarmMsg" custom-class="alarm-dialog" :append-to-body="false"
                         :show-close="false">
-                        <!-- 自定义关闭按钮 -->
+                        
                         <span class="closeBtn2" @click="showAlarmMsg = false">&times;</span>
 
                         <!-- 警告内容 -->
@@ -88,16 +88,13 @@ async function checkForAlarms() {
 
 // 當按下警告按鈕時觸發，顯示警告訊息的對話框
 const showWarningPanel = () => {
-    // 1) 先确保外层 overlay 可见
     const box = document.getElementById('alarmbox') as HTMLElement | null;
     if (box) {
         box.style.display = 'block';
     }
 
-    // 2) 打开 el-dialog
     showAlarmMsg.value = true;
 
-    // 3) 延迟绘制，等 DOM 完全渲染
     setTimeout(() => {
         const wrapper = document.querySelector(
             '#alarmbox .modal-content'
@@ -111,17 +108,14 @@ const showWarningPanel = () => {
             return;
         }
 
-        // 4) 动态设置宽高：宽度取 wrapper.clientWidth 或 90% 视窗宽
         const avail = wrapper ? wrapper.clientWidth : window.innerWidth * 0.9;
-        Canvas.width = avail;                    // <-- 直接用容器宽度，canvas 不会比它更宽
+        Canvas.width = avail;
         Canvas.height = 50 + (alarmrtn.value?.length || 0) * 30;
 
         const ctx = Canvas.getContext('2d');
         if (!ctx) return;
-        // 5) 每次先清空画布
         ctx.clearRect(0, 0, Canvas.width, Canvas.height);
 
-        // 6) 文字绘制
         ctx.font = '20px Arial';
         ctx.fillStyle = 'black';
         alarmrtn.value?.forEach((c, i) => {
@@ -145,7 +139,6 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* 遮罩层 */
 .modal {
     display: none;
     position: fixed;
@@ -156,27 +149,21 @@ onMounted(() => {
     overflow: auto;
 }
 
-/* 弹窗容器：圆角、阴影、保留横向滚动 */
 .modal-content {
     margin: 80px auto 0 !important;
-    /* 与顶部保持距离 */
     position: relative;
     width: 90%;
     max-width: 800px;
     max-height: 80vh;
     padding: 16px;
-    /* 四周内边距 */
     background: #fff;
     border-radius: 12px;
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
     overflow-x: auto !important;
-    /* 保留横向滚动 */
     overflow-y: hidden !important;
-    /* 不要外层纵向滚 */
     box-sizing: border-box;
 }
 
-/* 让 el-dialog 正好填满外层 .modal-content */
 .alarm-dialog .el-dialog__wrapper,
 .alarm-dialog .el-dialog {
     margin: 0;
@@ -184,7 +171,6 @@ onMounted(() => {
     height: 100% !important;
 }
 
-/* 粘顶 Header，包括默认 X 按钮 */
 .alarm-dialog .el-dialog__header {
     position: sticky !important;
     top: 0;
@@ -197,24 +183,18 @@ onMounted(() => {
     border-bottom: 1px solid #eee;
 }
 
-/* 隐藏 Element 默认的 body padding */
 .alarm-dialog .el-dialog__body {
     padding: 0 !important;
 }
 
-/* 实际滚动区：canvas 放这里 */
 .alarm-body {
     padding: 24px;
     white-space: nowrap;
-    /* 禁止换行，超出时出滚动条 */
     overflow-x: auto;
-    /* 横向滚 */
     overflow-y: auto;
-    /* 纵向滚 */
     box-sizing: border-box;
 }
 
-/* 手机端微调 */
 @media (max-width: 768px) {
     .modal-content {
         width: 95%;
@@ -230,7 +210,6 @@ onMounted(() => {
     }
 }
 
-/* 自定义关闭按钮 */
 .closeBtn2 {
   position: absolute;
   top: 8px;
@@ -239,6 +218,6 @@ onMounted(() => {
   line-height: 1;
   cursor: pointer;
   color: #333;
-  z-index: 20;            /* 确保浮在最上面 */
+  z-index: 20;
 }
 </style>
