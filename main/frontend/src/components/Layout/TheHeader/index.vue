@@ -261,7 +261,7 @@ onMounted(() => {
     min-width: 800px;
     /* 小螢幕時會出現水平捲軸，依需要調整 */
     border-collapse: collapse;
-    table-layout: fixed;
+    table-layout: auto;
     /* 防止長字撐破容器 */
     font-size: clamp(14px, 1.8vw, 18px);
     /* 會被 :style 覆蓋（alarmFontStyle） */
@@ -281,14 +281,14 @@ onMounted(() => {
 
 .alarm-table th,
 .alarm-table td {
-    text-align: center;   /* 水平置中 */
+    text-align: center;
+    /* 水平置中 */
     padding: 10px 12px;
     border-bottom: 1px solid #f0f0f0;
     vertical-align: middle;
     white-space: nowrap;
-    overflow: hidden;
-    /* 超出以省略號處理；若要看全字，拿掉這兩行 */
-    text-overflow: ellipsis;
+    overflow: visible;
+    text-overflow: clip;
 }
 
 .table-header {
@@ -325,10 +325,14 @@ onMounted(() => {
 
 /* 讓「時間」欄位永遠顯示完整字串（不省略），並推動水平捲動 */
 .alarm-table .col-time {
-  white-space: nowrap;         /* 不換行 */
-  overflow: visible;           /* 不裁切 */
-  text-overflow: clip;         /* 不顯示省略號 */
-  min-width: 220px;            /* 視你的字串長度可調 200~260px */
+    white-space: nowrap;
+    /* 不換行 */
+    overflow: visible;
+    /* 不裁切 */
+    text-overflow: clip;
+    /* 不顯示省略號 */
+    min-width: 220px;
+    /* 視你的字串長度可調 200~260px */
 }
 
 /* === RWD === */
