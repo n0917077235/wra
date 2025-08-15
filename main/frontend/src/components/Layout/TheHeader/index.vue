@@ -14,12 +14,43 @@
                 <div class="modal-content">
                     <el-dialog v-model="showAlarmMsg" custom-class="alarm-dialog" :append-to-body="false"
                         :show-close="false">
-                        
+
                         <span class="closeBtn2" @click="showAlarmMsg = false">&times;</span>
 
-                        <!-- 警告内容 -->
+                        <!-- 警告內容：由 Canvas 改為 HTML 文字表格 + 字體大小控制 -->
                         <div class="alarm-body">
-                            <canvas id="AlarmCanvas"></canvas>
+                            <div class="alarm-toolbar">
+                                <span class="table-header">警告清單（{{ alarmCount }} 筆）</span>
+                                <div class="toolbar-spacer"></div>
+                                <el-button size="small" @click="decFont" title="縮小字體">A-</el-button>
+                                <el-button size="small" @click="resetFont" title="重設字體">A</el-button>
+                                <el-button size="small" @click="incFont" title="放大字體">A+</el-button>
+                            </div>
+                            <div class="table-scroll">
+                                <table class="alarm-table" :style="alarmFontStyle" aria-label="警告清單">
+                                    <thead>
+                                        <tr>
+                                            <th class="table-header">流域/區域</th>
+                                            <th class="table-header">站點</th>
+                                            <th class="table-header">狀態</th>
+                                            <th class="table-header col-time">時間</th>
+                                            <th class="table-header">數值</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr v-for="(c, i) in alarmrtn" :key="i">
+                                            <td class="cell-text">{{ c.areaName }}</td>
+                                            <td class="cell-text">{{ c.sensorName }}</td>
+                                            <td class="status-cell">{{ c.status }}</td>
+                                            <td class="cell-text col-time">{{ c.lastDataTime }}</td>
+                                            <td class="cell-text">{{ c.value }}</td>
+                                        </tr>
+                                        <tr v-if="!alarmCount">
+                                            <td colspan="5" class="empty-hint">目前沒有警告。</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </el-dialog>
                 </div>
@@ -63,6 +94,32 @@ function isMobileDevice() {
 // 開發測試用：打開就注入 mock
 const useMockAlarm = false; // true 代表使用 mock 資料
 
+// 顯示的清單筆數
+const alarmCount = computed(() => alarmrtn.value?.length ?? 0);
+
+// 字體大小控制（預設 16px，可在 12~22 之間調整，記到 localStorage）
+const fontPx = ref<number>(16);
+const minFont = 12;
+const maxFont = 22;
+
+const alarmFontStyle = computed(() => ({
+    fontSize: `${fontPx.value}px`,
+    lineHeight: 1.5
+}));
+
+function incFont() {
+    fontPx.value = Math.min(fontPx.value + 2, maxFont);
+    localStorage.setItem('alarmFontPx', String(fontPx.value));
+}
+function decFont() {
+    fontPx.value = Math.max(fontPx.value - 2, minFont);
+    localStorage.setItem('alarmFontPx', String(fontPx.value));
+}
+function resetFont() {
+    fontPx.value = 16;
+    localStorage.setItem('alarmFontPx', String(fontPx.value));
+}
+
 async function checkForAlarms() {
     if (useMockAlarm) {
         alarmrtn.value = [
@@ -79,7 +136,6 @@ async function checkForAlarms() {
     }
 
     // 真實呼叫
-    if (isMobileDevice()) return;
     alarmrtn.value = await apiGetWaterEmbankAlarm();
     const alarms = alarmrtn.value.filter(item => item.status !== '');
     alarmrtn.value = alarms;
@@ -89,40 +145,8 @@ async function checkForAlarms() {
 // 當按下警告按鈕時觸發，顯示警告訊息的對話框
 const showWarningPanel = () => {
     const box = document.getElementById('alarmbox') as HTMLElement | null;
-    if (box) {
-        box.style.display = 'block';
-    }
-
+    if (box) box.style.display = 'block';
     showAlarmMsg.value = true;
-
-    setTimeout(() => {
-        const wrapper = document.querySelector(
-            '#alarmbox .modal-content'
-        ) as HTMLElement | null;
-        const Canvas = document.getElementById(
-            'AlarmCanvas'
-        ) as HTMLCanvasElement | null;
-
-        if (!Canvas) {
-            console.warn('找不到 AlarmCanvas');
-            return;
-        }
-
-        const avail = wrapper ? wrapper.clientWidth : window.innerWidth * 0.9;
-        Canvas.width = avail;
-        Canvas.height = 50 + (alarmrtn.value?.length || 0) * 30;
-
-        const ctx = Canvas.getContext('2d');
-        if (!ctx) return;
-        ctx.clearRect(0, 0, Canvas.width, Canvas.height);
-
-        ctx.font = '20px Arial';
-        ctx.fillStyle = 'black';
-        alarmrtn.value?.forEach((c, i) => {
-            const text = `${c.areaName} ${c.sensorName} ${c.status} ${c.lastDataTime} ${c.value}`;
-            ctx.fillText(text, 0, 50 + i * 30);
-        });
-    }, 100);
 };
 
 
@@ -134,90 +158,203 @@ onMounted(() => {
             modal.style.display = "none";
         }
     });
+    // 讀取已儲存的字體大小
+    const saved = Number(localStorage.getItem('alarmFontPx'));
+    if (!Number.isNaN(saved) && saved > 0) {
+        fontPx.value = Math.min(Math.max(saved, minFont), maxFont);
+    }
 });
 
 </script>
 
 <style scoped>
+/* === 遮罩與外殼 === */
 .modal {
     display: none;
     position: fixed;
     inset: 0;
-    /* top/right/bottom/left = 0 */
+    z-index: 1000;
     background: rgba(0, 0, 0, 0.4);
     padding-top: 5vh;
-    overflow: auto;
+    overflow: hidden;
+    /* 外層不滾動，避免雙捲軸 */
 }
 
 .modal-content {
-    margin: 80px auto 0 !important;
+    margin: 80px auto 0;
     position: relative;
     width: 90%;
-    max-width: 800px;
-    max-height: 80vh;
-    padding: 16px;
+    max-width: 900px;
     background: #fff;
     border-radius: 12px;
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
-    overflow-x: auto !important;
-    overflow-y: hidden !important;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, .15);
     box-sizing: border-box;
+    overflow: hidden;
+    /* 裁切內部外溢，圓角不被突破 */
+    z-index: 1001;
 }
 
+/* === Element Plus Dialog === */
 .alarm-dialog .el-dialog__wrapper,
 .alarm-dialog .el-dialog {
     margin: 0;
-    width: 100% !important;
-    height: 100% !important;
+    width: 100%;
+    height: 100%;
+    background: transparent;
+    box-shadow: none;
 }
 
 .alarm-dialog .el-dialog__header {
-    position: sticky !important;
+    position: sticky;
     top: 0;
-    z-index: 10;
+    z-index: 2;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 24px !important;
+    padding: 0 24px;
     background: #fff;
     border-bottom: 1px solid #eee;
 }
 
+/* 不讓這層再滾動，捲軸留給 .table-scroll */
 .alarm-dialog .el-dialog__body {
-    padding: 0 !important;
+    padding: 0;
+    overflow: hidden;
 }
 
+/* === 內容區 === */
 .alarm-body {
     padding: 24px;
-    white-space: nowrap;
-    overflow-x: auto;
-    overflow-y: auto;
     box-sizing: border-box;
+    max-width: 100%;
 }
 
+/* 工具列 */
+.alarm-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.toolbar-spacer {
+    flex: 1;
+}
+
+/* === 單一滾動容器：同時水平與垂直 === */
+.table-scroll {
+    position: relative;
+    overflow: auto;
+    /* 同時支援水平＋垂直 */
+    max-height: calc(80vh - 56px - 24px*2);
+    /* 視窗—header—上下 padding */
+    /* 上式中 56px 為 header 估值、24px 為 .alarm-body 的 padding；如有變化可微調 */
+    scrollbar-gutter: stable both-edges;
+    /* 預留捲軸空間，避免內容跳動 */
+    border-radius: 8px;
+    /* 與外殼圓角協調 */
+}
+
+/* === 表格：設定最小寬，促使小螢幕可水平捲動 === */
+.alarm-table {
+    width: 100%;
+    min-width: 800px;
+    /* 小螢幕時會出現水平捲軸，依需要調整 */
+    border-collapse: collapse;
+    table-layout: fixed;
+    /* 防止長字撐破容器 */
+    font-size: clamp(14px, 1.8vw, 18px);
+    /* 會被 :style 覆蓋（alarmFontStyle） */
+}
+
+.alarm-table thead th {
+    position: sticky;
+    /* 對著 .table-scroll 這個容器吸附 */
+    top: 0;
+    background: #fff;
+    z-index: 1;
+    /* 低於 header(2) 高於內容 */
+    text-align: center;
+    border-bottom: 1px solid #eee;
+    padding: 10px 12px;
+}
+
+.alarm-table th,
+.alarm-table td {
+    text-align: center;   /* 水平置中 */
+    padding: 10px 12px;
+    border-bottom: 1px solid #f0f0f0;
+    vertical-align: middle;
+    white-space: nowrap;
+    overflow: hidden;
+    /* 超出以省略號處理；若要看全字，拿掉這兩行 */
+    text-overflow: ellipsis;
+}
+
+.table-header {
+    color: #000;
+    font-weight: bold;
+}
+
+.cell-text {
+    color: #000;
+}
+
+.status-cell {
+    font-weight: 600;
+    color: #d4380d;
+}
+
+.empty-hint {
+    text-align: center;
+    color: #888;
+}
+
+/* 關閉按鈕 */
+.closeBtn2 {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    font-size: 24px;
+    line-height: 1;
+    cursor: pointer;
+    color: #333;
+    z-index: 3;
+    /* 高於 header / table */
+}
+
+/* 讓「時間」欄位永遠顯示完整字串（不省略），並推動水平捲動 */
+.alarm-table .col-time {
+  white-space: nowrap;         /* 不換行 */
+  overflow: visible;           /* 不裁切 */
+  text-overflow: clip;         /* 不顯示省略號 */
+  min-width: 220px;            /* 視你的字串長度可調 200~260px */
+}
+
+/* === RWD === */
 @media (max-width: 768px) {
     .modal-content {
         width: 95%;
-        max-height: 90vh;
     }
 
     .alarm-dialog .el-dialog__header {
-        padding: 0 16px !important;
+        padding: 0 16px;
     }
 
     .alarm-body {
         padding: 16px;
     }
-}
 
-.closeBtn2 {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  font-size: 24px;
-  line-height: 1;
-  cursor: pointer;
-  color: #333;
-  z-index: 20;
+    .table-scroll {
+        max-height: calc(90vh - 52px - 16px*2);
+    }
+
+    .alarm-table th,
+    .alarm-table td {
+        padding: 8px 10px;
+    }
+
+    /* 若手機 sticky 仍有遮蓋問題，可改成下面這行（擇一） */
+    /* .alarm-table thead th { position: static; } */
 }
 </style>
