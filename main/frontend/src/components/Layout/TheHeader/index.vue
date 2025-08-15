@@ -5,17 +5,26 @@
             <div class="text-[14px] sm:text-[18px]">{{ routerName }}</div>
 
             <!-- 1130920 警告按鈕，當有異常時顯示 -->
-            <el-button v-show="shouldShowButton" @click="showWarningPanel" style="height:40px;margin-left: 300px; padding: 5px 10px; font-size: 12px;">
-                <img src="@/assets/image/alarm.png" alt="Button Image" style="width: 100%; height: 35px; margin-right: 0px;">
+            <el-button v-show="shouldShowButton" @click="showWarningPanel"
+                class="alarm-btn h-10 px-2 text-xs ml-0 md:ml-[300px] flex items-center justify-center">
+                <img src="@/assets/image/alarm.png" alt="Alarm" class="h-8 w-auto" />
             </el-button>
+
             <div id="alarmbox" class="modal">
-                <div class="modal-content" style="width: 1300px; height: 500px; overflow-y: auto; border: 1px solid #ccc;">
-                    <el-dialog v-model="showAlarmMsg" title="Alarm Message" style="width: 1300px; height: 500px; overflow-y: auto; border: 1px solid #ccc;">
-                        <span class="closeBtn2">&times;</span>
-                        <canvas id="AlarmCanvas" width="1300"></canvas>
+                <div class="modal-content"> <!-- 不要再直写 style -->
+                    <el-dialog v-model="showAlarmMsg" custom-class="alarm-dialog" :append-to-body="false"
+                        :show-close="false">
+                        <!-- 自定义关闭按钮 -->
+                        <span class="closeBtn2" @click="showAlarmMsg = false">&times;</span>
+
+                        <!-- 警告内容 -->
+                        <div class="alarm-body">
+                            <canvas id="AlarmCanvas"></canvas>
+                        </div>
                     </el-dialog>
                 </div>
             </div>
+
         </div>
         <span class="text-[12px] sm:text-[16px]">{{ userName }}</span>
 
@@ -25,134 +34,211 @@
 </template>
 
 <script lang="ts" setup>
-    import { computed, ref,onMounted } from 'vue';
+import { computed, ref, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { useStore } from 'vuex';
-    import ToggleLogo from './ToggleLogo.vue';
-    import { apiGetWaterEmbankAlarm, SensorGeneralQueryDataResponse } from '@/resource/sensor';
-    const alarmrtn=ref<SensorGeneralQueryDataResponse[]>();
+import ToggleLogo from './ToggleLogo.vue';
+import { apiGetWaterEmbankAlarm, SensorGeneralQueryDataResponse } from '@/resource/sensor';
+const alarmrtn = ref<SensorGeneralQueryDataResponse[]>();
 const route = useRoute();
 const store = useStore();
 
 const userName = computed<string>(() => store.state.user.userName);
 const routerName = computed<string>(() => {
-  return (route.matched[1]?.meta?.routerName || '') as string;
+    return (route.matched[1]?.meta?.routerName || '') as string;
 });
 
-    // 控制警告訊息的顯示
-    const shouldShowButton = ref(false);  // 控制警告按鈕的顯示
-    const showAlarmMsg = ref(false);      // 控制警告對話框的顯示
-    const warningButton = ref<HTMLElement | null>(null);
+// 控制警告訊息的顯示
+const shouldShowButton = ref(false);  // 控制警告按鈕的顯示
+const showAlarmMsg = ref(false);      // 控制警告對話框的顯示
+const warningButton = ref<HTMLElement | null>(null);
 
-    // 警告訊息的內容
-    const warningMessage = ref('警告: 當前有異常事件需要處理！');
-    function isMobileDevice() {
-        const mobileDevice = ['Android', 'webOS', 'iPhone', 'iPad', 'iPod', 'BlackBerry', 'Windows Phone']
-        let isMobileDevice = mobileDevice.some(e => navigator.userAgent.match(e))
-        return isMobileDevice
+// 警告訊息的內容
+const warningMessage = ref('警告: 當前有異常事件需要處理！');
+function isMobileDevice() {
+    const mobileDevice = ['Android', 'webOS', 'iPhone', 'iPad', 'iPod', 'BlackBerry', 'Windows Phone']
+    let isMobileDevice = mobileDevice.some(e => navigator.userAgent.match(e))
+    return isMobileDevice
+}
+// 開發測試用：打開就注入 mock
+const useMockAlarm = false; // true 代表使用 mock 資料
+
+async function checkForAlarms() {
+    if (useMockAlarm) {
+        alarmrtn.value = [
+            {
+                areaName: '大漢溪',
+                sensorName: '塔寮坑閘門1',
+                status: '水位過高',
+                lastDataTime: '2025-08-07 09:15:00',
+                value: '7.12 M'
+            }
+        ];
+        shouldShowButton.value = true;
+        return;
     }
-    // 檢查是否需要顯示警告按鈕（模擬條件）
-    async function checkForAlarms() {
-        //1131025 do not show in phone
-        if (isMobileDevice()) return;
-        //alert("in");
-        /* 模擬條件檢查，如果有異常，就顯示按鈕
-            alert("in");
-            alert(alarmrtn.length);
-            let alarms = alarmrtn.filter(item => item.status !== '');
-            alert(alarms.length);
-            */
-        alarmrtn.value = await apiGetWaterEmbankAlarm();
-        let alarms = alarmrtn.value.filter(item => item.status!="");
-        //alert(alarmrtn.value.length);
-        //alert(alarmrtn.value[0].status.charCodeAt(0));
-        //alert(alarms.length);
-        alarmrtn.value = alarms;
-        if (alarmrtn.value.length > 0) {
-            shouldShowButton.value = true;
+
+    // 真實呼叫
+    if (isMobileDevice()) return;
+    alarmrtn.value = await apiGetWaterEmbankAlarm();
+    const alarms = alarmrtn.value.filter(item => item.status !== '');
+    alarmrtn.value = alarms;
+    shouldShowButton.value = alarms.length > 0;
+}
+
+// 當按下警告按鈕時觸發，顯示警告訊息的對話框
+const showWarningPanel = () => {
+    // 1) 先确保外层 overlay 可见
+    const box = document.getElementById('alarmbox') as HTMLElement | null;
+    if (box) {
+        box.style.display = 'block';
+    }
+
+    // 2) 打开 el-dialog
+    showAlarmMsg.value = true;
+
+    // 3) 延迟绘制，等 DOM 完全渲染
+    setTimeout(() => {
+        const wrapper = document.querySelector(
+            '#alarmbox .modal-content'
+        ) as HTMLElement | null;
+        const Canvas = document.getElementById(
+            'AlarmCanvas'
+        ) as HTMLCanvasElement | null;
+
+        if (!Canvas) {
+            console.warn('找不到 AlarmCanvas');
+            return;
         }
 
+        // 4) 动态设置宽高：宽度取 wrapper.clientWidth 或 90% 视窗宽
+        const avail = wrapper ? wrapper.clientWidth : window.innerWidth * 0.9;
+        Canvas.width = avail;                    // <-- 直接用容器宽度，canvas 不会比它更宽
+        Canvas.height = 50 + (alarmrtn.value?.length || 0) * 30;
 
+        const ctx = Canvas.getContext('2d');
+        if (!ctx) return;
+        // 5) 每次先清空画布
+        ctx.clearRect(0, 0, Canvas.width, Canvas.height);
 
-    };
-
-    // 當按下警告按鈕時觸發，顯示警告訊息的對話框
-    const showWarningPanel = () => {
-        //alert("showWarningPanel");
-        setTimeout(() => {
-            const box = document.getElementById('alarmbox') as HTMLElement;
-            const Canvas = document.getElementById('AlarmCanvas');
-            if (Canvas) {
-                if (alarmrtn.value)
-                    Canvas.height = 100 + alarmrtn.value.length * 30;
-            }
-            const ctx = Canvas?.getContext('2d');
-            if (box && ctx) {
-                box.style.display = "block";
-                ctx.font = '20px Arial';
-                //alert(ctx.height);
-
-                //ctx.fillStyle = 'orange';
-                //.fillRect(10, 10, 400, 500);
-                ctx.fillStyle = 'black';
-                //alert(ctx.height);
-
-                let msg = "";
-                alarmrtn.value?.forEach(function (c, index, array) {
-                    let msg1 = c.areaName + " " + c.sensorName + " " + c.status + " " + c.lastDataTime + " " + c.value;
-                    //let msg1 = c.status + " " + c.more;
-                    ctx.fillText(msg1, 20, 50 + index * 30);
-                    //if (index < 10)
-                        //alert(msg1 + " 50+" + index * 30);
-                    //msg = msg + msg1;
-                });
-
-            }
-        }, 100);
-        // 彈出視窗
-        showAlarmMsg.value = true;
-    };
-
-    onMounted(() => {
-        checkForAlarms(); // 模擬檢查是否有警告，決定是否顯示按鈕
-        document.getElementsByClassName("closeBtn2")[0]?.addEventListener('click', function () {
-            const modal = document.getElementById("alarmbox");
-            if (modal) {
-                modal.style.display = "none";
-            }
+        // 6) 文字绘制
+        ctx.font = '20px Arial';
+        ctx.fillStyle = 'black';
+        alarmrtn.value?.forEach((c, i) => {
+            const text = `${c.areaName} ${c.sensorName} ${c.status} ${c.lastDataTime} ${c.value}`;
+            ctx.fillText(text, 0, 50 + i * 30);
         });
+    }, 100);
+};
+
+
+onMounted(() => {
+    checkForAlarms(); // 模擬檢查是否有警告，決定是否顯示按鈕
+    document.getElementsByClassName("closeBtn2")[0]?.addEventListener('click', function () {
+        const modal = document.getElementById("alarmbox");
+        if (modal) {
+            modal.style.display = "none";
+        }
     });
+});
 
 </script>
 
-<style>
-    .modal {
-        display: none;
-        position: fixed;
-        z-index: 1;
-        padding-top: 80px;
-        left: 0;
-        top: 0;
-        width: 100%;
-        height: 100%;
-        overflow: auto;
-        background-color: rgb(0, 0, 0);
-        background-color: rgba(0, 0, 0, 0.4);
-    }
+<style scoped>
+/* 遮罩层 */
+.modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    /* top/right/bottom/left = 0 */
+    background: rgba(0, 0, 0, 0.4);
+    padding-top: 5vh;
+    overflow: auto;
+}
 
+/* 弹窗容器：圆角、阴影、保留横向滚动 */
+.modal-content {
+    margin: 80px auto 0 !important;
+    /* 与顶部保持距离 */
+    position: relative;
+    width: 90%;
+    max-width: 800px;
+    max-height: 80vh;
+    padding: 16px;
+    /* 四周内边距 */
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    overflow-x: auto !important;
+    /* 保留横向滚动 */
+    overflow-y: hidden !important;
+    /* 不要外层纵向滚 */
+    box-sizing: border-box;
+}
+
+/* 让 el-dialog 正好填满外层 .modal-content */
+.alarm-dialog .el-dialog__wrapper,
+.alarm-dialog .el-dialog {
+    margin: 0;
+    width: 100% !important;
+    height: 100% !important;
+}
+
+/* 粘顶 Header，包括默认 X 按钮 */
+.alarm-dialog .el-dialog__header {
+    position: sticky !important;
+    top: 0;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px !important;
+    background: #fff;
+    border-bottom: 1px solid #eee;
+}
+
+/* 隐藏 Element 默认的 body padding */
+.alarm-dialog .el-dialog__body {
+    padding: 0 !important;
+}
+
+/* 实际滚动区：canvas 放这里 */
+.alarm-body {
+    padding: 24px;
+    white-space: nowrap;
+    /* 禁止换行，超出时出滚动条 */
+    overflow-x: auto;
+    /* 横向滚 */
+    overflow-y: auto;
+    /* 纵向滚 */
+    box-sizing: border-box;
+}
+
+/* 手机端微调 */
+@media (max-width: 768px) {
     .modal-content {
-        background-color: #fefefe;
-        margin: auto;
-        padding: 20px;
-        border: 1px solid #888;
-        width: 90%;
+        width: 95%;
+        max-height: 90vh;
     }
 
-    .closeBtn2 {
-        position: relative;
-        top: 0px; /* 距離頂部的距離，可以根據需要調整 */
-        left: 0px; /* 靠右對齊，距離右邊的距離，可以根據需要調整 */
-        font-size: 24px; /* 調整按鈕大小 */
-        cursor: pointer; /* 鼠標懸停時顯示手型 */
+    .alarm-dialog .el-dialog__header {
+        padding: 0 16px !important;
     }
+
+    .alarm-body {
+        padding: 16px;
+    }
+}
+
+/* 自定义关闭按钮 */
+.closeBtn2 {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+  color: #333;
+  z-index: 20;            /* 确保浮在最上面 */
+}
 </style>

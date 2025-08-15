@@ -5,11 +5,9 @@
         <app-icon icon-name="logo"></app-icon>
       </el-icon>
     </div>
-    <img
-      src="@/assets/image/logo-main.png"
-      alt="logo"
-      class="mr-2 hidden sm:block"
-    />
+    <router-link to="/" class="mr-2 hidden sm:block">
+      <img src="@/assets/image/logo-main.png" alt="logo" class="w-auto h-6" />
+    </router-link>
     <el-icon :size="14" class="cursor-pointer" @click="handleMenuDrawer">
       <app-icon icon-name="icon_toggle_left" v-show="openDrawer"></app-icon>
       <app-icon icon-name="icon_toggle_right" v-show="!openDrawer"></app-icon>
