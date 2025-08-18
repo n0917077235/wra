@@ -15,7 +15,7 @@ eform: 維護電子表單
 
 ## First, run backend
 - In visual studio, open solution `Wra10Core2024`
-- Simply press F5 in visual studio
+- Simply press F5, or Ctrl+F5 (if you want to save power when developing on a laptop)
 
 ## Then, run frontend
 - `cd main\frontend`

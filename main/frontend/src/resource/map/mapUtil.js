@@ -8,7 +8,6 @@ import MapDrawing from './mapDrawing';
 
 export default class MapUtil {
     static _eqIntensities = ['1', '2', '3', '4', '5.1', '5.9', '6.1', '6.9', '7'];
-
     static _lineProps = {
         'layer13': {
             color: "#663300",

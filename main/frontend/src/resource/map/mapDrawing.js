@@ -38,13 +38,13 @@ export default class MapDrawing {
    * Message to show when the user is drawing a polygon.
    * @type {string}
    */
-  continuePolygonMsg = '點選以繼續畫多邊形';
+  continuePolygonMsg = '點兩下完成繪圖';
 
   /**
    * Message to show when the user is drawing a line.
    * @type {string}
    */
-  continueLineMsg = '點選以繼續畫線段';
+  continueLineMsg = '點兩下完成繪圖';
 
   draw = undefined;
   type = 'none';
@@ -53,19 +53,24 @@ export default class MapDrawing {
   layers;
   changesUnsaved;
   fileMode;
+  editing;
+  _highlightedFeature = null;
 
-  constructor(map, layers, changesUnsaved, fileMode) {
+  static highlightKey = 'highlight';
+
+  constructor(map, layers, changesUnsaved, fileMode, editing) {
     this.vector = new ol.layer.Vector({
       source: this.source,
     });
 
-    this.attachMap(map);
+    this._attachMap(map);
     this.layers = layers;
     this.changesUnsaved = changesUnsaved;
     this.fileMode = fileMode;
+    this.editing = editing;
   }
 
-  attachMap(map) {
+  _attachMap(map) {
     this.map = map;
     map.on('pointermove', e => this.pointerMoveHandler(e));
 
@@ -74,10 +79,51 @@ export default class MapDrawing {
       if (h) h.classList.add('hidden');
     });
 
-    this.enableAddMarkers();
+    this._enableAddMarkers();
+    this._enableDeletion();
   }
 
-  enableAddMarkers() {
+  deleteSelected() {
+    if (this._highlightedFeature === null) return;
+    let layer = this._getLayer();
+    if (layer === null) return;
+    layer.getSource().removeFeature(this._highlightedFeature);
+    this._highlightedFeature = null;
+    this.changesUnsaved.value = true;
+    this.editing.value = false;
+  }
+
+  _enableDeletion() {
+    let map = this.map;
+
+    map.on('singleclick', event => {
+      this._resetHighlights();
+      if (this.type !== 'none') return;
+      let drawingLayer = this._getLayer();
+      let layerFilter = layer => ol.util.getUid(layer) === ol.util.getUid(drawingLayer);
+      let first = null;
+
+      map.forEachFeatureAtPixel(event.pixel, f => {
+        if (first !== null) return;
+        first = f;
+      }, { layerFilter });
+
+      if (first === null) return;
+
+      // highlight
+      first.set(MapDrawing.highlightKey, '1');
+      this._highlightedFeature = first;
+      this.editing.value = true;
+    });
+  }
+
+  _resetHighlights() {
+    this._highlightedFeature?.set(MapDrawing.highlightKey, '0');
+    this._highlightedFeature = null;
+    this.editing.value = false;
+  }
+
+  _enableAddMarkers() {
     this.map.on('singleclick', evt => {
       if (this.type !== 'marker' && this.type !== 'text') return;
       let coordinate = evt.coordinate;
@@ -98,26 +144,28 @@ export default class MapDrawing {
   // type: 'length' | 'area' | 'marker' | 'text' |'none'
   setType(type) {
     this.type = type;
-    this.map.getInteractions().clear();
+    this.sketch = null;
+    this._removeCurrentInteraction();
 
-    if (type === 'none' || type === 'marker' || type === 'text') {
+    if (type === 'none') {
       this.hideResult();
-
-      // this.draw = new ol.interaction.Draw({
-      //   source: this.source,
-      //   type,
-      //   style: MapDrawing.styles,
-      // });
-
-      // this.map.addInteraction(this.draw);
     } else {
       this.addInteraction(type);
     }
   }
 
+  _removeCurrentInteraction() {
+    if (!this.draw) return;
+    let map = this.map;
+
+    map.getInteractions().forEach(x => {
+      if (ol.util.getUid(x) === ol.util.getUid(this.draw)) map.removeInteraction(x);
+    });
+  }
+
   pointerMoveHandler(evt) {
-    if (this.type === 'none' || this.type === 'marker' || this.type === 'text' || evt.dragging) return;
-    let helpMsg = '點選以開始量測';
+    if (this.type === 'none' || evt.dragging) return;
+    let helpMsg = '點選以開始標記';
 
     if (this.sketch) {
       const geom = this.sketch.getGeometry();
@@ -166,34 +214,42 @@ export default class MapDrawing {
     return output;
   };
 
-  static styles = new ol.style.Style({
-    fill: new ol.style.Fill({
-      color: 'rgba(255, 255, 255, 0.2)',
-    }),
-    stroke: new ol.style.Stroke({
-      color: 'rgba(255, 0, 255, 0.5)',
-      width: 4,
-    }),
-    image: new ol.style.Circle({
-      radius: 5,
-      stroke: new ol.style.Stroke({
-        color: 'rgba(0, 0, 0, 0.7)',
-      }),
-      fill: new ol.style.Fill({
-        color: 'rgba(255, 255, 255, 0.2)',
-      }),
-    }),
-  });
+  static styles = MapDrawing._getStyles(false);
+  static _highlightedStyles = MapDrawing._getStyles(true);
 
-  static markerStyle(text) {
+  static _getStyles(highlight) {
+    return new ol.style.Style({
+      fill: new ol.style.Fill({
+        color: 'rgba(255, 255, 255, 0.7)',
+      }),
+      stroke: new ol.style.Stroke({
+        color: highlight ? 'red' : 'rgba(255, 0, 255, 0.5)',
+        width: 4,
+      }),
+      image: new ol.style.Circle({
+        radius: 5,
+        stroke: new ol.style.Stroke({
+          color: 'rgba(0, 0, 0, 0.7)',
+        }),
+        fill: new ol.style.Fill({
+          color: 'rgba(255, 255, 255, 0.2)',
+        }),
+      }),
+    });
+  }
+
+  static markerStyle(text, highlight) {
+    let f = highlight ? 'pin.png' : 'pin_magenta.png';
+    let fontSize = highlight ? '22px' : '18px';
+
     return new ol.style.Style({
       image: new ol.style.Icon({
-        scale: 0.65,
+        scale: highlight ? 0.85 : 0.65,
         anchor: [0.5, 1],
-        src: require('@/assets/image/map/pin.png'),
-      }), 
+        src: require(`@/assets/image/map/${f}`),
+      }),
       text: new ol.style.Text({
-        font: '18px Calibri,sans-serif',
+        font: `${fontSize} Calibri,sans-serif`,
         fill: new ol.style.Fill({ color: '#000' }),
         stroke: new ol.style.Stroke({
           color: '#fff', width: 6
@@ -204,16 +260,25 @@ export default class MapDrawing {
   }
 
   static styleFunc(feature) {
+    let highlight = feature.get(MapDrawing.highlightKey) === '1';
+
     if (feature.get('pointType') === 'marker') {
       let text = feature.get('text');
-      return MapDrawing.markerStyle(text);
+      return MapDrawing.markerStyle(text, highlight);
     }
 
-    return MapDrawing.styles;
+    return highlight ? MapDrawing._highlightedStyles : MapDrawing.styles;
   }
 
+  typeMap = {
+    area: 'Polygon',
+    length: 'LineString',
+    marker: 'Point',
+    text: 'Point',
+  };
+
   addInteraction(t) {
-    const type = t == 'area' ? 'Polygon' : 'LineString';
+    const type = this.typeMap[t];
 
     this.draw = new ol.interaction.Draw({
       source: this.source,
@@ -222,8 +287,8 @@ export default class MapDrawing {
     });
 
     this.map.addInteraction(this.draw);
-    this.createMeasureTooltip();
     this.createHelpTooltip();
+    this.createMeasureTooltip();
 
     let listener;
 

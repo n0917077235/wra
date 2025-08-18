@@ -459,7 +459,7 @@ async function addLayer(layerId, funcName, layerGroup = null) {
             changedItems,
         };
 
-        LineHighlight.enable(layerItems);
+        if (layerId !== LayerDef.DRAWING) LineHighlight.enable(layerItems);
         InfoWindowUtil.enable(layerItems);
     }
     catch (e) {
