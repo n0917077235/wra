@@ -1,63 +1,67 @@
 <template>
     <div class="main m-4 p-[16px]">
         <el-form :inline="true" :model="ruleForm" class="m-2 flex flex-wrap ">
-            <wra-select v-model="ruleForm.year"
-                        label="年度"
-                        name="value"
-                        :options="availableYears"
-                        :withoutValueLabel="true"
-                        class="el-select2"></wra-select>
+            <div class="box">
+                <div class="title">年度</div>
+                <wra-select v-model="ruleForm.year"
+                            name="value"
+                            :options="availableYears"
+                            :withoutValueLabel="true"
+                            class="el-select"></wra-select>
 
-            <wra-select v-model="ruleForm.month"
-                        label="月份"
-                        name="value"
-                        :options="availableMonths"
-                        :withoutValueLabel="true"
-                        class="el-select2"></wra-select>
-            <span class="m-2">震度 </span>
-            <el-select v-model="ruleForm.intensity" placeholder="請選擇" id="sl1" class="el-select4">
-                <el-option v-for="item in options"
-                           :key="item.value"
-                           :label="item.label"
-                           :value="item.value" />
-            </el-select>
-            <span class="m-2"> 級以上</span>
-            <wra-select v-model="ruleForm.event"
-                        label="事件"
-                        name="value"
-                        :options="eventOptions"
-                        :withoutValueLabel="true"
-                        class="el-select3">
-            </wra-select>
+                <div class="title">月份</div>
+                <wra-select v-model="ruleForm.month"
+                            name="value"
+                            :options="availableMonths"
+                            :withoutValueLabel="true"
+                            class="el-select"></wra-select>
 
-            <el-button type="primary" 
-                       class="icon-button w-full sm:w-fit"
-                       @click="submit">
-                <el-icon :size="32" class="cursor-pointer">
-                    <app-icon icon-name="icon_search_button"></app-icon>
-                </el-icon>
-            </el-button>
+                <div class="title">震度至少</div>
+                <wra-select v-model="ruleForm.intensity"
+                            name="value"
+                            :options="options"
+                            valueName="value"
+                            labelName="label"
+                            class="el-select"></wra-select>
+                            
+                <div>
+                    <el-checkbox v-model="ruleForm.checked1" label="堤頂" size="large" class="mr-4"
+                        @change="submit" />
+                    <el-checkbox v-model="ruleForm.checked2" label="堤底" size="large" class="mr-4" 
+                        @change="submit" />
+                    <el-checkbox v-model="ruleForm.hasChart" label="等震度圖" size="large" class="mr-4" 
+                        @change="submit" />
+                </div>
+
+                <div class="title">事件</div>
+                <wra-select v-model="ruleForm.event"
+                            name="value"
+                            :options="eventOptions"
+                            :withoutValueLabel="true"
+                            class="el-select"
+                            @update:model-value="submit">
+                </wra-select>
+                
+                <div class="flex items-center buttons">
+                    <el-button type="primary"
+                            class="custom-button w-full sm:w-fit"
+                            @click="clearcondition">
+                        重置條件
+                    </el-button>
+                    <el-button type="primary" key="buttonKey"
+                            class="custom-button sm:w-fit"
+                            @click="createmap" :disabled="isButtonDisabled || !ruleForm.event.includes('(')">
+                        產生等震度圖
+                    </el-button>
+                    <el-button :type="buttonType" :key="buttonKey" v-show="shouldShowButton"
+                            class="custom-button sm:w-fit" id="btn102"
+                            @click="downloadmap" :disabled="downloadurl==''">
+                        {{ buttonText }}
+                    </el-button>
+                </div>
+            </div>
+
         </el-form>
-        <div class="m-2 flex items-center">
-            <el-checkbox v-model="ruleForm.checked1" label="堤頂" size="large" class="mr-4" id="ck1" />
-            <el-checkbox v-model="ruleForm.checked2" label="堤底" size="large" class="mr-4" id="ck2" />
-
-            <el-button type="primary"
-                       class="custom-button w-full sm:w-fit"
-                       @click="clearcondition">
-                重置條件
-            </el-button>
-            <el-button type="primary" key="buttonKey"
-                       class="custom-button sm:w-fit" id="btn101"
-                       @click="createmap" :disabled="isButtonDisabled || !ruleForm.event.includes('(')">
-                產生等震度圖
-            </el-button>
-            <el-button :type="buttonType" :key="buttonKey" v-show="shouldShowButton"
-                       class="custom-button sm:w-fit" id="btn102"
-                       @click="downloadmap" :disabled="downloadurl==''">
-                {{ buttonText }}
-            </el-button>
-        </div>
 
         <div v-if="hasData"
              class="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-4">
@@ -128,6 +132,7 @@
         event: '',
         checked1: true,
         checked2: true,
+        hasChart: false,
         intensity: '3',
     });
     const ruleRange = reactive<EarthquakeByRange>({
@@ -235,7 +240,7 @@ const buttonState = ref('default'); // 'default', 'active', 'error'
     function clearcondition() {
         ruleForm.checked1 = true;
         ruleForm.checked2 = true;
-        //if(sl1)
+        ruleForm.hasChart = false;
         ruleForm.intensity = "3";
         ruleRange.intensity = "3";
     }
@@ -286,20 +291,22 @@ const buttonState = ref('default'); // 'default', 'active', 'error'
 
     const availableEvents = ref<EQEventRangeResponse[]>([]);
     const EventDetail = ref<EQEventDetailResponse>([]);
-    // 提取 event 屬性
+
     const eventOptions = computed(() => {
         return availableEvents.value.map(eventObj => {
-            let rtn = eventObj[0];
-            if (eventObj[1] == "1") rtn = rtn + "(等震度圖)";
-            return rtn;
-        });
+            let str = eventObj[0];
+            let hasChart = eventObj[1] == "1";
+            if (hasChart) str = str + "(等震度圖)";
+            return (ruleForm.hasChart && !hasChart) ? null : str;
+        }).filter(x => x !== null);
     });
+
     const getApiGetEQEventRange = async (): Promise<void> => {
         try {
             const response = await apiGetEQEventRange(ruleForm);
             if (response) {
                 availableEvents.value = response;
-                ruleForm.event = eventOptions.value[0].toString();
+                submit();
             }
         } catch (error) {
             console.error(error);
@@ -445,6 +452,7 @@ const buttonState = ref('default'); // 'default', 'active', 'error'
         }
     };
     let dictEventDetail: { [key: string]: EQEventDetailResponse} = {};
+
     const getApiGetEQEventDetail = async (): Promise<void> => {
         try {
             if (ruleEvent.eventTag == "") return;
@@ -464,10 +472,11 @@ const buttonState = ref('default'); // 'default', 'active', 'error'
             console.error(error);
         }
     };
+
     const submit = async (): Promise<void> => {
+        ruleForm.event = eventOptions.value[0].toString();
         ruleRange.range = getRuleRange(ruleForm);
         ruleRange.intensity = ruleForm.intensity;
-        //alert(ruleRange.range + " " + ruleRange.intensity);
         ruleRange.eventTime = ruleForm.event.split('(')[0];
     };
 
@@ -493,19 +502,9 @@ const buttonState = ref('default'); // 'default', 'active', 'error'
             width: 100%
         }
 
-        .el-select3 {
-            width: 300px; // 確保卡片在所有屏幕尺寸下都占滿父容器的寬度
-            height: min-content;
-        }
-
-        .el-select4 {
-            width: 100px; // 確保卡片在所有屏幕尺寸下都占滿父容器的寬度
-            height: min-content;
-        }
-
-        .el-select2 {
-            width: 150px; // 確保卡片在所有屏幕尺寸下都占滿父容器的寬度
-            height: min-content;
+        .title {
+            margin-bottom: 3px;
+            font-size: 14px;
         }
 
         .el-card {
@@ -581,9 +580,18 @@ const buttonState = ref('default'); // 'default', 'active', 'error'
         .custom-button {
             height: 25px; /* 指定按鈕的高度，可以根據需求調整 */
             padding: 0 20px; /* 調整內邊距，確保內容居中 */
-            font-size: 16px; /* 調整字體大小 */
+            font-size: 14px; /* 調整字體大小 */
             line-height: 25px; /* 確保文字在按鈕內垂直居中 */
             display: inline-block;
             white-space: nowrap;
+        }
+
+        .box {
+            max-width: 500px;
+        }
+
+        .buttons {
+            margin-top: 15px;
+            margin-bottom: 25px;
         }
 </style>
