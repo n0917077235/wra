@@ -24,30 +24,24 @@
                             labelName="label"
                             class="el-select"></wra-select>
                             
+                <div>
+                    <el-checkbox v-model="ruleForm.checked1" label="堤頂" size="large" class="mr-4"
+                        @change="submit" />
+                    <el-checkbox v-model="ruleForm.checked2" label="堤底" size="large" class="mr-4" 
+                        @change="submit" />
+                    <el-checkbox v-model="ruleForm.hasChart" label="等震度圖" size="large" class="mr-4" 
+                        @change="submit" />
+                </div>
+
                 <div class="title">事件</div>
                 <wra-select v-model="ruleForm.event"
                             name="value"
                             :options="eventOptions"
                             :withoutValueLabel="true"
-                            class="el-select">
+                            class="el-select"
+                            @update:model-value="submit">
                 </wra-select>
                 
-                <div>
-                    <el-checkbox v-model="ruleForm.checked1" label="堤頂" size="large" class="mr-4" />
-                    <el-checkbox v-model="ruleForm.checked2" label="堤底" size="large" class="mr-4" />
-                    <el-checkbox v-model="ruleForm.checked3" label="等震度圖" size="large" class="mr-4" />
-                </div>
-
-                <div style="margin: 10px 0">
-                    <el-button type="primary" 
-                            class="icon-button w-full"
-                            @click="submit">
-                        <el-icon :size="32" class="cursor-pointer">
-                            <app-icon icon-name="icon_search_button"></app-icon>
-                        </el-icon>
-                    </el-button>
-                </div>
-
                 <div class="flex items-center buttons">
                     <el-button type="primary"
                             class="custom-button w-full sm:w-fit"
@@ -138,7 +132,7 @@
         event: '',
         checked1: true,
         checked2: true,
-        checked3: false,
+        hasChart: false,
         intensity: '3',
     });
     const ruleRange = reactive<EarthquakeByRange>({
@@ -246,7 +240,7 @@ const buttonState = ref('default'); // 'default', 'active', 'error'
     function clearcondition() {
         ruleForm.checked1 = true;
         ruleForm.checked2 = true;
-        ruleForm.checked3 = false;
+        ruleForm.hasChart = false;
         ruleForm.intensity = "3";
         ruleRange.intensity = "3";
     }
@@ -297,20 +291,22 @@ const buttonState = ref('default'); // 'default', 'active', 'error'
 
     const availableEvents = ref<EQEventRangeResponse[]>([]);
     const EventDetail = ref<EQEventDetailResponse>([]);
-    // 提取 event 屬性
+
     const eventOptions = computed(() => {
         return availableEvents.value.map(eventObj => {
-            let rtn = eventObj[0];
-            if (eventObj[1] == "1") rtn = rtn + "(等震度圖)";
-            return rtn;
-        });
+            let str = eventObj[0];
+            let hasChart = eventObj[1] == "1";
+            if (hasChart) str = str + "(等震度圖)";
+            return (ruleForm.hasChart && !hasChart) ? null : str;
+        }).filter(x => x !== null);
     });
+
     const getApiGetEQEventRange = async (): Promise<void> => {
         try {
             const response = await apiGetEQEventRange(ruleForm);
             if (response) {
                 availableEvents.value = response;
-                ruleForm.event = eventOptions.value[0].toString();
+                submit();
             }
         } catch (error) {
             console.error(error);
@@ -456,6 +452,7 @@ const buttonState = ref('default'); // 'default', 'active', 'error'
         }
     };
     let dictEventDetail: { [key: string]: EQEventDetailResponse} = {};
+
     const getApiGetEQEventDetail = async (): Promise<void> => {
         try {
             if (ruleEvent.eventTag == "") return;
@@ -475,10 +472,11 @@ const buttonState = ref('default'); // 'default', 'active', 'error'
             console.error(error);
         }
     };
+
     const submit = async (): Promise<void> => {
+        ruleForm.event = eventOptions.value[0].toString();
         ruleRange.range = getRuleRange(ruleForm);
         ruleRange.intensity = ruleForm.intensity;
-        //alert(ruleRange.range + " " + ruleRange.intensity);
         ruleRange.eventTime = ruleForm.event.split('(')[0];
     };
 
@@ -593,6 +591,7 @@ const buttonState = ref('default'); // 'default', 'active', 'error'
         }
 
         .buttons {
+            margin-top: 15px;
             margin-bottom: 25px;
         }
 </style>
