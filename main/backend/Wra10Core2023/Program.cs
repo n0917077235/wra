@@ -32,7 +32,7 @@ public class Program
     }
 
     public static IWebHostBuilder CreateWebHostBuilder(string[] args) =>
-        WebHost.CreateDefaultBuilder(args).UseStartup<Startup>()
+        WebHost.CreateDefaultBuilder(args).UseStartup<Startup>();
 
     public class Startup
     {
