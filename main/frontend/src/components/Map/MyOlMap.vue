@@ -1,6 +1,5 @@
 <template>
     <div id="app" class="app-container">
-        <el-tag v-if="title">{{ title }}</el-tag>
         <div id="olmap" class="cctv-map"></div>
         <div id="menuToggle" @click="toggleMenu">
             <img src="@/assets/image/layers.png">
@@ -8,9 +7,8 @@
         <div id="layerControl">
             <div id="baseMaps" class="layer-content">
                 <div v-for="(text, i) in mapTypeTexts">
-                    <input type="radio" :id="'__map_id'+i" :value="i" v-model="mapType" 
-                        @change="updateMapType"/>
-                    <label :for="'__map_id'+i">&nbsp;{{ text }}</label>
+                    <input type="radio" :id="'__map_id' + i" :value="i" v-model="mapType" @change="updateMapType" />
+                    <label :for="'__map_id' + i">&nbsp;{{ text }}</label>
                 </div>
             </div>
             <hr>
@@ -107,13 +105,14 @@
                 <label><input type="checkbox" id="layer21" @click="toggleLayer('layer21')"> 雙北橫移門即時啟閉<img
                         src='@/assets/image/blackdooropen.png' width="20" height="20"
                         style="float:right; margin-right:5px;"></label><br>
-                <label><input type="checkbox" id="layer22" @click="drawmap()"> 自訂圖層 </label><button id="cleardrawed"
-                    @click="cleardrawed()"> 清除 </button> <br>
+                <label><input type="checkbox" id="layer22" @click="toggleLayer('layer22')"> 我的標記 </label>
+                <br>
                 <label><input type="checkbox" id="layer23" @click="toggleLayer('layer23')"> 堤防護岸<img
                         src="@/assets/image/red.png" width="20" height="20"
                         style="float:right; margin-right:5px;"></label><br>
             </div>
         </div>
+        <map-toolbar v-if="pMap && showDrawingToolbar" :map="pMap" :layers="layers"></map-toolbar>
         <Popup :overlay="popup.overlay" :content="popup.content" @initialized="onPopupInit"></Popup>
     </div>
 </template>
@@ -127,34 +126,23 @@ import { apiGetSensorMoreDataByStationName, apiGetSensorGeneralQueryData } from 
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { useStore } from 'vuex';
 import Popup from './Popup.vue';
+import MapToolbar from './MapToolbar.vue';
 import LayerMap from '@/resource/map/layerMap';
 import LayerDef from '@/resource/layerDef';
 import SensorProps from '@/resource/map/sensorProps';
 import StationProps from '@/resource/map/stationProps';
 
-interface Props {
-    title?: string;
-    x?: string;
-    y?: string;
-}
-
-const props = withDefaults(defineProps<Props>(), {
-    x: '',
-    y: '',
-});
-
 const store2 = useStore();
-const userId = computed<string>(() => store2.state.user.userId);
-const CameraArea = computed(() => store2.state.image.currentCameraArea);
 const pMap = ref();
-const markerPoint = ref();
-const pTGMarker = ref();
 const el = document.getElementsByClassName('el');
 const monitoringStationsExpanded = ref(true);
 const SenserMapsExpanded = ref(false);
 const NetworkMapsExpanded = ref(false);
 const SafeManageMapsExpanded = ref(false);
 const RiverThreeMapsExpanded = ref(false);
+const showDrawingToolbar = ref(false);
+const menuVisible = ref(true);
+let layers = new LayerMap();
 
 const popup = ref({
     content: {},
@@ -165,7 +153,6 @@ const popup = ref({
 const changedItems = ref([]);
 
 onMounted(() => {
-    store2.dispatch('drawings/loadDrawings'); // 使用命名空間調用 action
     init();
     toggleLayer(LayerDef.TANSUI_STATION);
     toggleLayer(LayerDef.YANSANTZI_STATION);
@@ -196,64 +183,6 @@ function getSensorLayerLines() {
         },
     ];
 }
-
-function cleardrawed() {
-    const savedDrawings = store2.state.drawings.drawings;
-    if (savedDrawings) {
-        store2.dispatch('drawings/clearDrawings');
-    }
-    if (dm != null) dm.clearAllGraphics();
-    pDatadrawed.setMap(null);
-    //drawSavedDrawings();
-}
-
-var pDatadrawed = new TGOS.TGData({ map: pMap.value });
-function drawSavedDrawings() {
-    pDatadrawed.setMap(null);
-    pDatadrawed = new TGOS.TGData({ map: pMap.value });
-    try {
-        const savedDrawings = store2.state.drawings.drawings;
-        if (savedDrawings) {
-            savedDrawings.forEach(drawing => {
-
-                var graphics = pDatadrawed.addGeoJson(drawing, { idPropertyName: "GEOJSON" });
-                graphics.forEach((g) => {
-                    //if (g == "undefined") alert(g);
-                    g.setProperty("strokeColor", "#FF0000");
-                    if (g['geometry']["type"].toLowerCase() == "linestring") {
-                        var style1 = {
-                            strokeColor: "#CC0000",
-                            strokeWeight: 4,
-                        };
-                        pDatadrawed.overrideStyle(g, style1);
-                    }
-                }
-                )
-            });
-        }
-    } catch (e) { alert(e); }
-}
-
-watch(CameraArea.value, () => {
-    updateWnd(
-        CameraArea.value.x,
-        CameraArea.value.y,
-        CameraArea.value.stationNameA,
-    );
-});
-
-watch(
-    () => props.x,
-    async () => {
-        if (props.x && props.y) {
-            await nextTick();
-            updateWnd(props.x, props.y);
-        }
-    },
-    { deep: true, immediate: true },
-);
-
-const menuVisible = ref(true);
 
 function toggleMenu() {
     menuVisible.value = !menuVisible.value;
@@ -293,7 +222,6 @@ let gmapLayer = new ol.layer.Tile({
 const mapType = ref(0);
 
 function updateMapType() {
-    // mapType.value = v;
     gmapLayer.setSource(mapSources[mapType.value]);
 };
 
@@ -339,148 +267,6 @@ function showPosition(position) {
     MapUtil.setCenter(pMap.value, mey, mex);
 }
 
-var dm: TGOS.TGDrawing;
-
-function drawmap() {
-    var el = document.getElementById('layer22') as HTMLInputElement;
-    if (el.checked) {
-        if (dm == null) {
-            dm = new TGOS.TGDrawing();
-            dm.setMap(pMap.value);
-            dm.setOptions({
-                drawingControl: true,  //顯示繪圖管理器
-                drawingControlOptions: {
-                    position: "bottom_left",
-                    drawingModes: ["MARKER", "LINESTRING", "EDIT"]
-                    //設定繪圖管理器顯示於右下角
-                },
-                markerOptions: {  //設定繪製標記的樣式
-                    //dragable: true,
-                    flat: false
-                },
-                polylineOptions: {  //設定繪製折線的樣式
-                    strokeWeight: 3,
-                    //strokeDasharray: ". ", //線段樣式
-                    strokeColor: '#00AAAA',
-                    strokeOpacity: 0.7
-                },
-                polygonOptions: {  //設定繪製多邊形的樣式
-                    fillColor: '#ffdd55',
-                    fillOpacity: 0.5,
-                    strokeWeight: 2,
-                    strokeColor: '#ffdd00',
-                    strokeOpacity: 0.5
-                },
-                circleOptions: {  //設定繪製圓形的樣式
-                    fillColor: '#55cc55',
-                    fillOpacity: 0.6,
-                    strokeWeight: 4,
-                    strokeColor: '#22cc22',
-                    strokeOpacity: 0.6
-                },
-                envelopeOptions: {  //設定繪製矩形的樣式
-                    fillColor: '#ff5555',
-                    fillOpacity: 0.4,
-                    strokeWeight: 3,
-                    strokeColor: '#ff0000',
-                    strokeOpacity: 0.4
-                }
-            });
-            // 監聽繪圖完成事件
-            TGOS.TGEvent.addListener(dm, 'overlay_complete', function (e) {
-                //alert(e.type);
-                let geoJson;
-                switch (e.type.toLowerCase()) {
-                    case 'marker':
-                        geoJson = {
-                            type: 'Feature',
-                            geometry: {
-                                type: 'Point',
-                                coordinates: [e.overlay.position.x, e.overlay.position.y]
-                            },
-                            properties: {}
-                        };
-                        break;
-                    case 'linestring':
-                        const path2 = [];
-                        const linePath = e.overlay.getPath().getPath();
-                        for (let i = 0; i < linePath.length; i++) {
-                            const point = linePath[i] as TGOS.TGPoint;
-                            path2.push([point.x, point.y]);
-                        };
-                        geoJson = {
-                            type: 'Feature',
-                            geometry: {
-                                type: 'LineString',
-                                coordinates: path2
-                            },
-                            properties: {}
-                        };
-                        break;
-                    /*  NOT Store
-                    case 'polyline':
-                        //alert("510");
-                        const path = e.overlay.getPath().map(point => [point.x, point.y]);
-                        geoJson = {
-                            type: 'Feature',
-                            geometry: {
-                                type: 'Polyline',
-                                coordinates: path
-                            },
-                            properties: {}
-                        };
-                        break;
-                    case 'polygon':
-                        const path3 = [];
-                        const rings = e.overlay.getPath();
-                        for (let i = 0; i < rings.length; i++) {
-                            const point = rings[i] as TGOS.TGPoint;
-                            path3.push([point.x, point.y]);
-                        };
-                        geoJson = {
-                            type: 'Feature',
-                            geometry: {
-                                type: 'Polygon',
-                                coordinates: path3
-                            },
-                            properties: {}
-                        };
-                        break;
-                    case 'circle':
-                        geoJson = {
-                            type: 'Feature',
-                            geometry: {
-                                type: 'Point',
-                                coordinates: e.overlay.center,
-                            },
-                            properties: {
-                                radius: e.overlay.radius,
-                            }
-                        };
-                        break;
-                    */
-                    // Add more cases if needed for other types like rectangle, etc.
-                }
-
-                if (geoJson) {
-                    store2.dispatch('drawings/saveDrawing', geoJson);
-                    //alert(geoJson);
-                }
-            });
-        }
-        store2.dispatch('drawings/loadDrawings');
-        drawSavedDrawings();
-        dm.setDefaultControlVisible(true);
-    } else {
-        pDatadrawed.setMap(null);
-        if (dm != null) {
-            dm.setDefaultControlVisible(false);
-            dm.clearAllGraphics();
-            dm.setDrawingMode("NONE")
-        }
-    }
-}
-
 function addUserLocationMarker(x: Number, y: Number) {
     let map = pMap.value;
 
@@ -497,16 +283,6 @@ function addUserLocationMarker(x: Number, y: Number) {
     map.addLayer(markers);
     let marker = new ol.Feature(new ol.geom.Point(ol.proj.fromLonLat([x, y])));
     markers.getSource().addFeature(marker);
-}
-
-//The ColorCode() will give the code every time.
-function ColorCode() {
-    var makingColorCode = '0123456789ABCDEF';
-    var finalCode = '#';
-    for (var counter = 0; counter < 6; counter++) {
-        finalCode = finalCode + makingColorCode[Math.floor(Math.random() * 16)];
-    }
-    return finalCode;
 }
 
 function toggleLayerGroup(groupId) {
@@ -538,6 +314,10 @@ function toggleLayerGroup(groupId) {
 
 const markers = Array<TGOS.TGMarker>();
 
+function updateToolbarVisibility(layerGroup, visible) {
+    if (layerGroup === LayerDef.DRAWING) showDrawingToolbar.value = visible;
+}
+
 // Toogle the visibility of a layer group.
 // A layer group can represent one or several layers.
 // For example, layer group 'layer13' corresponds to 'layer13_1', 'layer13_2', etc
@@ -545,6 +325,7 @@ async function toggleLayer(layerGroup) {
     var el = document.getElementById(layerGroup);
     let map = pMap.value;
     let myLayers = layers.get(layerGroup);
+    updateToolbarVisibility(layerGroup, el.checked);
 
     if (myLayers !== undefined) {
         // Layer already exists. Toggle visibility.
@@ -589,10 +370,7 @@ function getLayerGeojsonUrls(layerGroup) {
     if (layerGroup === 'layer18') return single(byFile("GPS02.json"));
     if (layerGroup === 'layer19') return single("/GeoJson/GetDamPointGps");
     if (layerGroup === 'layer20') return single(byFile("GPS04.json"));
-
-    if (layerGroup === 'layer22') return [];
-    //自訂圖層 await addLayer(layerId, "/GeoJson/GetAdslGps");
-
+    if (layerGroup === LayerDef.DRAWING) return single("/GeoJson/GetEmpty");
     if (layerGroup === 'layer23') return single(byFile("GPS05.json"));
     if (layerGroup === 'layer26') return single(byFile("a河川區域線.geojson"));
     if (layerGroup === 'layer25') return single(byFile("b用地範圍線.geojson"));
@@ -600,12 +378,10 @@ function getLayerGeojsonUrls(layerGroup) {
     return [];
 }
 
-let layers = new LayerMap();
-
 // Returns null if data is not available.
 async function getLayers(layerId, funcName) {
     if (layerId == "layer12") {
-        let infos = { userId: userId.value, eventTime: "" };
+        let infos = { eventTime: "" };
         let v = await apiGetIsoseismal(infos);
         let layers = [];
 
@@ -683,14 +459,12 @@ async function addLayer(layerId, funcName, layerGroup = null) {
             changedItems,
         };
 
-        LineHighlight.enable(layerItems);
+        if (layerId !== LayerDef.DRAWING) LineHighlight.enable(layerItems);
         InfoWindowUtil.enable(layerItems);
     }
     catch (e) {
         console.log(e);
     }
-
-    getLocation();
 }
 
 function addPopupOverlay(map) {
@@ -720,27 +494,6 @@ function refreshSensorLayers() {
             }
         }
     }
-}
-
-function updateWnd(x: number, y: number, title?: string): void {
-    let map = pMap.value;
-    MapUtil.setCenter(map, y, x);
-
-    if (title) {
-        pTGMarker.value.setTitle(title);
-    }
-
-    markerPoint.value = new TGOS.TGPoint(x, y);
-    const markerImg = new TGOS.TGImage(
-        'https://api.tgos.tw/TGOS_API/images/marker.png',
-        new TGOS.TGSize(50, 40),
-        new TGOS.TGPoint(0, 0),
-        new TGOS.TGPoint(20, 50),
-    );
-    pTGMarker.value.setTitle(title);
-    alert(title);
-    pTGMarker.value.setPosition(markerPoint.value);
-    pTGMarker.value.setIcon(markerImg);
 }
 </script>
 

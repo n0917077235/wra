@@ -148,12 +148,10 @@ public class SQLHelper
 
     public DataSet GetDataSet(string sql)
     {
-
         SqlDataAdapter sda = new SqlDataAdapter(sql, GetConn());
         sda.SelectCommand.CommandTimeout = 600;
         DataSet dset = new DataSet();
         sda.Fill(dset);
-
         return dset;
     }
 

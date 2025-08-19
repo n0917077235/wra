@@ -25,6 +25,7 @@ export default class LineHighlight {
         let layerProps = layerItems.layerProps;
         let changed = layerItems.changedItems;
         LineHighlight._resetOtherLineStyles(changed);
+        let popup = layerItems.popup;
 
         // Highlight current one. Increse brightness by 40%
         let color = LineHighlight._lightenColor(layerProps.strokecolor, 40);
@@ -43,7 +44,6 @@ export default class LineHighlight {
 
         if (name) {
             let coordinate = event.coordinate;
-            let popup = layerItems.popup;
 
             popup.content = {
                 mode: 'simple',

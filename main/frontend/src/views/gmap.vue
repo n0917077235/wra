@@ -1,6 +1,6 @@
 <template>
   <div id="app">
-    <MyOlMap :title="''"></MyOlMap>
+    <MyOlMap></MyOlMap>
   </div>
 </template>
 

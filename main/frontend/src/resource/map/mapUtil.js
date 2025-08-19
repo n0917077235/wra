@@ -4,10 +4,10 @@ import SensorProps from './sensorProps';
 import GateImages from './gateImages';
 import InfoWindowUtil from './infoWindowUtil';
 import StationProps from './stationProps';
+import MapDrawing from './mapDrawing';
 
 export default class MapUtil {
     static _eqIntensities = ['1', '2', '3', '4', '5.1', '5.9', '6.1', '6.9', '7'];
-
     static _lineProps = {
         'layer13': {
             color: "#663300",
@@ -125,6 +125,8 @@ export default class MapUtil {
     }
 
     static styleFunction(layerProps, getShowValue, sensorInfo) {
+        if (layerProps.layerId === LayerDef.DRAWING) return MapDrawing.styleFunc;
+
         return feature => {
             let fi = MapUtil._getFeatureItem(layerProps, feature, sensorInfo);
             let image = fi.icon;
@@ -148,6 +150,16 @@ export default class MapUtil {
                         width: layerProps.strokew,
                     }),
                 }),
+                'Polygon': new ol.style.Style({
+                    stroke: new ol.style.Stroke({
+                        color: layerProps.strokecolor,
+                        lineDash: [4],
+                        width: layerProps.strokew,
+                    }),
+                    fill: new ol.style.Fill({
+                        color: 'rgba(0, 0, 255, 0.1)',
+                    }),
+                }),
                 'MultiLineString': new ol.style.Style({
                     stroke: new ol.style.Stroke({
                         color: layerProps.strokecolor,
@@ -164,16 +176,6 @@ export default class MapUtil {
                     }),
                     fill: new ol.style.Fill({
                         color: 'rgba(255, 255, 0, 0.1)',
-                    }),
-                }),
-                'Polygon': new ol.style.Style({
-                    stroke: new ol.style.Stroke({
-                        color: layerProps.strokecolor,
-                        lineDash: [4],
-                        width: layerProps.strokew,
-                    }),
-                    fill: new ol.style.Fill({
-                        color: 'rgba(0, 0, 255, 0.1)',
                     }),
                 }),
                 'Circle': new ol.style.Style({

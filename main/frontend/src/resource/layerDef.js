@@ -11,6 +11,7 @@ let LayerDef = {
     LEVEL: 'layer10',                // 水位計
     GATE: 'layer11',                 // 閘門
     SLIDING_GATE: 'layer21',         // 橫移門
+    DRAWING: 'layer22',              // 自訂圖層
     PLANNING_LEVEL: 'layer27',       // 規劃課水位計
 };
 

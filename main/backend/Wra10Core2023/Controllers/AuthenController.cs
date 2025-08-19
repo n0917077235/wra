@@ -81,10 +81,7 @@ namespace Wra10Core2023.Controllers
                     lstParam.Add(new SqlParameter("@userip", ipAddress));
                     lstParam.Add(new SqlParameter("@intime", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")));
                     sqlHelper.ExecuteNonQuery(cmd, lstParam.ToArray());
-
-                }
-               
-
+                }           
             }
             catch(Exception ex)
             {

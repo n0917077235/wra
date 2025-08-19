@@ -15,6 +15,7 @@ using System.ComponentModel;
 using System.Net.Sockets;
 using System.Text;
 using System.Windows.Forms;
+using Wra10Core2023.Util;
 
 namespace Wra10Core2023.Controllers
 {
@@ -429,7 +430,7 @@ namespace Wra10Core2023.Controllers
             {
                 return BadRequest(mapData);
             }
-            string userId = iMap.userId;
+            string userId = HttpContext.GetUserName();
             string eventTime = iMap.eventTime;
             StreamWriter file = new StreamWriter(@"D:\ApiDebug\EQ_" + DateTime.Now.ToString("yyyyMMdd_HHmmss_fff") + ".txt");
             IsoseismalMap im = new IsoseismalMap();
@@ -530,7 +531,6 @@ namespace Wra10Core2023.Controllers
 
         public class IMapModel
         {
-            public string userId { get; set; }
             public string eventTime { get; set; }
         }
         /*
