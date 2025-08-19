@@ -22,8 +22,6 @@ let props = defineProps(['map', 'layers']);
 let drawing = new MapDrawing(props.map, props.layers, changesUnsaved, fileMode, editing);
 
 let items = [
-    { icon: 'delete.png', isEditor: true, action: () => drawing.deleteSelected() },
-    { isDivider: true, isEditor: true, },
     { icon: 'cursor.png', action: () => drawing.setType('none') },
     { icon: 'text.png', action: () => drawing.setType('text') },
     { icon: 'icon_map.png', action: () => drawing.setType('marker') },
@@ -33,6 +31,7 @@ let items = [
     { icon: 'folder.png', action: () => { fileMode.value = FileMode.OPEN } },
     { icon: 'save.png', action: () => { fileMode.value = FileMode.SAVE } },
     { icon: 'clear.png', action: () => clear() },
+    { icon: 'delete.png', isEditor: true, action: () => drawing.deleteSelected() },
 ];
 
 onMounted(() => {

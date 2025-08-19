@@ -82,7 +82,7 @@ export default class MapDrawing {
     this._enableAddMarkers();
     this._enableDeletion();
   }
-
+  
   deleteSelected() {
     if (this._highlightedFeature === null) return;
     let layer = this._getLayer();
