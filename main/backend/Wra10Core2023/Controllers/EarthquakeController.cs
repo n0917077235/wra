@@ -74,17 +74,6 @@ namespace Wra10Core2023.Controllers
             return result;
         }
 
-        //[Authorize]
-        [HttpGet]
-        [Route("IsoseismalTest")]
-        public void Test()
-        {
-            List<SqlParameter> parameters = new List<SqlParameter>();
-            SqlHelper sqlHelper = new SqlHelper(_configuration.GetConnectionString("Water2022"));
-            parameters.Add(new SqlParameter("@eventTime", ""));
-            DataTable dt = sqlHelper.ExecuteStoreProcedureQuery("sp_Isoseismal", parameters.ToArray());
-        }
-
         [Authorize]
         [HttpGet]
         [Route("Isoseismal")]
