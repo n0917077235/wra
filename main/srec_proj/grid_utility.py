@@ -10,9 +10,7 @@ from numba import jit
 from typing import Union, List, Dict, Tuple, Optional
 import twd97
 import matplotlib.pyplot as plt
-import gdal_utility
 import netcdf_analysis as NCA
-import file_utility as fut
 import cell_inform as CI
 
 cell_taiwan_params = {
@@ -110,7 +108,6 @@ def town_raster_data(
     town_shp: str,
     project_name: str = "default_proj",
     export_path: str = "",
-    log_refresh: bool = False,
     cell_inform=None,
     # log_show: bool = False,
     # log_debug: bool = False,
@@ -132,21 +129,6 @@ def town_raster_data(
         os.path.basename(town_shp.replace(".shp", ".nc")),
     )
     
-    if log_refresh:
-        # 清除舊的檔案
-        flist = fut.search_files_in_dir(
-            export_path, regular_flags=town_nc
-        )
-
-        for target_file in flist + [argv_pickle]:
-            assert isinstance(target_file, str)
-            try:
-                fut.remove_file(target_file)
-            except FileNotFoundError:
-                # 如果缺少 file, 表示不存在
-                # pass
-                pass
-
     if export_path != "":
         # 表示 local, 無須再建立目錄
         os.makedirs(export_path, exist_ok=True)
@@ -204,58 +186,6 @@ def town_raster_data(
         .sort_index()
     )
 
-    if not os.path.exists(town_nc):
-        ##############################################################
-        # re-write to shp
-        town_shp2 = os.path.join(
-            export_path,
-            os.path.basename(town_shp),
-        )
-        if root_logger is not None:
-            root_logger.debug(
-                "--> {}".format(
-                    "Re-export to shapefile: {}".format(
-                        town_shp2
-                    )
-                )
-            )
-        try:
-            gf.to_file(town_shp2)
-        except AttributeError as e:
-            raise AttributeError(
-                "{} / {} / {} / {}".format(
-                    gf,
-                    gf.dtypes,
-                    gpd.__version__,
-                    pd.__version__,
-                )
-            ) from e
-        except ValueError as e:
-            raise ValueError(gf.columns) from e
-
-        # shp file --> nc file
-        if root_logger is not None:
-            root_logger.debug(
-                "--> shp to nc: {} / {}".format(
-                    town_shp2, town_nc
-                )
-            )
-
-        if cell_inform is None:
-            cell_inform = cell_taiwan_params["TWD97_121"]
-        mygdal = gdal_utility.gdal_utility(
-            town_nc,
-            cell_inform,
-            log_debug=True,
-            log_add_rightend=log_add_rightend,
-        )
-        mygdal.gdal_rasterizing(
-            town_shp2,
-            attribute="town_id",
-            log_quiet=kwargs.get("log_quiet", False),
-            root_logger=root_logger,
-        )
-            
     message = "Read NC data and post analysis"
     if root_logger is not None:
         root_logger.debug("--> {}".format(message))

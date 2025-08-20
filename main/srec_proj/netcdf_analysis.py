@@ -17,7 +17,6 @@ def show_nc_dimensions(fr, log_debug: bool = False):
         print(fr.dimensions)  # 欄位
 
 
-# @jit
 def get_dimension_name(fr) -> List:
     """
     回傳 ncband 的 dimemsions 欄位名稱
@@ -27,7 +26,6 @@ def get_dimension_name(fr) -> List:
     return keys_dim
 
 
-# @jit
 def get_band_name(fr) -> List:
     """
     回傳 band 變數名稱
@@ -41,7 +39,6 @@ def get_band_name(fr) -> List:
     return list(band_names)
 
 
-# @jit, 不可使用 jit
 def read_ncband(nc_fname: str, **kwargs) -> Tuple:
     """
     讀取 nc band (x, y, t, band1)

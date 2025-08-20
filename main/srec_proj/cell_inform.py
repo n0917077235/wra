@@ -36,7 +36,6 @@ def determine_index_core(
     return -999
 
 
-# @jit, 不可使用 jit
 def readcell_inform(cell_fname: str, **kwargs) -> List:
     """
     讀取 cell 定義資訊
@@ -250,70 +249,32 @@ class cell_utility:
         assert isinstance(cell_fname, (str, list, dict, tuple))
         log_yreverse = kwargs.get("log_yreverse", False)
 
-        # cell_inform 參數
-        if isinstance(cell_fname, (str, list, tuple)):
-            if root_logger is not None:
-                root_logger.debug(
-                    "  --> Cell Inform Type (str, list, tuple): {}".format(
-                        type(cell_fname)
-                    )
+        if root_logger is not None:
+            root_logger.debug(
+                "  --> Cell Inform Type (str, list, tuple): {}".format(
+                    type(cell_fname)
                 )
-            # 多種形式的 cell_inform 定義
-            # str, 從檔案讀取
-            # list 則直接設定,
-            self.cell_inform = cell_inform_transform(
-                cell_fname, **kwargs
             )
+        # 多種形式的 cell_inform 定義
+        # str, 從檔案讀取
+        # list 則直接設定,
+        self.cell_inform = cell_inform_transform(
+            cell_fname, **kwargs
+        )
 
-            # 相關參數
-            (self.minx, self.maxx, self.resx) = tuple(
-                self.cell_inform[0]
-            )
-            (self.miny, self.maxy, self.resy) = tuple(
-                self.cell_inform[1]
-            )
+        # 相關參數
+        (self.minx, self.maxx, self.resx) = tuple(
+            self.cell_inform[0]
+        )
+        (self.miny, self.maxy, self.resy) = tuple(
+            self.cell_inform[1]
+        )
 
-            # 定義 edge
-            self.define_edges(**kwargs)
-            # 定義 xlist & ylist
-            self.xlist = determine_coor_list(self.xedges)
-            self.ylist = determine_coor_list(self.yedges)
-
-        elif isinstance(cell_fname, dict):
-            for flag in ["xedges", "yedges"]:
-                assert flag in cell_fname
-            if root_logger is not None:
-                root_logger.debug(
-                    "  --> Cell Inform Type (dict): {}".format(
-                        type(cell_fname)
-                    )
-                )
-            # 直接定義好 xedges, yedges, xlist, ylist
-            self.xedges = cell_fname["xedges"]
-            self.yedges = cell_fname["yedges"]
-            self.xlist = np.array(
-                [
-                    (self.xedges[i] + self.xedges[i + 1]) / 2
-                    for i in range(self.xedges.shape[0] - 1)
-                ]
-            )
-            self.ylist = np.array(
-                [
-                    (self.yedges[j] + self.yedges[j + 1]) / 2
-                    for j in range(self.yedges.shape[0] - 1)
-                ]
-            )
-
-            self.minx, self.maxx, self.resx = (
-                np.min(self.xedges),
-                np.max(self.xedges),
-                None,
-            )
-            self.miny, self.maxy, self.resy = (
-                np.min(self.yedges),
-                np.max(self.yedges),
-                None,
-            )
+        # 定義 edge
+        self.define_edges(**kwargs)
+        # 定義 xlist & ylist
+        self.xlist = determine_coor_list(self.xedges)
+        self.ylist = determine_coor_list(self.yedges)
 
         self.extent = [
             self.minx,
@@ -420,25 +381,6 @@ class cell_utility:
         )
         return loc_index
 
-    def create_grid_frame(self):
-        """
-        建立grid外框的Polygon (shaply)
-        """
-        gdf_grid_frame = gpd.GeoDataFrame(
-            [
-                Polygon(
-                    [
-                        [self.extent[0], self.extent[2]],
-                        [self.extent[1], self.extent[2]],
-                        [self.extent[1], self.extent[3]],
-                        [self.extent[0], self.extent[3]],
-                        [self.extent[0], self.extent[2]],
-                    ]
-                )
-            ],
-            columns=["geometry"],
-        )
-        return gdf_grid_frame
 
 
 def interpolate_scipy(

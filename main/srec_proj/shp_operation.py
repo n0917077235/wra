@@ -14,7 +14,6 @@ import os
 import math
 import matplotlib.pyplot as plt
 from typing import List, Tuple, Union, Optional
-import contextily as ctx
 import numpy as np
 
 # import inspect
@@ -396,12 +395,6 @@ class shp_operation:
         tics_limit_layout=None,
         **kwargs,
     ):
-        # 檢查過時用法
-        jut.check_outdated_IO(
-            "tics_limit_layout",
-            "請改用 extent 設定繪製範圍",
-            **kwargs,
-        )
         root_logger = kwargs.get("root_logger", None)
         if (
             self.gdf_shp.loc[

@@ -131,7 +131,6 @@ def load_point_data(point_fname: str) -> pd.DataFrame:
     return df_point
 
 
-#############################################################################
 def plot_grid(
     _fig,
     ax,
@@ -142,12 +141,6 @@ def plot_grid(
     levels,
     **kwargs,
 ):
-    # log_grouping = True
-    # 用來處理 grid 繪圖資訊
-    # 鄉鎮圖
-    # gpd = geopandas.read_file("Taiwan_town_twd97_utf8.shp")
-    # gpd.plot(ax=ax, linestyle="--", linewidth=1.)
-    # 呈現內容
     if kwargs.get("log_grouping", False):
         eq_level = [
             0.5,
@@ -187,13 +180,7 @@ def plot_grid(
         extent=my_cell.extent,
         origin="lower",
         alpha=0.4,
-        # cmap="hsv",
         cmap="gist_ncar",
-        # cmap="nipy_spectral",
-        # cmap="jet",
-        # cmap="rainbow",
-        # cmap="brg",
-        # cmap="terrain",
         **{
             key: elem
             for key, elem in kwargs.items()
@@ -212,16 +199,6 @@ def plot_grid(
         loc_shift = np.array(kwargs.get("loc_shift", [50, 200]))
         for l in range(len(points)):
             if my_cell.check_incell(tuple(points[l, :])):
-                """
-                ax.plot(
-                    points[l, 0],
-                    points[l, 1],
-                    marker="o",
-                    color="k",
-                    linestyle="none",
-                )
-                """
-                #message = "{}".format(int(vals[l]))
                 try:
                     for i in range(len(eq_level) - 1):
                         if (vals[l] >= eq_level[i]) and (vals[l] < eq_level[i + 1]):
@@ -237,33 +214,13 @@ def plot_grid(
                 except InnerLoop:
                     pass
 
-    def fmt(x):
-        s = f"{x:.2f}"
-        if s.endswith("0"):
-            s = f"{x:.2f}"
-        return (
-            rf"{s} " if plt.rcParams["text.usetex"] else f"{s} "
-        )
-
     contour = ax.contour(
         my_cell.grid_x,
         my_cell.grid_y,
         grid_z,
-        # cmap=plt.cm.jet,
         levels=levels,
     )
-    """
-    # 等值線 label
-    ax.clabel(
-        contour,
-        contour.levels,
-        inline=True,
-        fmt=fmt,
-        fontsize=10,
-    )
-    """
-    # if kwargs.get("fig_title", None) is not None:
-    #    ax.set_title(kwargs.get("fig_title", None))
+    
     return ax, contour
 
 
@@ -287,7 +244,6 @@ def plot_grid_export(
         cell_inform=my_cell,
         log_label=True,
         label_columns="Taiwan_county_twd97::county",
-        #label_filter_code="embankment_10.shp::length>=3000&embankment_10.shp::name!=堤防",
     )
 
     ax, contour = plot_grid(
@@ -336,7 +292,6 @@ def plot_grid_export(
 
 
 if __name__ == "__main__":
-    #######################################################
     # input file
     input_fname = sys.argv[1]
     # load config.txt
@@ -379,10 +334,10 @@ if __name__ == "__main__":
     my_cell = cell_inform.cell_utility(argv_params["coordinate"])
     town_data = grid_utility.town_raster_data(
         "Taiwan_town_twd97.shp",
-        log_refresh=False,
         cell_inform=argv_params["coordinate"],
         encoding="big5",
     )
+    
     assert os.path.exists("Taiwan_town_twd97.nc")
     my_grid = grid_utility.grid_utility(
         my_cell,
@@ -416,10 +371,8 @@ if __name__ == "__main__":
             "method": "OrdinaryKriging",
             "variogram_model": "linear",
         }
-        # kwargs_krig["method"] = "UniversalKriging"
-        # kwargs_krig["variogram_model"] = "power"
+        
         kwargs_krig["variogram_model"] = "spherical"
-        # kwargs_krig["variogram_model"] = "exponential"
 
         grid_z = my_grid.interpolate_combine(
             points,
@@ -490,9 +443,6 @@ if __name__ == "__main__":
             vals2,
             grid_x=my_cell_wgs84.grid_x,
             grid_y=my_cell_wgs84.grid_y,
-            # method="linear",
-            # log_ocean_remove=True,
-            # log_nearest_merge=False,  # 外圍數據不呈現
             log_ocean_remove=True,
             log_nearest_merge=True,  # 外圍數據不呈現
             log_debug=argv_params["log_debug"],
@@ -544,8 +494,7 @@ if __name__ == "__main__":
                 os.path.basename(argv_params["input"]).replace(
                     ".txt", ".geojson"
                 ),
-            )#,
-            #drive="GeoJSON",
+            )
         )
     except jut.KrigingFail:
         if np.all(
@@ -570,6 +519,5 @@ if __name__ == "__main__":
                     os.path.basename(
                         argv_params["input"]
                     ).replace(".txt", ".geojson"),
-                )#,
-                #drive="GeoJSON",
+                )
             )

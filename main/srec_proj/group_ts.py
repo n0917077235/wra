@@ -6,16 +6,12 @@ from numba import jit
 import numpy as np
 import matplotlib.pyplot as plt
 from typing import List, Union, Tuple, Optional
-from sklearn.linear_model import LinearRegression
-from alive_progress import alive_bar
 import datetime
-from geopy.distance import distance
 import twd97
 import operator
 
 # from typing import List
 import jutility as jut
-import file_utility as fut
 import sys
 import warnings
 

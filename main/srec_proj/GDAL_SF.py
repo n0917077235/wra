@@ -10,7 +10,6 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 import json
-import re
 import math
 import shapely
 
@@ -105,18 +104,6 @@ def gis_extra_post_plot(
                 extent=cell_inform.extent,
                 **kwargs,
             )
-            """ # 備註, debug, 直接以 cell_inform 輸入
-            tics_limit_layout=[
-                [
-                    np.min(cell_inform.xedges),
-                    np.min(cell_inform.yedges),
-                ],
-                [
-                    np.max(cell_inform.xedges),
-                    np.max(cell_inform.yedges),
-                ],
-            ],
-            """
 
             if kwargs.get("log_label", False):
                 # 如為 True, 標註 shp 中欄位名稱
