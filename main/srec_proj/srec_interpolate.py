@@ -451,87 +451,6 @@ if __name__ == "__main__":
             log_grouping=True,
         )
 
-        '''
-        if argv_params["log_krig_compare"]:
-            # 比較各種不同的演算法
-            plt.style.use("bmh")
-            _fig, axs = plt.subplots(3, 3, figsize=(12, 9))
-            kwargs_interpolate = {
-                0: {"method": "linear"},
-                1: {
-                    "method": "OrdinaryKriging",
-                    "variogram_model": "linear",
-                },
-                2: {
-                    "method": "OrdinaryKriging",
-                    "variogram_model": "power",
-                },
-                3: {
-                    "method": "OrdinaryKriging",
-                    "variogram_model": "exponential",
-                },
-                4: {
-                    "method": "OrdinaryKriging",
-                    "variogram_model": "spherical",
-                },
-                5: {
-                    "method": "OrdinaryKriging",
-                    "variogram_model": "gaussian",
-                },
-                6: {
-                    "method": "OrdinaryKriging",
-                    "variogram_model": "hole-effect",
-                },
-            }
-            for (
-                index,
-                kwargs_interpolate_param,
-            ) in kwargs_interpolate.items():
-                grid_z4 = my_grid.interpolate_combine(
-                    points,
-                    vals,
-                    grid_x=my_cell.grid_x,
-                    grid_y=my_cell.grid_y,
-                    log_ocean_remove=True,
-                    log_nearest_merge=True,  # 外圍數據不呈現
-                    log_debug=argv_params["log_debug"],
-                    root_logger=root_logger,
-                    **kwargs_interpolate_param,
-                )
-
-                ax = plt_parameters.get_subax(axs, index)
-                try:
-                    fig_title = "{} / {}".format(
-                        kwargs_interpolate_param["method"],
-                        kwargs_interpolate_param[
-                            "variogram_model"
-                        ],
-                    )
-                except KeyError:
-                    fig_title = kwargs_interpolate_param[
-                        "method"
-                    ]
-                ax, contour = plot_grid(
-                    _fig,
-                    ax,
-                    points,
-                    vals,
-                    grid_z4,
-                    my_cell,
-                    levels,
-                    vmin=np.min(vals),
-                    vmax=np.max(vals),
-                    loc_shift=[100, 400],
-                    log_plot_points=True,
-                    fig_title=fig_title,
-                )
-            plt.tight_layout()
-            jut.save_fig(
-                os.path.join(
-                    argv_params["output"], "kriging_compare"
-                )
-            )
-
         #############################################################################
         # --> WGS 84
         points2 = []
@@ -628,7 +547,6 @@ if __name__ == "__main__":
             )#,
             #drive="GeoJSON",
         )
-        '''
     except jut.KrigingFail:
         if np.all(
             [val == np.mean(vals) for val in vals]
