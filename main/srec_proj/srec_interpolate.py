@@ -733,7 +733,7 @@ if __name__ == "__main__":
     my_cell = cell_inform.cell_utility(argv_params["coordinate"])
     town_data = grid_utility.town_raster_data(
         "Taiwan_town_twd97.shp",
-        log_refresh=True,
+        log_refresh=False,
         cell_inform=argv_params["coordinate"],
         encoding="big5",
     )
@@ -996,8 +996,8 @@ if __name__ == "__main__":
                 os.path.basename(argv_params["input"]).replace(
                     ".txt", ".geojson"
                 ),
-            ),
-            drive="GeoJSON",
+            )#,
+            #drive="GeoJSON",
         )
     except jut.KrigingFail:
         if np.all(
@@ -1022,6 +1022,6 @@ if __name__ == "__main__":
                     os.path.basename(
                         argv_params["input"]
                     ).replace(".txt", ".geojson"),
-                ),
-                drive="GeoJSON",
+                )#,
+                #drive="GeoJSON",
             )

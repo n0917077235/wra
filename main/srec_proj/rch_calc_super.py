@@ -76,7 +76,7 @@ log_interpolate = True
 log_parallel_process = False
 log_seasonal = True
 
-plt.rcParams["font.sans-serif"] = ["simhei"]  # 中文字體
+plt.rcParams["font.sans-serif"] = ["SimSun"]  # 中文字體
 plt.rcParams["axes.unicode_minus"] = False
 
 # 全域變數

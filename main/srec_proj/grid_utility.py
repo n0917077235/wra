@@ -153,6 +153,7 @@ def town_raster_data(
         export_path,
         os.path.basename(town_shp.replace(".shp", ".nc")),
     )
+    
     argv_pickle = os.path.join(
         export_path,
         "{}.pickle".format(project_name),
@@ -178,6 +179,8 @@ def town_raster_data(
         os.makedirs(export_path, exist_ok=True)
     town_data = {}
     gf = None
+    
+    
     if not os.path.exists(argv_pickle):
         if root_logger is not None:
             root_logger.debug(
@@ -281,17 +284,17 @@ def town_raster_data(
                 log_quiet=kwargs.get("log_quiet", False),
                 root_logger=root_logger,
             )
-
+                
         message = "Read NC data and post analysis"
         if root_logger is not None:
             root_logger.debug("--> {}".format(message))
         # 建立鄉鎮 id 的 raster map
         (ylist, xlist, town_band) = NCA.read_ncband(town_nc)
-        # 除去 < 0 者, 改為 np.NaN
+        # 除去 < 0 者, 改為 np.nan
         town_band = town_band.astype("float")
         town_band = np.where(
             town_band < 0,
-            np.NaN,
+            np.nan,
             town_band,
         )
         town_data = {
@@ -532,7 +535,7 @@ class grid_utility:
         2. 輸出成為 shapefile, 檔名為 nc_fname_out (更改副檔名 nc -> shp)
         3. 以 gdal_rasterize
 
-        如在 polygon 則為 1, 反之, 則為 np.NaN
+        如在 polygon 則為 1, 反之, 則為 np.nan
 
         輸出為 nc_fname
         """
@@ -600,7 +603,7 @@ class grid_utility:
                     grid_z = np.where(
                         mask >= 0,
                         grid_z,
-                        np.NaN,
+                        np.nan,
                     )
                 except TypeError as e:
                     raise TypeError(
@@ -611,7 +614,7 @@ class grid_utility:
                 grid_z = np.where(
                     mask < 0,
                     grid_z,
-                    np.NaN,
+                    np.nan,
                 )
         return grid_z
 
@@ -646,7 +649,7 @@ class grid_utility:
     def interpolate_combine(self, points, vals, **kwargs):
         """
         聯合內插
-        1. nearest & linear (外差部份為 np.NaN)
+        1. nearest & linear (外差部份為 np.nan)
         2. 整併
         """
         method = kwargs.get("method", "linear")
@@ -912,7 +915,7 @@ class grid_utility:
         )  # 轉換投影
 
         town_data_band = np.full(
-            grid_x_to.shape, np.NaN
+            grid_x_to.shape, np.nan
         )  # 建立對應投影的縣市對應
         for j, y in enumerate(ylist_to):
             for i, x in enumerate(xlist_to):

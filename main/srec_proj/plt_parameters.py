@@ -16,7 +16,7 @@ import cmap_define
 
 figsize = (12, 9)
 # 繪圖, 中文
-plt.rcParams["font.sans-serif"] = ["simhei"]
+plt.rcParams["font.sans-serif"] = ["SimSun"]
 # plt.rcParams["font.sans-serif"] = ["Microsoft JhengHei"]
 plt.rcParams["axes.unicode_minus"] = False
 plt.style.use("bmh")
