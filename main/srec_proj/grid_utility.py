@@ -8,7 +8,6 @@ import geopandas as gpd
 import numpy as np
 from numba import jit
 from typing import Union, List, Dict, Tuple, Optional
-import pickle
 import twd97
 import matplotlib.pyplot as plt
 import gdal_utility
@@ -154,11 +153,6 @@ def town_raster_data(
         os.path.basename(town_shp.replace(".shp", ".nc")),
     )
     
-    argv_pickle = os.path.join(
-        export_path,
-        "{}.pickle".format(project_name),
-    )
-
     if log_refresh:
         # 清除舊的檔案
         flist = fut.search_files_in_dir(
@@ -180,139 +174,129 @@ def town_raster_data(
     town_data = {}
     gf = None
     
-    
-    if not os.path.exists(argv_pickle):
+    if root_logger is not None:
+        root_logger.debug(
+            "--> pickle does not exist and load from '{}'".format(
+                town_shp
+            )
+        )
+    ##############################################################
+    # read shp with geopandas
+    # 加入 town_id, export dbf
+    # 2022/5/17 加入 town_mapping 部分除了原有的 id vs. town name 外,
+    #   額外加入各鄉鎮面積
+    gf = gpd.read_file(town_shp, **kwargs)
+    rename_params = {
+        "縣市名稱": "county_name",
+        "county": "county_name",
+        "county_n_1": "county_name",  # 太長的欄位名稱, 會被截掉
+        "鄉鎮名稱": "town_name",
+        "town": "town_name",
+        "AREA": "area",
+    }
+    gf = gf.rename(columns=rename_params)
+    # 刪除重複 column
+    for col in [
+        "county_name",
+        "county_id",
+        "town_name",
+        "town_id",
+    ]:
+        gf = remove_duplicated_col(gf, col)
+
+    # Add county & town id
+    gf = define_id(gf, "county_name", "county_id")
+    gf = define_id(
+        gf, ["county_name", "town_name"], "town_id"
+    )
+
+    df_town_mapping = (
+        gf.loc[
+            :,
+            [
+                "county_name",
+                "county_id",
+                "town_name",
+                "town_id",
+                "area",
+            ],
+        ]
+        .set_index("town_id")
+        .sort_index()
+    )
+
+    if not os.path.exists(town_nc):
+        ##############################################################
+        # re-write to shp
+        town_shp2 = os.path.join(
+            export_path,
+            os.path.basename(town_shp),
+        )
         if root_logger is not None:
             root_logger.debug(
-                "--> pickle does not exist and load from '{}'".format(
-                    town_shp
-                )
-            )
-        ##############################################################
-        # read shp with geopandas
-        # 加入 town_id, export dbf
-        # 2022/5/17 加入 town_mapping 部分除了原有的 id vs. town name 外,
-        #   額外加入各鄉鎮面積
-        gf = gpd.read_file(town_shp, **kwargs)
-        rename_params = {
-            "縣市名稱": "county_name",
-            "county": "county_name",
-            "county_n_1": "county_name",  # 太長的欄位名稱, 會被截掉
-            "鄉鎮名稱": "town_name",
-            "town": "town_name",
-            "AREA": "area",
-        }
-        gf = gf.rename(columns=rename_params)
-        # 刪除重複 column
-        for col in [
-            "county_name",
-            "county_id",
-            "town_name",
-            "town_id",
-        ]:
-            gf = remove_duplicated_col(gf, col)
-
-        # Add county & town id
-        gf = define_id(gf, "county_name", "county_id")
-        gf = define_id(
-            gf, ["county_name", "town_name"], "town_id"
-        )
-
-        df_town_mapping = (
-            gf.loc[
-                :,
-                [
-                    "county_name",
-                    "county_id",
-                    "town_name",
-                    "town_id",
-                    "area",
-                ],
-            ]
-            .set_index("town_id")
-            .sort_index()
-        )
-
-        if not os.path.exists(town_nc):
-            ##############################################################
-            # re-write to shp
-            town_shp2 = os.path.join(
-                export_path,
-                os.path.basename(town_shp),
-            )
-            if root_logger is not None:
-                root_logger.debug(
-                    "--> {}".format(
-                        "Re-export to shapefile: {}".format(
-                            town_shp2
-                        )
+                "--> {}".format(
+                    "Re-export to shapefile: {}".format(
+                        town_shp2
                     )
                 )
-            try:
-                gf.to_file(town_shp2)
-            except AttributeError as e:
-                raise AttributeError(
-                    "{} / {} / {} / {}".format(
-                        gf,
-                        gf.dtypes,
-                        gpd.__version__,
-                        pd.__version__,
-                    )
-                ) from e
-            except ValueError as e:
-                raise ValueError(gf.columns) from e
-
-            # shp file --> nc file
-            if root_logger is not None:
-                root_logger.debug(
-                    "--> shp to nc: {} / {}".format(
-                        town_shp2, town_nc
-                    )
+            )
+        try:
+            gf.to_file(town_shp2)
+        except AttributeError as e:
+            raise AttributeError(
+                "{} / {} / {} / {}".format(
+                    gf,
+                    gf.dtypes,
+                    gpd.__version__,
+                    pd.__version__,
                 )
+            ) from e
+        except ValueError as e:
+            raise ValueError(gf.columns) from e
 
-            if cell_inform is None:
-                cell_inform = cell_taiwan_params["TWD97_121"]
-            mygdal = gdal_utility.gdal_utility(
-                town_nc,
-                cell_inform,
-                log_debug=True,
-                log_add_rightend=log_add_rightend,
-            )
-            mygdal.gdal_rasterizing(
-                town_shp2,
-                attribute="town_id",
-                log_quiet=kwargs.get("log_quiet", False),
-                root_logger=root_logger,
-            )
-                
-        message = "Read NC data and post analysis"
+        # shp file --> nc file
         if root_logger is not None:
-            root_logger.debug("--> {}".format(message))
-        # 建立鄉鎮 id 的 raster map
-        (ylist, xlist, town_band) = NCA.read_ncband(town_nc)
-        # 除去 < 0 者, 改為 np.nan
-        town_band = town_band.astype("float")
-        town_band = np.where(
-            town_band < 0,
-            np.nan,
-            town_band,
+            root_logger.debug(
+                "--> shp to nc: {} / {}".format(
+                    town_shp2, town_nc
+                )
+            )
+
+        if cell_inform is None:
+            cell_inform = cell_taiwan_params["TWD97_121"]
+        mygdal = gdal_utility.gdal_utility(
+            town_nc,
+            cell_inform,
+            log_debug=True,
+            log_add_rightend=log_add_rightend,
         )
-        town_data = {
-            "xlist": xlist,
-            "ylist": ylist,
-            "band": town_band,
-            "town_mapping": df_town_mapping,
-            "gpd": gf,
-        }
-        with open(argv_pickle, "wb") as f:
-            pickle.dump(town_data, f)
-    else:
-        message = "Load pickle file"
-        if root_logger is not None:
-            root_logger.debug("--> {}".format(message))
-        # data load
-        with open(argv_pickle, "rb") as f:
-            town_data = pickle.load(f)
+        mygdal.gdal_rasterizing(
+            town_shp2,
+            attribute="town_id",
+            log_quiet=kwargs.get("log_quiet", False),
+            root_logger=root_logger,
+        )
+            
+    message = "Read NC data and post analysis"
+    if root_logger is not None:
+        root_logger.debug("--> {}".format(message))
+    # 建立鄉鎮 id 的 raster map
+    (ylist, xlist, town_band) = NCA.read_ncband(town_nc)
+    # 除去 < 0 者, 改為 np.nan
+    town_band = town_band.astype("float")
+    town_band = np.where(
+        town_band < 0,
+        np.nan,
+        town_band,
+    )
+    town_data = {
+        "xlist": xlist,
+        "ylist": ylist,
+        "band": town_band,
+        "town_mapping": df_town_mapping,
+        "gpd": gf,
+    }
+    
     return town_data
 
 
