@@ -61,17 +61,3 @@ class Polar_coord:
         cos_val = (x - cx) / r
         theta = sin_cos2rad(sin_val, cos_val)
         return (r, theta)
-
-
-if __name__ == "__main__":
-    # 測試, 輸入 sin_val & cos_val --> rad
-    for rad in np.arange(0, 2 * np.pi, np.pi / 6):
-        print(
-            np.round(180 * rad / math.pi, 2),
-            np.round(
-                180
-                * sin_cos2rad(np.sin(rad), np.cos(rad))
-                / math.pi,
-                2,
-            ),
-        )

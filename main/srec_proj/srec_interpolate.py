@@ -22,7 +22,6 @@ import geojsoncontour
 import grid_utility
 import cell_inform
 import jutility as jut
-import jlib_logging
 import plt_parameters
 import shp_operation
 
@@ -358,16 +357,7 @@ if __name__ == "__main__":
     log_append = False
     program_name = "srec_interpolate"
     root_logger = None
-    if argv_params.get("log_debug", False):
-        root_logger = jlib_logging.logger_setup(
-            program_name,
-            filename=os.path.join(
-                argv_params["output"],
-                program_name,
-            ),
-            log_append=log_append,
-        )
-
+    
     # load 震度資料
     assert os.path.exists(argv_params["input"]), argv_params[
         "input"
@@ -416,10 +406,7 @@ if __name__ == "__main__":
     vals = np.array(
         list(argv_params["point_data"].loc[:, "震度"].values)
     )
-    my_cell_wgs84_shink = cell_inform.cell_utility(
-        argv_params["coordinate"].replace(".txt", "_wgs84.txt"),
-        shink=0.003,
-    )
+    
     levels = argv_params["levels"]
     try:
         if np.all([val == np.mean(vals) for val in vals]):
@@ -464,6 +451,7 @@ if __name__ == "__main__":
             log_grouping=True,
         )
 
+        '''
         if argv_params["log_krig_compare"]:
             # 比較各種不同的演算法
             plt.style.use("bmh")
@@ -548,22 +536,7 @@ if __name__ == "__main__":
         # --> WGS 84
         points2 = []
         vals2 = []
-        """
-        for i in range(my_cell.grid_x.shape[0]):
-            for j in range(my_cell.grid_y.shape[1]):
-                if not np.isnan(grid_z[i, j]):
-                    vals2.append(grid_z[i, j])
-                    point_wgs84 = twd97.towgs84(
-                        my_cell.grid_x[i, j],
-                        my_cell.grid_y[i, j],
-                    )
-                    points2.append(
-                        [
-                            point_wgs84[1],
-                            point_wgs84[0],
-                        ]  # 東經在前, 北緯在後
-                    )
-        """
+        
         points2 = np.array(
             list(
                 [
@@ -655,6 +628,7 @@ if __name__ == "__main__":
             )#,
             #drive="GeoJSON",
         )
+        '''
     except jut.KrigingFail:
         if np.all(
             [val == np.mean(vals) for val in vals]

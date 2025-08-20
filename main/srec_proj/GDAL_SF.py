@@ -15,11 +15,7 @@ import math
 import shapely
 
 sys.path.append(os.path.join("..", "..", "jlib", "srcs"))
-import gdal_utility as gdut
-import file_utility as fut
-import jutility as jut
 import shp_operation as shp_op
-import cell_inform as CI
 import group_ts
 import polar_coord
 

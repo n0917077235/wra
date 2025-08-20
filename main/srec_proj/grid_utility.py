@@ -84,27 +84,6 @@ def define_id(
     return df
 
 
-def gpd_buffer(
-    gdf: gpd,
-    buffer_distance: Union[int, float],
-    log_dissolved: bool = False,
-    dissove_column: str = "",
-    **_kwargs,
-) -> gpd:
-    """
-    在既有 polygon 外圍加入 buffer
-    shp_fname_in: shape file
-
-    """
-    if log_dissolved:
-        assert (
-            dissove_column != ""
-        )  # 不可以是預設值, 一定要設定欄位
-        gdf = gdf.dissolve(by=dissove_column)
-    # buffer
-    return gdf.buffer(buffer_distance)
-
-
 def remove_duplicated_col(gdf, col_name: str):
     """
     刪除重複欄位
@@ -300,43 +279,6 @@ def town_raster_data(
     return town_data
 
 
-@jit
-def find_nearest_index(
-    val: Union[int, float], array: np.ndarray
-):
-    """
-    找尋最相近的數值, 並回傳其 index
-    """
-    idx = (np.absolute(array - val)).argmin()
-    return idx
-
-
-# @jit, 不可使用
-def query_nearest(
-    point, xlist=None, ylist=None, band=None, **kwargs
-):
-    """
-    找出最近的數值, 查詢數據
-    """
-    xindex = find_nearest_index(point[0], xlist)
-    yindex = find_nearest_index(point[1], ylist)
-    return band[yindex, xindex]
-
-
-@jit
-def yreverse(data_array: np.ndarray) -> np.ndarray:
-    """
-    南北互換
-    """
-    data_array2 = np.array(
-        [
-            list(data_array[data_array.shape[0] - j - 1, :])
-            for j in range(data_array.shape[0])
-        ]
-    )
-    return data_array2
-
-
 def project_translate(proj_name: str) -> str:
     """
     投影轉換, 以EPSG::4326呈現
@@ -350,93 +292,6 @@ def project_translate(proj_name: str) -> str:
                 proj_name2 = key
     assert proj_name2 is not None  # 不應該還是 None
     return proj_name2
-
-
-def determine_city_pkm(city: str):
-    """
-    if Penghu, Kinmen and Matsu, then True
-    如果為金門, 馬祖, 澎湖 --> TWD97, 119
-    """
-
-    try:
-        assert isinstance(city, str)
-    except AssertionError as e:
-        raise AssertionError(
-            "!!! {} / {}".format(city, type(city))
-        ) from e
-    pkm_citys = ["金門縣", "連江縣", "澎湖縣"]
-    other_citys = [
-        "彰化縣",
-        "高雄市",
-        "桃園市",
-        "臺中市",
-        "嘉義市",
-        "臺東縣",
-        "臺北市",
-        "苗栗縣",
-        "雲林縣",
-        "新竹縣",
-        "南投縣",
-        "嘉義縣",
-        "臺南市",
-        "新北市",
-        "屏東縣",
-        "花蓮縣",
-        "新竹市",
-        "宜蘭縣",
-        "基隆市",
-    ]
-    assert city in pkm_citys + other_citys
-    log_pkm = city in pkm_citys
-    return log_pkm
-
-
-# @jit
-def random_pick_data(
-    pick_number: int,
-    points: List,
-    vals: List,
-) -> Tuple:
-    """
-    隨機挑選數據
-    """
-    assert isinstance(points, list)
-    assert isinstance(vals, list)
-
-    index_list = list(range(len(points)))
-    rand_list = np.random.rand(pick_number)
-    index_list2 = []
-    for i in range(pick_number):
-        pool_size = len(points) - i
-        pick_no = min(
-            int(round(rand_list[i] * pool_size - 0.5)),
-            pool_size - 1,
-        )
-        pick_no = max(pick_no, 0)
-        index_list2.append(index_list[pick_no])
-        try:
-            del index_list[pick_no]  # 從pool中刪除
-        except ValueError as e:
-            raise ValueError(
-                "{} not in {}".format(pick_no, index_list[:10])
-            ) from e
-    points2 = [points[index] for index in index_list2]
-    vals2 = [vals[index] for index in index_list2]
-    assert len(points) == len(vals)
-    return points2, vals2
-
-
-def remove_shp_flist(shp_fname: str):
-    """
-    Shapefile 為多個檔案的組成, 刪除所屬相關檔案
-    """
-    # 結束後刪除 shp files
-    for subfname in ["cpg", "dbf", "prj", "shp", "shx"]:
-        shp_fname_list = shp_fname.replace(
-            ".shp", ".{}".format(subfname)
-        )
-        if os.path.exists(shp_fname_list):
-            fut.remove_file(shp_fname_list)
 
 
 class grid_utility:
@@ -467,7 +322,6 @@ class grid_utility:
 
         town_data: 鄉鎮資料
 
-        log_yreverse = True
         南北互換
 
         """
@@ -490,73 +344,6 @@ class grid_utility:
         self.town_data = town_data
 
         self.root_logger = kwargs.get("root_logger", None)
-
-    def plot_grid(self, ax, **kwargs):
-        """
-        Plot grid
-        """
-        # print (type(self.town_data["band"]), self.town_data.keys())
-        extent = self.grid_param["cell"].extent
-        ax.imshow(
-            self.town_data["band"], extent=extent, **kwargs
-        )
-        plt.gca().invert_yaxis()
-
-    def create_buffer_mask(
-        self,
-        shp_fname_in: str,
-        nc_fname_out: str,
-        buffer_distance: float,
-        log_dissolve: bool = False,
-        # dissolve_column: str = "",
-        log_remove_shp: bool = True,
-        **kwargs,  # 可以是 attribute, burn_index, 用來輸入 gdal_rasterizing
-    ):
-        """
-        輸入 shp_fname, 對其 dissolve, 並輸入 buffer_distance 產生 buffer nc
-        動作:
-        1. 利用 geopandas 進行 dissolve, 並且產生 buffer polygon
-        2. 輸出成為 shapefile, 檔名為 nc_fname_out (更改副檔名 nc -> shp)
-        3. 以 gdal_rasterize
-
-        如在 polygon 則為 1, 反之, 則為 np.nan
-
-        輸出為 nc_fname
-        """
-        assert os.path.exists(shp_fname_in)
-
-        # dissolve & buffer process
-        # save to shapefile
-        shp_fname_out = nc_fname_out.replace(".nc", ".shp")
-        gpd_buffer(
-            gpd.read_file(shp_fname_in),
-            buffer_distance,  # 2 km
-            log_dissolved=log_dissolve,
-            # dissove_column=dissolve_column,
-            **kwargs,
-        ).to_file(shp_fname_out)
-
-        # 預備目錄
-        if not os.path.exists(os.path.dirname(nc_fname_out)):
-            os.makedirs(os.path.dirname(nc_fname_out))
-        # gdal rasterizing
-        mygdal = gdal_utility.gdal_utility(
-            nc_fname_out, self.grid_param["cell"].cell_inform
-        )
-        mygdal.gdal_rasterizing(
-            shp_fname_out,
-            **{
-                flag: kwargs[flag]
-                for flag in ["attribute", "burn_index"]
-                if flag in kwargs.keys()
-            },
-        )
-        nc_contents = NCA.read_ncband(nc_fname_out)
-
-        # 結束後刪除 shp files
-        if log_remove_shp:
-            remove_shp_flist(shp_fname_out)
-        return nc_contents[-1]
 
     def ocean_mask_trim(
         self,
@@ -629,7 +416,6 @@ class grid_utility:
             grid_z = self.ocean_mask_trim(grid_z, **kwargs)
         return grid_z
 
-    # @jit, 不可使用 jit
     def interpolate_combine(self, points, vals, **kwargs):
         """
         聯合內插
@@ -747,184 +533,3 @@ class grid_utility:
                 )
 
         return grid_z
-
-    def query_grid_index(
-        self, point: Union[Tuple, List]
-    ) -> Tuple:
-        """
-        查詢對應的 Grid Index
-        """
-        assert isinstance(point, (tuple, list))
-        assert len(point) == 2
-
-        xindex = find_nearest_index(
-            point[0], self.grid_param["cell"].xlist
-        )
-        yindex = find_nearest_index(
-            point[1], self.grid_param["cell"].ylist
-        )
-        return (xindex, yindex)
-
-    def check_point_is_land(
-        self, point: Union[Tuple, List]
-    ) -> bool:
-        """
-        判斷座標是否位於陸地
-        """
-        (xindex, yindex) = self.query_grid_index(point)
-        return self.town_data["band"][yindex, xindex] >= 0
-
-    def projection_transform(
-        self,
-        to_proj: str,
-        points: Union[List, Tuple, np.ndarray],
-        from_proj=None,
-    ) -> np.ndarray:
-        """
-        投影轉換
-        from self.proj_name to to_proj
-        """
-        assert isinstance(points, (np.ndarray, list, tuple))
-        to_proj = project_translate(
-            to_proj
-        )  # 轉換為 EPSG::4326 形式
-        if isinstance(points, list):
-            points = np.array(points)
-        elif isinstance(points, tuple):
-            points = np.array([list(points)])
-        if from_proj is None:
-            from_proj = self.proj_name
-
-        points2 = np.array([])
-        pkm_dict = {
-            "EPSG::4326": {  # WGS84 --> TWD97_121 / TWD97_119
-                "EPSG::3826": False,  # 121
-                "EPSG::3825": True,  # 119
-            },
-            "EPSG::3826": {
-                "All": False,
-            },
-            "EPSG::3825": {
-                "All": True,
-            },
-        }
-        pkm = False
-        if from_proj == "EPSG::4326":
-            pkm = pkm_dict[from_proj][to_proj]
-            points2 = np.array(
-                [
-                    twd97.fromwgs84(
-                        points[i, 1], points[i, 0], pkm=pkm
-                    )  # 北緯, 東京
-                    for i in range(points.shape[0])
-                ]
-            )
-        elif from_proj in ["EPSG::3826", "EPSG::3825"]:
-            # TWD97 -> WGS84
-            pkm = pkm_dict[from_proj]["All"]
-            if to_proj == "EPSG::4326":
-                points2 = np.array(
-                    [
-                        [point[1], point[0]]  # 改成東經, 北緯
-                        for point in [
-                            twd97.towgs84(
-                                *tuple(points[i, :]), pkm=pkm
-                            )  # 北緯, 東京
-                            for i in range(points.shape[0])
-                        ]
-                    ]
-                )
-            else:
-                raise TypeError(
-                    "!!! Wrong projection: {} --> {}".format(
-                        from_proj, to_proj
-                    )
-                )
-        return points2
-
-    def grid_projection_transform(
-        self,
-        grid_z: np.ndarray,
-        to_proj: str,
-        to_cell_inform: List,
-        pick_size=500,
-        **kwargs,
-    ):
-        """
-        從原本的投影轉為新的投影
-        grid_z 為原本投影的內插值
-
-        待轉換的內容
-        self.grid_param["cell"].grid_x
-        self.grid_param["cell"].grid_y
-        grid_z
-        """
-        to_proj = project_translate(to_proj)
-
-        # 新的 proj 的 grid
-        mycell = CI.cell_utility(to_cell_inform)
-        (
-            grid_x_to,
-            grid_y_to,
-            xlist_to,
-            ylist_to,
-        ) = (
-            mycell.grid_x,
-            mycell.grid_y,
-            mycell.xlist,
-            mycell.ylist,
-        )
-
-        # CI.regular_grid(to_cell_inform)
-
-        points = []
-        vals = []
-        vals_town = []
-        for j, y in enumerate(self.grid_param["cell"].ylist):
-            for i, x in enumerate(self.grid_param["cell"].xlist):
-                if not np.isnan(grid_z[j, i]):  # 排除 NaN
-                    points.append([x, y])
-                    vals.append(grid_z[j, i])
-                    vals_town.append(
-                        self.town_data["band"][j, i]
-                    )
-
-        vals2 = vals
-        if len(vals) > pick_size:
-            points, vals2 = random_pick_data(
-                pick_size, points, vals
-            )
-        points2 = self.projection_transform(
-            to_proj, points
-        )  # 轉換投影
-
-        town_data_band = np.full(
-            grid_x_to.shape, np.nan
-        )  # 建立對應投影的縣市對應
-        for j, y in enumerate(ylist_to):
-            for i, x in enumerate(xlist_to):
-                # 投影轉回來
-                point_from = self.projection_transform(
-                    self.proj_name,
-                    (x, y),  # point_to
-                    from_proj=to_proj,
-                )
-                town_data_band[j, i] = query_nearest(
-                    point_from[0], **self.town_data
-                )
-
-        grid_z_to = self.interpolate_combine(
-            points2,
-            vals2,
-            grid_x=grid_x_to,
-            grid_y=grid_y_to,
-            town_data_band=town_data_band,
-            *kwargs,
-        )
-        return (
-            grid_x_to,
-            grid_y_to,
-            xlist_to,
-            ylist_to,
-            grid_z_to,
-        )
