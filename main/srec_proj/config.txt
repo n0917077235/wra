@@ -1,0 +1,61 @@
+input="Input"
+output="Output"
+#levels=1,2,3,4,5,6,7
+#levels=1,1.25,1.5,1.75,2,2.25,2.5,2.75,3,3.25,3.5,3.75,4,4.25,4.5,4.75,5.,5.25,5.5,5.75,6,6.25,6.5,6.75,7
+levels=1.,1.5,2.5,3.5,4.55,5.5,6.0,6.5,7.0,7.5,8.
+
+
+gis_extra_post=embankment_10.shp,maroon,-,0.75,0.9,Taiwan_county_twd97.shp,black,--,1.,0.6    # 定義額外的 GIS 圖層,
+                                                        # 0, shape file name
+                                                        # 1, line color 
+                                                        # 2, line type 
+                                                        # 3, line width
+                                                        # 4, alpha 
+#annotate_extra_post={"text":"台北市","xycoords":"data","x":305000,"y":2778750,"xtext":305000,"ytext":2778750,"color":"black","fontsize":16}
+annotate_extra_post={"text":"台北市","xycoords":"data","x":305000,"y":2770000,"xtext":305000,"ytext":2770000,"color":"black","fontsize":16}
+
+annotate_extra_post={"text":"基隆市","xycoords":"data","x":320000,"y":2780000,"xtext":320000,"ytext":2780000,"color":"black","fontsize":16}
+
+#annotate_extra_post={"text":"新北市","xycoords":"data","x":293000,"y":2756000,"xtext":293000,"ytext":2756000,"color":"black","fontsize":16}
+annotate_extra_post={"text":"新北市","xycoords":"data","x":311000,"y":2756000,"xtext":311000,"ytext":2756000,"color":"black","fontsize":16}
+#annotate_extra_post={"text":"新北市","xycoords":"data","x":293000,"y":2782000,"xtext":293000,"ytext":2782000,"color":"black","fontsize":16}
+#annotate_extra_post={"text":"新北市","xycoords":"data","x":311000,"y":2785000,"xtext":311000,"ytext":2785000,"color":"black","fontsize":16}
+#annotate_extra_post={"text":"新北市","xycoords":"data","x":325000,"y":2765000,"xtext":325000,"ytext":2765000,"color":"black","fontsize":16}
+
+annotate_extra_post={"text":"桃園市","xycoords":"data","x":280000,"y":2770000,"xtext":280000,"ytext":2770000,"color":"black","fontsize":16}
+#annotate_extra_post={"text":"桃園市","xycoords":"data","x":280000,"y":2745000,"xtext":280000,"ytext":2745000,"color":"black","fontsize":16}
+
+annotate_extra_post={"text":"宜蘭縣","xycoords":"data","x":325000,"y":2745000,"xtext":325000,"ytext":2745000,"color":"black","fontsize":16}
+
+
+annotate_extra_post={"text":"景左堤防","xycoords":"data","x":307000,"y":2763000,"xtext":307000,"ytext":2763000,"color":"black","fontsize":13}
+annotate_extra_post={"text":"土城堤防","xycoords":"data","x":294000,"y":2763000,"xtext":294000,"ytext":2763000,"color":"black","fontsize":13}
+
+annotate_extra_post={"text":"中和堤防","xycoords":"data","x":300500,"y":2766000,"xtext":300500,"ytext":2766000,"color":"black","fontsize":13}
+annotate_extra_post={"text":"中原堤防","xycoords":"data","x":299000,"y":2769000,"xtext":299000,"ytext":2769000,"color":"black","fontsize":13}
+
+annotate_extra_post={"text":"板橋堤防","xycoords":"data","x":295000,"y":2768000,"xtext":295000,"ytext":2768000,"color":"black","fontsize":13}
+
+annotate_extra_post={"text":"樹林堤防","xycoords":"data","x":291000,"y":2767000,"xtext":291000,"ytext":2767000,"color":"black","fontsize":13}
+
+annotate_extra_post={"text":"新莊堤防","xycoords":"data","x":295000,"y":2771000,"xtext":295000,"ytext":2771000,"color":"black","fontsize":13}
+
+annotate_extra_post={"text":"三重堤防","xycoords":"data","x":301000,"y":2772000,"xtext":301000,"ytext":2772000,"color":"black","fontsize":13}
+
+annotate_extra_post={"text":"疏右堤防","xycoords":"data","x":296000,"y":2774000,"xtext":296000,"ytext":2774000,"color":"black","fontsize":13}
+
+annotate_extra_post={"text":"疏左堤防","xycoords":"data","x":292000,"y":2774000,"xtext":292000,"ytext":2774000,"color":"black","fontsize":13}
+
+annotate_extra_post={"text":"蘆洲堤防","xycoords":"data","x":297000,"y":2776000,"xtext":297000,"ytext":2776000,"color":"black","fontsize":13}
+
+annotate_extra_post={"text":"北山堤防","xycoords":"data","x":310000,"y":2773000,"xtext":310000,"ytext":2773000,"color":"black","fontsize":13}
+
+annotate_extra_post={"text":"樟樹堤防","xycoords":"data","x":314000,"y":2772000,"xtext":314000,"ytext":2772000,"color":"black","fontsize":13}
+
+annotate_extra_post={"text":"橋東堤防","xycoords":"data","x":315000,"y":2774000,"xtext":315000,"ytext":2774000,"color":"black","fontsize":13}
+
+annotate_extra_post={"text":"百福堤防","xycoords":"data","x":316000,"y":2776000,"xtext":316000,"ytext":2776000,"color":"black","fontsize":13}
+
+annotate_extra_post={"text":"大華堤防","xycoords":"data","x":320000,"y":2778000,"xtext":320000,"ytext":2778000,"color":"black","fontsize":13}
+
+annotate_extra_post={"text":"七堵堤防","xycoords":"data","x":321000,"y":2775500,"xtext":321000,"ytext":2775500,"color":"black","fontsize":13}

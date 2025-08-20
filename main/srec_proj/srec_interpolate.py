@@ -1,0 +1,1027 @@
+"""
+首潤, 地震資料內差
+    回傳 geojson 形式的震度等直線
+    採用 geojsoncontour package
+
+"""
+
+import sys
+import os
+from typing import Dict, List, Optional
+
+import pandas as pd
+import numpy as np
+import geopandas as gpd
+from shapely import Polygon
+import shapely
+import shapely.errors
+from matplotlib.ticker import FormatStrFormatter
+import twd97
+import matplotlib.pyplot as plt
+import geojsoncontour
+import grid_utility
+import cell_inform
+import jutility as jut
+import polar_coord
+import jlib_logging
+import plt_parameters
+import shp_operation
+
+import GDAL_SF
+
+
+class Match_Simple_Polygon(Exception):
+    """
+
+    避免 break 跳出太多層
+    """
+
+    pass
+
+class InnerLoop(Exception):
+    '''
+    break inner loop
+    '''
+    pass
+
+def calc_distance(point_line: List) -> List:
+    distance_result = [
+        np.power(
+            np.sum(
+                np.power(
+                    np.array(point_line[i])
+                    - np.array(point_line[i + 1]),
+                    2,
+                )
+            ),
+            0.5,
+        )
+        for i in range(len(point_line) - 1)
+    ]
+    return distance_result
+
+
+def determine_contour_point(
+    gf_contour: gpd.GeoDataFrame, **kwargs
+) -> List:
+    """
+    輸入 contour 擷取 line 上的點
+    kwargs["criteria"] 為距離限制
+    """
+    line_point = [
+        list(point)
+        for point in gf_contour.loc[
+            gf_contour.index[0],
+            "geometry",
+        ].coords
+    ]
+    distance_line = calc_distance(line_point)
+    args = np.argwhere(
+        np.array(distance_line) > kwargs["criteria"]
+    )
+    if len(args) > 0:
+        # 表示有不滿足者
+        for arg in args:
+            if kwargs.get("log_debug", False):
+                print(
+                    arg[0],
+                    distance_line[arg[0]],
+                    len(line_point),
+                    len(line_point) - arg[0],
+                )
+            line_point = line_point[: arg[0] - 1]
+            break
+    return line_point
+
+
+def cell_closed_loop(
+    my_cell, assigned_level
+) -> gpd.GeoDataFrame:
+    """
+    以 extent 取出封閉 polygon
+    """
+    return gpd.GeoDataFrame(
+        [[assigned_level]],
+        index=[0],
+        columns=["level-value"],
+        crs="epsg:4326",
+        geometry=[
+            Polygon(
+                [
+                    (my_cell.extent[0], my_cell.extent[2]),
+                    (my_cell.extent[1], my_cell.extent[2]),
+                    (my_cell.extent[1], my_cell.extent[3]),
+                    (my_cell.extent[0], my_cell.extent[3]),
+                ]
+            )
+        ],
+    )
+
+
+def load_config(config_file: str, input_fname: str) -> Dict:
+    """
+    load config.txt
+    """
+    argv_params = {}
+    with open(config_file, "r", encoding="utf-8") as f:
+        for line in f:
+            sepline = line.strip().split("=")
+            if len(sepline) >= 2:
+                if sepline[0][0] != "#":
+                    flag = sepline[0].lower()
+                    if flag not in ["annotate_extra_post"]:
+                        val = (
+                            sepline[1]
+                            .replace('"', "")
+                            .replace("'", "")
+                        )
+                        argv_params[flag] = val
+                    else:
+                        val = line.rstrip().replace(
+                            "{}=".format(flag), ""
+                        )
+                        if flag not in argv_params:
+                            argv_params[flag] = []
+                        argv_params[flag].append(
+                            GDAL_SF.annotate_extra_post_analysis(
+                                val
+                            )
+                        )
+
+    input_folder = argv_params["input"]
+    argv_params["input"] = os.path.join(
+        input_folder, input_fname
+    )
+    argv_params["coordinate"] = os.path.join(
+        input_folder, "coor_taipei.txt"
+    )
+    argv_params["levels"] = [
+        float(level)
+        for level in argv_params["levels"].split(",")
+    ]
+    if "gis_extra_post" in argv_params:
+        sepline2 = (
+            argv_params["gis_extra_post"]
+            .split(" ")[0]
+            .split(",")
+        )
+        if "#" in sepline2:
+            # 如果中間有 # 符號, 刪除後方的資訊
+            for i in range(len(sepline2)):
+                if sepline2[i] == "#":
+                    sepline2 = sepline[:i]
+                    break
+
+        # len == 5 的倍數
+        # 0, shape file name
+        # 1, line color
+        # 2, line type
+        # 3, line width
+        # 4, alpha
+        # 5, marker
+        try:
+            assert len(sepline2) % 5 == 0
+        except AssertionError as e:
+            raise AssertionError(
+                "{} / {}".format(sepline2, len(sepline2))
+            ) from e
+
+        sepline3 = [
+            sepline2[j : j + 5]
+            for j in range(0, len(sepline2), 5)
+        ]
+        for j in range(len(sepline3)):
+            # 定義 line width & alpha
+            for k in [3, 4]:
+                assert jut.check_isfloat(
+                    sepline3[j][k]
+                )  # 確認可轉換為 float
+                sepline3[j][k] = float(  # type: ignore
+                    sepline3[j][k]
+                )
+            for k in [0, 1, 2]:
+                # 字串
+                assert isinstance(sepline3[j][k], str)
+        argv_params["gis_extra_post"] = sepline3
+    return argv_params
+
+
+def load_point_data(point_fname: str) -> pd.DataFrame:
+    """
+    load point data
+    """
+    assert os.path.exists(point_fname)
+    df_point = pd.read_csv(point_fname)
+    return df_point
+
+
+class Polar_Circle:
+    """
+    建立環狀的資料, 以 self.df_polar 倉儲
+    以 rad 進行環狀排序
+    依據選擇條件, 選擇夾在兩點之間的資料
+    """
+
+    def __init__(self):
+        self.df_polar = pd.DataFrame([])
+
+    def add_data(
+        self, radius: float, other_inform: List, columns: List
+    ):
+        self.df_polar = pd.concat(
+            [
+                self.df_polar,
+                pd.DataFrame(
+                    [[radius] + other_inform],
+                    columns=["rad"] + columns,
+                ),
+            ],
+            ignore_index=True,
+        )
+
+    def grep_between(self, col: str, val1, val2):
+        """
+        col 為 DataFrame 之欄位名稱
+        在此找尋符合條件的兩個點
+        並回傳兩點間包夾的節點
+        環狀順序不可變, 但環狀可循環
+        """
+        self.df_polar = self.df_polar.sort_values(
+            by=["rad"]
+        )  # 依據 rad 排序
+        self.df_polar.loc[:, "sequence"] = np.arange(
+            self.df_polar.shape[0]
+        )
+
+        assert col in self.df_polar.columns
+        df_polar2 = self.df_polar[self.df_polar[col] == val1]
+        index_first = df_polar2.index[0]
+        df_polar2 = self.df_polar[self.df_polar[col] == val2]
+        index_last = df_polar2.index[0]
+
+        # 從尾端開始找
+        self.df_polar.loc[:, "sequence"] = (
+            self.df_polar.loc[:, "sequence"]
+            - self.df_polar.loc[index_last, "sequence"]
+        ) % self.df_polar.shape[0]
+        self.df_polar = self.df_polar.sort_values(
+            by=["sequence"]
+        )
+        df_polar_last = self.df_polar.loc[
+            index_last:index_first, :
+        ]
+
+        # 從前端開始找
+        self.df_polar.loc[:, "sequence"] = (
+            self.df_polar.loc[:, "sequence"]
+            - self.df_polar.loc[index_first, "sequence"]
+        ) % self.df_polar.shape[0]
+        self.df_polar = self.df_polar.sort_values(
+            by=["sequence"]
+        )
+        df_polar_first = self.df_polar.loc[
+            index_first:index_last, :
+        ]
+        return df_polar_first, df_polar_last
+
+
+def one_side_contour2(lon_lat_list, **kwargs):
+    """
+    以 my_cell 之中心點, 與各極點 & 等值線端點建立向量, 並轉換為極座標
+    """
+    df_framework = kwargs["df_framework"]
+    # assigned_level = kwargs["assigned_level"]
+    my_cell = kwargs["my_cell"]
+
+    # 在四極點, 以極座標計算, 計算角度
+    my_polar_circle = Polar_Circle()
+
+    my_polar = polar_coord.Polar_coord(list(my_cell.cell_center))
+    columns = ["ticks", "val", "x", "y"]
+    for index in df_framework.index:
+        point = list(
+            df_framework.loc[index, "geometry"].coords[0]
+        )
+        r, radius = my_polar.cart_to_polar(point)
+        # df_framework.loc[index, "polar_rad"] = theta
+        my_polar_circle.add_data(
+            radius,
+            list(
+                df_framework.loc[index, ["ticks", "val"]].values
+            )
+            + list(
+                df_framework.loc[index, "geometry"].coords[0]
+            ),
+            columns,
+        )
+
+    # 以 contour line 前後端點, 計算角度
+    for index in [0, -1]:
+        point = lon_lat_list[index]
+        r, radius = my_polar.cart_to_polar(point)
+        my_polar_circle.add_data(
+            radius,
+            [
+                "c1_{}".format(
+                    {
+                        0: "first",
+                        -1: "last",
+                    }[index]
+                ),
+                kwargs["level"],
+            ]
+            + point,
+            columns,
+        )
+
+    df_polar_first, df_polar_last = my_polar_circle.grep_between(
+        "ticks", "c1_first", "c1_last"
+    )
+    df_polar_selected: Optional[pd.DataFrame] = (
+        select_only_two_end(
+            [
+                df_polar_first,
+                df_polar_last,
+            ]
+        )
+    )
+    # 第一段 link
+    df_polar_selected_link1 = df_polar_selected.loc[  # 刪除首尾
+        df_polar_selected.index[1] : df_polar_selected.index[-2],
+        :,
+    ]
+
+    lon_lat_list_all = [
+        [],
+        [],
+    ]
+
+    # 如果 c1_last 為第一位, 採用順向
+    # 順向
+    for j in range(2):
+        lon_lat_list_all[j] += lon_lat_list
+
+    # 第一段連接點的中間點
+    mid_points = [
+        list(
+            df_polar_selected_link1.loc[
+                index,
+                ["x", "y"],
+            ].values
+        )
+        for index in df_polar_selected_link1.index
+    ]
+    for j in range(2):
+        if j == 1:
+            mid_points.reverse()
+        lon_lat_list_all[j] += mid_points
+
+    # 正向
+    lon_lat_list2 = []
+    try:
+        for j in range(2):
+            if shapely.is_simple(Polygon(lon_lat_list_all[j])):
+                lon_lat_list2 = lon_lat_list_all[j]
+                # 符合條件, 跳出
+                raise Match_Simple_Polygon()
+    except Match_Simple_Polygon:
+        pass
+    if len(lon_lat_list2) == 0:
+        lon_lat_list2 = lon_lat_list
+    assert isinstance(lon_lat_list2, list)
+    assert isinstance(lon_lat_list2[0][0], float), lon_lat_list[
+        0
+    ]
+    return lon_lat_list2
+
+
+def check_contain_str(
+    str_target: str,
+    matched_list: List,
+) -> bool:
+    """
+    確認是否符合 matched_list 其中之一
+    """
+    assert isinstance(str_target, str), "{} / {}".format(
+        str_target, str(str_target)
+    )
+    assert isinstance(matched_list, list)
+
+    return bool(
+        np.any([str_target.find(ml) >= 0 for ml in matched_list])
+    )
+
+
+def select_only_two_end(
+    df_list: List,
+) -> pd.DataFrame:
+    """
+    輸入前述四種不同的選擇, 回傳只有頭尾是 c1 or c2 的點
+    """
+    assert isinstance(df_list, list)
+    df_result = None
+    mat = []
+    for i, df in enumerate(df_list):
+        check_result = [
+            check_contain_str(
+                df.loc[index, "ticks"],
+                ["c1", "c2"],
+            )
+            for index in df.index
+        ]
+        mat_sub = [i, df.shape[0], np.sum(check_result)]
+        if len(check_result) >= 2:
+            mat_sub.append(check_result[0])
+            mat_sub.append(check_result[-1])
+        else:
+            mat_sub += [False, False]
+        mat.append(mat_sub)
+    df_result = pd.DataFrame(
+        mat,
+        columns=[
+            "index",
+            "length",
+            "matched_count",
+            "first_check",
+            "last_check",
+        ],
+    ).set_index("index")
+    df_result.loc[:, "matched_all"] = np.logical_and(
+        df_result.loc[:, "first_check"],
+        df_result.loc[:, "last_check"],
+        df_result.loc[:, "matched_count"] == 2,
+    )
+
+    assert np.any(
+        df_result.loc[:, "matched_all"].values
+    ), df_result.loc[
+        :, "matched_all"
+    ].values  # 至少有一組滿足
+
+    # 刪除不符合者
+    df_result2 = df_result[df_result["matched_all"]]
+    # log_matched & length 排序
+    df_result2 = df_result2.sort_values(
+        by=[
+            "length",
+        ]
+    )
+    return df_list[df_result2.index[0]]
+
+
+def pick_point(df: pd.Series, matched_str: str) -> List:
+    assert isinstance(df, pd.Series)
+    return [
+        val for val in df.values if val.find(matched_str) >= 0
+    ]
+
+
+#############################################################################
+def plot_grid(
+    _fig,
+    ax,
+    points,
+    vals,
+    grid_z,
+    my_cell,
+    levels,
+    **kwargs,
+):
+    # log_grouping = True
+    # 用來處理 grid 繪圖資訊
+    # 鄉鎮圖
+    # gpd = geopandas.read_file("Taiwan_town_twd97_utf8.shp")
+    # gpd.plot(ax=ax, linestyle="--", linewidth=1.)
+    # 呈現內容
+    if kwargs.get("log_grouping", False):
+        eq_level = [
+            0.5,
+            1.5,
+            2.5,
+            3.5,
+            4.5,
+            5.5,
+            6.0,
+            6.5,
+            7.0,
+            8.0,
+        ]
+        eq_label = [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5-",
+            "5+",
+            "6-",
+            "6+",
+            "7",
+        ]
+        for i in range(len(eq_level) - 1):
+            grid_z = np.where(
+                np.logical_and(
+                    grid_z < eq_level[i + 1],
+                    grid_z >= eq_level[i],
+                ),
+                (eq_level[i] + eq_level[i + 1]) / 2,
+                grid_z,
+            )
+
+    pos = ax.imshow(
+        grid_z,
+        extent=my_cell.extent,
+        origin="lower",
+        alpha=0.4,
+        # cmap="hsv",
+        cmap="gist_ncar",
+        # cmap="nipy_spectral",
+        # cmap="jet",
+        # cmap="rainbow",
+        # cmap="brg",
+        # cmap="terrain",
+        **{
+            key: elem
+            for key, elem in kwargs.items()
+            if key in ["vmin", "vmax"]
+        },
+    )
+    cbar = _fig.colorbar(pos, ax=ax, fraction=0.03, pad=0.04)
+    cbar.set_label(
+        "震度",
+        labelpad=20,
+        rotation=270,
+        fontsize=16,
+    )
+
+    if kwargs.get("log_plot_points", True):
+        loc_shift = np.array(kwargs.get("loc_shift", [50, 200]))
+        for l in range(len(points)):
+            if my_cell.check_incell(tuple(points[l, :])):
+                """
+                ax.plot(
+                    points[l, 0],
+                    points[l, 1],
+                    marker="o",
+                    color="k",
+                    linestyle="none",
+                )
+                """
+                #message = "{}".format(int(vals[l]))
+                try:
+                    for i in range(len(eq_level) - 1):
+                        if (vals[l] >= eq_level[i]) and (vals[l] < eq_level[i + 1]):
+                            message = eq_label[i]
+                            ax.annotate(
+                                message,
+                                xy=points[l, :] + loc_shift,
+                                xytext=points[l, :] + loc_shift,
+                                xycoords="data",
+                                fontsize=16,
+                            )
+                            raise InnerLoop
+                except InnerLoop:
+                    pass
+
+    def fmt(x):
+        s = f"{x:.2f}"
+        if s.endswith("0"):
+            s = f"{x:.2f}"
+        return (
+            rf"{s} " if plt.rcParams["text.usetex"] else f"{s} "
+        )
+
+    contour = ax.contour(
+        my_cell.grid_x,
+        my_cell.grid_y,
+        grid_z,
+        # cmap=plt.cm.jet,
+        levels=levels,
+    )
+    """
+    # 等值線 label
+    ax.clabel(
+        contour,
+        contour.levels,
+        inline=True,
+        fmt=fmt,
+        fontsize=10,
+    )
+    """
+    # if kwargs.get("fig_title", None) is not None:
+    #    ax.set_title(kwargs.get("fig_title", None))
+    return ax, contour
+
+
+def plot_grid_export(
+    points,
+    vals,
+    grid_z,
+    my_cell,
+    levels,
+    fig_fname: str,
+    argv_params,
+    **kwargs,
+):
+    plt.style.use("bmh")
+    _fig, ax = plt.subplots(1, figsize=(16, 10.5))
+
+    # 繪製背景
+    GDAL_SF.gis_extra_post_plot(
+        ax,
+        gis_extra_post=argv_params.get("gis_extra_post", None),
+        cell_inform=my_cell,
+        log_label=True,
+        label_columns="Taiwan_county_twd97::county",
+        #label_filter_code="embankment_10.shp::length>=3000&embankment_10.shp::name!=堤防",
+    )
+
+    ax, contour = plot_grid(
+        _fig,
+        ax,
+        points,
+        vals,
+        grid_z,
+        my_cell,
+        levels,
+        vmin=np.min(levels),
+        vmax=np.max(levels),
+        **kwargs,
+    )
+
+    # 額外加入 annotate
+    GDAL_SF.annotate_extra_post_plot(
+        ax, argv_params["annotate_extra_post"], **kwargs
+    )
+
+    for flag in ["fig_title", "fig_xlabel", "fig_ylabel"]:
+        plt_parameters.assign_fig_detail(ax, flag, **kwargs)
+
+    geojson = None
+    geojson_fname = os.path.join(
+        argv_params["output"],
+        os.path.basename(argv_params["input"]).replace(
+            ".txt", ".geojson"
+        ),
+    )
+    if kwargs.get("log_geojson", False):
+        # Convert matplotlib contour to geojson
+        geojson = geojsoncontour.contour_to_geojson(
+            contour=contour,
+            ndigits=3,
+            unit="m",
+            geojson_filepath=geojson_fname,
+        )
+
+    ax.yaxis.set_major_formatter(FormatStrFormatter("%.0f"))
+    plt.yticks(rotation=90)
+    plt.tight_layout()
+    if argv_params["log_plot"]:
+        jut.save_fig(fig_fname)
+    return geojson_fname, geojson
+
+
+if __name__ == "__main__":
+    #######################################################
+    # input file
+    input_fname = sys.argv[1]
+    # load config.txt
+    argv_params = load_config("config.txt", input_fname)
+    for flag in ["log_plot", "log_debug", "log_krig_compare"]:
+        argv_params[flag] = (
+            np.sum(
+                np.array(
+                    [  # 是否要繪圖 or debug
+                        argv.lower().find(flag) >= 0
+                        for argv in sys.argv[1:]
+                    ]
+                )
+            )
+            > 0
+        )
+
+    log_append = False
+    program_name = "srec_interpolate"
+    root_logger = None
+    if argv_params.get("log_debug", False):
+        root_logger = jlib_logging.logger_setup(
+            program_name,
+            filename=os.path.join(
+                argv_params["output"],
+                program_name,
+            ),
+            log_append=log_append,
+        )
+
+    # load 震度資料
+    assert os.path.exists(argv_params["input"]), argv_params[
+        "input"
+    ]
+    argv_params["point_data"] = load_point_data(
+        argv_params["input"]
+    )
+    # WGS84 --> TWD97
+    for index in argv_params["point_data"].index:
+        (
+            argv_params["point_data"].loc[index, "x"],
+            argv_params["point_data"].loc[index, "y"],
+        ) = twd97.fromwgs84(
+            argv_params["point_data"].loc[index, "N"],
+            argv_params["point_data"].loc[index, "E"],
+        )
+
+    # 處理縣市資料
+    my_cell = cell_inform.cell_utility(argv_params["coordinate"])
+    town_data = grid_utility.town_raster_data(
+        "Taiwan_town_twd97.shp",
+        log_refresh=True,
+        cell_inform=argv_params["coordinate"],
+        encoding="big5",
+    )
+    assert os.path.exists("Taiwan_town_twd97.nc")
+    my_grid = grid_utility.grid_utility(
+        my_cell,
+        proj_name="EPSG:3826",
+        town_data=town_data,
+    )
+
+    # 進行內差
+    points = np.array(
+        list(
+            [
+                list(
+                    argv_params["point_data"]
+                    .loc[index, ["x", "y"]]
+                    .values
+                )
+                for index in argv_params["point_data"].index
+            ]
+        )
+    )
+    vals = np.array(
+        list(argv_params["point_data"].loc[:, "震度"].values)
+    )
+    my_cell_wgs84_shink = cell_inform.cell_utility(
+        argv_params["coordinate"].replace(".txt", "_wgs84.txt"),
+        shink=0.003,
+    )
+    levels = argv_params["levels"]
+    try:
+        if np.all([val == np.mean(vals) for val in vals]):
+            raise jut.KrigingFail("數據均一致")
+        kwargs_linear = {"method": "linear"}
+        kwargs_krig = {
+            "method": "OrdinaryKriging",
+            "variogram_model": "linear",
+        }
+        # kwargs_krig["method"] = "UniversalKriging"
+        # kwargs_krig["variogram_model"] = "power"
+        kwargs_krig["variogram_model"] = "spherical"
+        # kwargs_krig["variogram_model"] = "exponential"
+
+        grid_z = my_grid.interpolate_combine(
+            points,
+            vals,
+            grid_x=my_cell.grid_x,
+            grid_y=my_cell.grid_y,
+            log_ocean_remove=True,
+            log_nearest_merge=True,  # 外圍數據不呈現
+            log_debug=argv_params["log_debug"],
+            root_logger=root_logger,
+            **kwargs_krig,
+        )
+
+        # 繪圖
+        geojson_fname, _geojson = plot_grid_export(
+            points,
+            vals,
+            grid_z,
+            my_cell,
+            levels,
+            os.path.join(  # fig_fname
+                argv_params["output"],
+                os.path.basename(argv_params["input"])
+                .replace(".csv", "")
+                .replace(".txt", "_twd97"),
+            ),
+            argv_params,
+            log_geojson=False,
+            log_grouping=True,
+        )
+
+        if argv_params["log_krig_compare"]:
+            # 比較各種不同的演算法
+            plt.style.use("bmh")
+            _fig, axs = plt.subplots(3, 3, figsize=(12, 9))
+            kwargs_interpolate = {
+                0: {"method": "linear"},
+                1: {
+                    "method": "OrdinaryKriging",
+                    "variogram_model": "linear",
+                },
+                2: {
+                    "method": "OrdinaryKriging",
+                    "variogram_model": "power",
+                },
+                3: {
+                    "method": "OrdinaryKriging",
+                    "variogram_model": "exponential",
+                },
+                4: {
+                    "method": "OrdinaryKriging",
+                    "variogram_model": "spherical",
+                },
+                5: {
+                    "method": "OrdinaryKriging",
+                    "variogram_model": "gaussian",
+                },
+                6: {
+                    "method": "OrdinaryKriging",
+                    "variogram_model": "hole-effect",
+                },
+            }
+            for (
+                index,
+                kwargs_interpolate_param,
+            ) in kwargs_interpolate.items():
+                grid_z4 = my_grid.interpolate_combine(
+                    points,
+                    vals,
+                    grid_x=my_cell.grid_x,
+                    grid_y=my_cell.grid_y,
+                    log_ocean_remove=True,
+                    log_nearest_merge=True,  # 外圍數據不呈現
+                    log_debug=argv_params["log_debug"],
+                    root_logger=root_logger,
+                    **kwargs_interpolate_param,
+                )
+
+                ax = plt_parameters.get_subax(axs, index)
+                try:
+                    fig_title = "{} / {}".format(
+                        kwargs_interpolate_param["method"],
+                        kwargs_interpolate_param[
+                            "variogram_model"
+                        ],
+                    )
+                except KeyError:
+                    fig_title = kwargs_interpolate_param[
+                        "method"
+                    ]
+                ax, contour = plot_grid(
+                    _fig,
+                    ax,
+                    points,
+                    vals,
+                    grid_z4,
+                    my_cell,
+                    levels,
+                    vmin=np.min(vals),
+                    vmax=np.max(vals),
+                    loc_shift=[100, 400],
+                    log_plot_points=True,
+                    fig_title=fig_title,
+                )
+            plt.tight_layout()
+            jut.save_fig(
+                os.path.join(
+                    argv_params["output"], "kriging_compare"
+                )
+            )
+
+        #############################################################################
+        # --> WGS 84
+        points2 = []
+        vals2 = []
+        """
+        for i in range(my_cell.grid_x.shape[0]):
+            for j in range(my_cell.grid_y.shape[1]):
+                if not np.isnan(grid_z[i, j]):
+                    vals2.append(grid_z[i, j])
+                    point_wgs84 = twd97.towgs84(
+                        my_cell.grid_x[i, j],
+                        my_cell.grid_y[i, j],
+                    )
+                    points2.append(
+                        [
+                            point_wgs84[1],
+                            point_wgs84[0],
+                        ]  # 東經在前, 北緯在後
+                    )
+        """
+        points2 = np.array(
+            list(
+                [
+                    list(
+                        argv_params["point_data"]
+                        .loc[index, ["E", "N"]]
+                        .values
+                    )
+                    for index in argv_params["point_data"].index
+                ]
+            )
+        )
+        vals2 = np.array(
+            list(argv_params["point_data"].loc[:, "震度"].values)
+        )
+
+        points2 = np.array(points2)
+        vals2 = np.array(vals2)
+
+        my_cell_wgs84 = cell_inform.cell_utility(
+            argv_params["coordinate"].replace(
+                ".txt", "_wgs84.txt"
+            )
+        )
+        my_grid_wgs84 = grid_utility.grid_utility(
+            my_cell,
+            proj_name="EPSG:3826",
+            # town_data=town_data_wgs84,
+        )
+        grid_z2 = my_grid_wgs84.interpolate_combine(
+            points2,
+            vals2,
+            grid_x=my_cell_wgs84.grid_x,
+            grid_y=my_cell_wgs84.grid_y,
+            # method="linear",
+            # log_ocean_remove=True,
+            # log_nearest_merge=False,  # 外圍數據不呈現
+            log_ocean_remove=True,
+            log_nearest_merge=True,  # 外圍數據不呈現
+            log_debug=argv_params["log_debug"],
+            root_logger=root_logger,
+            **kwargs_krig,
+        )
+
+        # 繪圖
+        # 轉換為整數階層
+        grid_z3 = grid_z2.copy()
+        for i in range(1, 9):
+            grid_z3 = np.where(
+                np.logical_and(
+                    grid_z3 < i,
+                    grid_z3 >= i - 1,
+                ),
+                i - 1,
+                grid_z3,
+            )
+
+        geojson_fname, geojson = plot_grid_export(
+            points2,
+            vals2,
+            grid_z2,
+            my_cell_wgs84,
+            levels,
+            os.path.join(
+                argv_params["output"],
+                os.path.basename(argv_params["input"]).replace(
+                    ".txt", ""
+                ),
+            ),
+            argv_params,
+            log_geojson=True,
+            log_plot_points=False,
+        )
+        gpd_contour = gpd.read_file(geojson_fname)
+
+        # 將 LineString 所有的節點, 計算彼此距離
+        # 如距離高於門檻, 切割為多段線段
+        # LineString --> MultiLineString
+        gpd_contour = shp_operation.split_by_point_distance(
+            gpd_contour, 0.05
+        )
+        # 重新輸出
+        gpd_contour.to_file(
+            os.path.join(
+                argv_params["output"],
+                os.path.basename(argv_params["input"]).replace(
+                    ".txt", ".geojson"
+                ),
+            ),
+            drive="GeoJSON",
+        )
+    except jut.KrigingFail:
+        if np.all(
+            [val == np.mean(vals) for val in vals]
+        ):  # 所有數據都相同
+            # 無等值線, 以 cell 產生封閉曲線
+            assigned_level = np.NaN
+            for i in range(len(levels)):
+                try:
+                    if (levels[i] <= np.nanmean(vals)) and (
+                        levels[i + 1] > np.nanmean(vals)
+                    ):
+                        assigned_level = levels[i]
+                        break
+                except IndexError:
+                    pass
+
+            gpd_contour = gpd.GeoDataFrame([], geometry=[])
+            gpd_contour.to_file(
+                os.path.join(
+                    argv_params["output"],
+                    os.path.basename(
+                        argv_params["input"]
+                    ).replace(".txt", ".geojson"),
+                ),
+                drive="GeoJSON",
+            )
