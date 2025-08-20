@@ -123,6 +123,9 @@ public class Program
             */
 
             // 加入 定時排程，取消註解就會啟動
+            // services.AddHostedService<ScheduledTask.Services.ScheduledTaskServiceSystem>();
+            // services.AddHostedService<ScheduledTask.Services.ScheduledTaskServiceList>();
+            // services.AddHostedService<ScheduledTask.Services.ScheduledTaskServiceSensor>();
             // services.AddHostedService<ScheduledTask.Services.ScheduledTaskServiceCamera>();
             // services.AddHostedService<ScheduledTask.Services.ScheduledTaskServiceEarthquake>();
 
