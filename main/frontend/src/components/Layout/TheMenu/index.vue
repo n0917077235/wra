@@ -84,5 +84,6 @@ const menus = reactive<MainItem[]>([
     ],
   },
     { index: '/test11', iconName: 'icon_downlaod', pageName: '文件下載' },
+    { index: '/DeviceRepairHistory', iconName: '', pageName: '設備修繕履歷' },
 ]);
 </script>

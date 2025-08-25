@@ -288,6 +288,16 @@ const routes: Array<RouteRecordRaw> = [
         },
       },
       {
+        path: 'DeviceRepairHistory',
+        name: 'DeviceRepairHistory',
+        component: () =>
+          import(/* webpackChunkName: "test12" */ '@/views/DeviceRepairHistory/index.vue'),
+        meta: {
+          clearMainPadding: 1,
+            routerName: '設備修繕履歷', requiresAuth: true
+        },
+      },
+      {
         path: 'search',
         name: 'search',
         component: () =>
