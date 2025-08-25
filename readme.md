@@ -18,16 +18,16 @@ eform: 維護電子表單
 - Simply press F5, or Ctrl+F5 (if you want to save power when developing on a laptop)
 
 ## Setup python environment (等震度圖)
-- Install python 3.10.7
+- Install python 3.12.10
 - Go to `main\srec_proj`
 - Start a virtual environment and activate it:
 ```
-py -m venv .venv
+python -m venv .venv
 .venv\Scripts\activate
 ```
 
 - Install dependencies:
-`py -m pip install -r requirements.txt`
+`python -m pip install -r requirements.txt`
 
 - Run: `python srec_interpolate.py sample.txt log_plot`
 - Output file is in `main\srec_proj\Output`

@@ -501,7 +501,7 @@ if __name__ == "__main__":
             [val == np.mean(vals) for val in vals]
         ):  # 所有數據都相同
             # 無等值線, 以 cell 產生封閉曲線
-            assigned_level = np.NaN
+            assigned_level = np.nan
             for i in range(len(levels)):
                 try:
                     if (levels[i] <= np.nanmean(vals)) and (
