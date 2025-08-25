@@ -192,8 +192,6 @@ const buttonState = ref('default'); // 'default', 'active', 'error'
         producting.value = true;
         isButtonDisabled.value = true;
         let infos = { eventTime: ruleForm.event.split('(')[0] };
-        //let infos = { userId: "kris", eventTime: "" };
-        //alert(userId.value + " " + ruleForm.event.split('(')[0]);
         const rtn: GetIsoseismalResponse | null = await apiGetIsoseismal(infos);
         buttonKey.value += 1;
         if (rtn == null) {
@@ -205,13 +203,9 @@ const buttonState = ref('default'); // 'default', 'active', 'error'
             downloadurl.value = rtn.imageUrl;
             var element = document.getElementById('btn102') as HTMLInputElement;
             element.disabled=false;
-
         }
-       // data = rtn.geoJson;
-        //alert(isButtonDisabled.value || !ruleForm.event.includes('('));
-        // 更新 key 來強制重渲染按鈕
-        return;
     }
+    
     function downloadmap() {
         if (downloadurl.value == "") return;
         window.open(downloadurl.value, '_blank');
