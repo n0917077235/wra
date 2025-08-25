@@ -1,21 +1,13 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
-using Microsoft.Extensions.Hosting.Internal;
-using Org.BouncyCastle.Bcpg.OpenPgp;
 using System.Data;
 using System.Diagnostics;
+using System.Net.Sockets;
+using System.Reflection;
+using System.Text;
 using Wra10Core2023.Models;
 using SqlHelper = Wra10Core2023.Util.SQLHelper;
-using System.IO;
-using Docker.DotNet;
-using Docker.DotNet.Models;
-using Windows.Media.Protection.PlayReady;
-using System.ComponentModel;
-using System.Net.Sockets;
-using System.Text;
-using System.Windows.Forms;
-using Wra10Core2023.Util;
 
 namespace Wra10Core2023.Controllers;
 
@@ -38,7 +30,7 @@ public class EarthquakeController : Controller
         virtualImagePath = _configuration["VirtualVideoImage:Path"];
     }
 
-    private bool Connect2Docker(string userId,string eventTime)
+    private bool Connect2Docker(string userId, string eventTime)
     {
         StreamWriter file = new StreamWriter(@"D:\ApiDebug\Tcp_" + DateTime.Now.ToString("yyyyMMdd_HHmmss_fff") + ".txt");
         string serverIp = _configuration["IsoseismalMap:ServerIP"];
@@ -61,7 +53,7 @@ public class EarthquakeController : Controller
             int bytesReceived = netStream.Read(receiveBuffer);
             string data = Encoding.UTF8.GetString(receiveBuffer.AsSpan(0, bytesReceived));
             file.WriteLine("read:" + data);
-            if (data.IndexOf("Processed")!=-1)
+            if (data.IndexOf("Processed") != -1)
             {
                 file.WriteLine("true");
                 result = true;
@@ -76,7 +68,7 @@ public class EarthquakeController : Controller
 
     [Authorize]
     [HttpGet]
-    [Route("Isoseismal")]
+    [Route("IsoseismalTest")]
     public async Task<IActionResult> GetIsoseismalMap(string userId, string eventTime)
     {
         StreamWriter file = new StreamWriter(@"D:\ApiDebug\EQ_" + DateTime.Now.ToString("yyyyMMdd_HHmmss_fff") + ".txt");
@@ -234,80 +226,61 @@ public class EarthquakeController : Controller
         }
     }
 
-    
+    public static async Task<byte[]> GenerateImageAsync()
+    {
+        var dir = FindDir();
+        ClearDir(Path.Combine(dir, "Output"));
+        var process = new Process();
+        var startInfo = new ProcessStartInfo();
+        startInfo.WindowStyle = System.Diagnostics.ProcessWindowStyle.Hidden;
+        startInfo.FileName = "cmd.exe";
+        startInfo.Arguments = "/C python -m venv .venv && .venv\\Scripts\\activate && " +
+            "python srec_interpolate.py sample.txt log_plot";
+        startInfo.WorkingDirectory = dir;
+        process.StartInfo = startInfo;
+        process.Start();
+        await process.WaitForExitAsync();
+        Console.WriteLine(process.ExitCode);
+        var file = Path.Combine(dir, @"Output\sample_twd97.png");
+        return await System.IO.File.ReadAllBytesAsync(file);
+    }
+
+    private static void ClearDir(string dir)
+    {
+        foreach (var f in Directory.GetFiles(dir)) System.IO.File.Delete(f);
+    }
+
+    private static string FindDir()
+    {
+        var target = "srec_proj";
+        var dir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+
+        while (true)
+        {
+            var d = Path.Combine(dir, target);
+            if (Directory.Exists(d)) return d;
+            var parent = new DirectoryInfo(dir).Parent;
+            if (parent == null) throw new DirectoryNotFoundException();
+            dir = parent.FullName;
+        }
+    }
 
     [Authorize]
-    [HttpPost]
+    [HttpGet]
     [Route("Isoseismal")]
-    public async Task<IActionResult> GetIsoseismalMap([FromBody] IMapModel iMap)
+    public async Task<IActionResult> GetIsoseismalMap()
     {
-        IsoseismalMapData mapData = new IsoseismalMapData(false, string.Empty, string.Empty, null);
-        
-        if (iMap==null)
-        {
-            return BadRequest(mapData);
-        }
+        //IsoseismalMapData mapData = new IsoseismalMapData(false, string.Empty, string.Empty, null);
 
-        string userId = HttpContext.GetUserName();
-        string eventTime = iMap.eventTime;
-        
-        try
-        {                
-            string webRootPath = _hostingEnvironment.ContentRootPath;
-            string outputPath = _configuration["IsoseismalMap:outputPath"];
-            string outputTextFile = outputPath + "\\" + userId + ".txt";
-            string outputJsonFile = outputPath + "\\" + userId + ".geojson";
-            string srcImage = Path.Combine(outputPath, userId + "_twd97.png");
-            string imagePath = _configuration["IsoseismalMap:ImagePath"];
-            string dstImage = Path.Combine(webRootPath, imagePath) + @"\" + userId + "_twd97.png";
-            
-            if (!String.IsNullOrEmpty(eventTime))
-            {
-                try
-                {
-                    bool result = Connect2Docker(userId, eventTime);
-                    if (!result)
-                    {
-                        return BadRequest(mapData);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    return BadRequest(mapData);
-                }
-            }
+        //if (iMap == null)
+        //{
+        //    return BadRequest(mapData);
+        //}
 
-            if (System.IO.File.Exists(srcImage) && System.IO.File.Exists(outputJsonFile) && System.IO.File.Exists(outputTextFile))
-            {
-                StreamReader sr1 = new StreamReader(outputJsonFile);
-                string geoJson = sr1.ReadToEnd();
-                sr1.Close();
+        //string eventTime = iMap.eventTime;
 
-                StreamReader sr2 = new StreamReader(outputTextFile);
-                string line = null;
-                List<object> lstInfo = new List<object>();
-                while (!String.IsNullOrEmpty((line = sr2.ReadLine())))
-                {
-                    lstInfo.Add(line);
-                }
-                sr2.Close();
-
-                var imageUrl = new Uri($"{Request.Scheme}://{Request.Host}/" + virtualImagePath + @"/IMap/" + userId + "_twd97.png");
-                mapData.Result = true;
-                mapData.InfoList = lstInfo;
-                mapData.ImageUrl = imageUrl.ToString();
-                mapData.GeoJson = geoJson;
-                return Ok(mapData);
-            }
-            else
-            {
-                return BadRequest(mapData);
-            }
-        }
-        catch (Exception)
-        {
-            return BadRequest(mapData);
-        }
+        var bytes = await GenerateImageAsync();
+        return File(bytes, "image/png");
     }
 
     public class IMapModel
@@ -452,7 +425,7 @@ public class EarthquakeController : Controller
     [Authorize]
     [HttpPost]
     [Route("GetEQEvent")]
-    public IActionResult GetEQEvent(int range,string eventTime)
+    public IActionResult GetEQEvent(int range, string eventTime)
     {
         try
         {
@@ -475,9 +448,9 @@ public class EarthquakeController : Controller
                         recordTime = dt.Rows[i]["recordtime"].ToString(),
                         intensity = dt.Rows[i]["intensity"].ToString(),
                         grade = dt.Rows[i]["grade"].ToString(),
-                        pga= dt.Rows[i]["pga"].ToString(),
+                        pga = dt.Rows[i]["pga"].ToString(),
                         pgv = dt.Rows[i]["pgv"].ToString(),
-                        eventGroup= dt.Rows[i]["groupTime"].ToString(),
+                        eventGroup = dt.Rows[i]["groupTime"].ToString(),
                         eventTag = dt.Rows[i]["eventTag"].ToString(),
                         areaName = dt.Rows[i]["areaName"].ToString()
                     };
@@ -509,7 +482,7 @@ public class EarthquakeController : Controller
             {
                 SqlHelper sqlHeper = new SqlHelper(conn);
                 DataTable dt = sqlHeper.ExecuteStoreProcedureQuery("sp_eqchart", lstParam.ToArray());
-                
+
                 for (int i = 0; i < dt.Rows.Count; i++)
                 {
                     if (i == 0)

@@ -63,6 +63,7 @@
 
         </el-form>
 
+        <img :src="imageData"></img>
         <div v-if="hasData"
              class="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-4">
             <el-card v-for="(event, index) in EQresult" :key="index" class="p-2" @click="showHistoryChart(event)">
@@ -114,7 +115,8 @@
         EQEventDetailResponse,
     } from '@/resource/earthquakes';
     import { reactive, ref, watch, onMounted, nextTick, computed } from 'vue';
-    import { apiGetIsoseismal, GetIsoseismalRequest, GetIsoseismalResponse } from '@/resource/geojson'
+    import { apiClient } from '@/resource/index';
+    import { apiGetIsoseismal, GetIsoseismalRequest, GetIsoseismalResponse } from '@/resource/geojson';
     import { Chart, LineController, LineElement, PointElement, LinearScale, Title ,CategoryScale} from 'chart.js';
     Chart.register(LineController, LineElement, PointElement, LinearScale, Title, CategoryScale);
     import { useStore } from 'vuex';
@@ -122,6 +124,7 @@
     const store2 = useStore();
     const userId = computed<string>(() => store2.state.user.userId);
      
+    const imageData = ref(null);
     const hasData = ref<boolean>(false);
     const currentYear = new Date().getFullYear().toString();
     const currentMonth = (new Date().getMonth() + 1).toString();
@@ -186,26 +189,19 @@ const buttonState = ref('default'); // 'default', 'active', 'error'
         }
     });
 
-
     //產生等震度圖
     async function createmap() {
-        producting.value = true;
-        isButtonDisabled.value = true;
-        let infos = { eventTime: ruleForm.event.split('(')[0] };
-        const rtn: GetIsoseismalResponse | null = await apiGetIsoseismal(infos);
-        buttonKey.value += 1;
-        if (rtn == null) {
-            //提示未找到等震度圖
-            createsuccess.value = false;
-            return;
-        } else {
-            createsuccess.value = true;
-            downloadurl.value = rtn.imageUrl;
-            var element = document.getElementById('btn102') as HTMLInputElement;
-            element.disabled=false;
-        }
+        let res = await apiClient.get('Earthquake/Isoseismal', { responseType:"blob" });
+        let reader = new FileReader();
+
+        reader.onloadend = function () {
+            imageData.value = reader.result;
+        };
+        
+        let blob=res.data;
+        reader.readAsDataURL(blob);
     }
-    
+
     function downloadmap() {
         if (downloadurl.value == "") return;
         window.open(downloadurl.value, '_blank');
