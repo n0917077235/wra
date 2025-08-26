@@ -48,7 +48,7 @@ export interface EQEventDetailResponse {
 export async function apiGetEQEventRange(
   payload: EarthquakeBySearchPayload,
 ): Promise<EQEventRangeResponse[]> {
-  const response = await apiClient.post<EQEventRangeResponse[]>(
+  const response = await apiClient.get<EQEventRangeResponse[]>(
       `/Earthquake/GetEQEventRangeIntensity?year=${payload.year}&month=${payload.month}&intensity=${payload.intensity}`,
     {},
   );

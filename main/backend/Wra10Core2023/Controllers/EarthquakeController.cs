@@ -22,7 +22,7 @@ public class EarthquakeController : Controller
     string? videoImagePath = "";
     private string? virtualImagePath = "";
 
-    public EarthquakeController(ILogger<EarthquakeController> logger, IConfiguration configuration, 
+    public EarthquakeController(ILogger<EarthquakeController> logger, IConfiguration configuration,
         IWebHostEnvironment hostingEnvironment)
     {
         _logger = logger;
@@ -154,93 +154,29 @@ public class EarthquakeController : Controller
     }
 
     [Authorize]
-    [HttpPost]
-    [Route("GetEQEventRange")]
-    public IActionResult GetEQEventRange(int year, int month)
-    {
-        try
-        {
-            List<object> lstEventRange = new List<object>();
-            string? conn = _configuration.GetConnectionString("Water2022");
-            List<SqlParameter> lstParam = new List<SqlParameter>();
-            lstParam.Add(new SqlParameter("@year", year));
-            lstParam.Add(new SqlParameter("@month", month));
-            if (conn != null)
-            {
-                SqlHelper sqlHeper = new SqlHelper(conn);
-                DataTable dt = sqlHeper.ExecuteStoreProcedureQuery("sp_getEQMapTime", lstParam.ToArray());
-                for (int i = 0; i < dt.Rows.Count; i++)
-                {
-                    object obj = new object[] { dt.Rows[i][0].ToString(), int.Parse(dt.Rows[i][1].ToString()) };
-                    lstEventRange.Add(obj);
-                }
-            }
-            return Ok(lstEventRange.ToList());
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(ex.Message);
-        }
-    }
-
-    [Authorize]
-    [HttpPost]
+    [HttpGet]
     [Route("GetEQEventRangeIntensity")]
     public IActionResult GetEQEventRangeIntensity(int year, int month, float intensity)
     {
-        try
-        {
-            List<object> lstEventRange = new List<object>();
-            string? conn = _configuration.GetConnectionString("Water2022");
-            List<SqlParameter> lstParam = new List<SqlParameter>();
-            lstParam.Add(new SqlParameter("@year", year));
-            lstParam.Add(new SqlParameter("@month", month));
-            lstParam.Add(new SqlParameter("@intensity", intensity));
-            if (conn != null)
-            {
-                SqlHelper sqlHeper = new SqlHelper(conn);
-                DataTable dt = sqlHeper.ExecuteStoreProcedureQuery("sp_getEQMapTimeNew", lstParam.ToArray());
-                for (int i = 0; i < dt.Rows.Count; i++)
-                {
-                    object obj = new object[] { dt.Rows[i][0].ToString(), int.Parse(dt.Rows[i][1].ToString()) };
-                    lstEventRange.Add(obj);
-                }
-            }
-            return Ok(lstEventRange.ToList());
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(ex.Message);
-        }
+        var events = GetEQEvents(year, month, intensity);
+        return Ok(events);
     }
 
-    [Authorize]
-    [HttpPost]
-    [Route("GetEQEventRangeOld")]
-    public IActionResult GetEQEventRangeWithOld(int year, int month)
+    private record EqEvent(string Time, bool HasIsoseismalMap);
+
+    private IEnumerable<EqEvent> GetEQEvents(int year, int month, float intensity)
     {
-        try
-        {
-            List<string> lstEventRange = new List<string>();
-            string? conn = _configuration.GetConnectionString("Water2022");
-            List<SqlParameter> lstParam = new List<SqlParameter>();
-            lstParam.Add(new SqlParameter("@year", year));
-            lstParam.Add(new SqlParameter("@month", month));
-            if (conn != null)
-            {
-                SqlHelper sqlHeper = new SqlHelper(conn);
-                DataTable dt = sqlHeper.ExecuteStoreProcedureQuery("sp_eqeventrange", lstParam.ToArray());
-                for (int i = 0; i < dt.Rows.Count; i++)
-                {
-                    lstEventRange.Add(dt.Rows[i][0].ToString());
-                }
-            }
-            return Ok(lstEventRange.ToList());
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(ex.Message);
-        }
+        SqlParameter[] parameters =
+        [
+            new("@year", year),
+            new("@month", month),
+            new("@intensity", intensity),
+        ];
+
+        var sqlHeper = SiteUtil.MainDB(_configuration);
+        var dt = sqlHeper.ExecuteStoreProcedureQuery("sp_getEQMapTimeNew", parameters);
+        var rows = dt.Rows.Cast<DataRow>();
+        return rows.Select(row => new EqEvent((string)row[0], (int)row[1] == 1));
     }
 
     [Authorize]

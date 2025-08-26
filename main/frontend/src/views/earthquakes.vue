@@ -39,7 +39,7 @@
                             :options="eventOptions"
                             :withoutValueLabel="true"
                             class="el-select"
-                            @update:model-value="submit">
+                            @update:model-value="updateRuleRange">
                 </wra-select>
                 
                 <div class="flex items-center buttons">
@@ -168,7 +168,7 @@
     const createsuccess = ref(true);
     const downloadurl = ref("");
     // 狀態變數
-const buttonState = ref('default'); // 'default', 'active', 'error'
+    const buttonState = ref('default'); // 'default', 'active', 'error'
 
     // 動態變化按鈕的顏色和文字
     const buttonType = computed(() => {
@@ -285,9 +285,9 @@ const buttonState = ref('default'); // 'default', 'active', 'error'
     const EventDetail = ref<EQEventDetailResponse>([]);
 
     const eventOptions = computed(() => {
-        return availableEvents.value.map(eventObj => {
-            let str = eventObj[0];
-            let hasChart = eventObj[1] == "1";
+        return availableEvents.value.map(x => {
+            let str = x.time;
+            let hasChart = x.hasIsoseismalMap;
             if (hasChart) str = str + "(等震度圖)";
             return (ruleForm.hasChart && !hasChart) ? null : str;
         }).filter(x => x !== null);
@@ -308,6 +308,7 @@ const buttonState = ref('default'); // 'default', 'active', 'error'
     watch([() => ruleRange.range, () => ruleRange.eventTime, () => ruleRange.intensity], (): void => {
         getApiGetEQEvent();
     });
+
     watch(EventDetail, (n): void => {
         //alert(n.lstRecordTime);
         // 如果已经存在一个 Chart 实例，销毁它
@@ -432,10 +433,8 @@ const buttonState = ref('default'); // 'default', 'active', 'error'
     const EQresult = ref<EQEventResponse[]>([]);
     const getApiGetEQEvent = async (): Promise<void> => {
         try {
-            //const response = await apiGetEQEventNew(ruleRange);
             const response = await apiGetEQEvent(ruleRange);
             if (response) {
-                //alert(response);
                 EQresult.value = response;
                 hasData.value = true;
             }
@@ -465,12 +464,19 @@ const buttonState = ref('default'); // 'default', 'active', 'error'
         }
     };
 
-    const submit = async (): Promise<void> => {
-        ruleForm.event = eventOptions.value[0].toString();
+    const submit = () => {
         ruleRange.range = getRuleRange(ruleForm);
         ruleRange.intensity = ruleForm.intensity;
-        ruleRange.eventTime = ruleForm.event.split('(')[0];
+
+        if (eventOptions.value.length > 0) {
+            ruleForm.event = eventOptions.value[0];
+            ruleRange.eventTime = ruleForm.event.split('(')[0];
+        }
     };
+
+    const updateRuleRange = () => {
+       ruleRange.eventTime = ruleForm.event.split('(')[0]; 
+    }
 
     const getRuleRange = (form: EarthquakeBySearchPayload): string => {
         if (form.checked1 && form.checked2) {

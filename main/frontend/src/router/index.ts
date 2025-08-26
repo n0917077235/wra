@@ -270,7 +270,7 @@ const routes: Array<RouteRecordRaw> = [
         name: 'Earthquakes',
         component: () =>
           import(
-            /* webpackChunkName: "test10" */ '@/views/Earthquakes/index.vue'
+            /* webpackChunkName: "test10" */ '@/views/earthquakes.vue'
           ),
         meta: {
           clearMainPadding: 1,
@@ -341,7 +341,7 @@ const routes: Array<RouteRecordRaw> = [
         path: 'login',
         name: 'login',
         component: () =>
-          import(/* webpackChunkName: "login" */ '@/views/Login/index.vue'),
+          import(/* webpackChunkName: "login" */ '@/views/login.vue'),
       },
     ],
   },
