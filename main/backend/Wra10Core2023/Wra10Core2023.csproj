@@ -27,6 +27,7 @@
   <ItemGroup>
     <PackageReference Include="Docker.DotNet" Version="3.125.15" />
     <PackageReference Include="DotNetZip" Version="1.16.0" />
+    <PackageReference Include="EPPlus" Version="8.1.0" />
     <PackageReference Include="GeoJSON.Net" Version="1.2.19" />
     <PackageReference Include="MailKit" Version="4.13.0" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication" Version="2.3.0" />
