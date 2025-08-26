@@ -42,19 +42,4 @@
 
     }
 
-    public class IsoseismalMapData
-    {
-        public bool Result {  get; set; }
-        public string GeoJson { get; set; }   
-        public string ImageUrl { get; set; }  
-        public List<object> InfoList { get; set; } 
-
-        public IsoseismalMapData(bool result,string geoJson, string imageUrl, List<object> infoList)
-        {
-            Result = result;
-            GeoJson = geoJson;
-            ImageUrl = imageUrl;
-            InfoList = infoList;
-        }
-    }
 }

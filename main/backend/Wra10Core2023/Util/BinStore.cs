@@ -25,7 +25,7 @@ public static class BinStore
 
     public static byte[] Get(string key)
     {
-
+        return null;
     }
 
     public static void Set(string key, byte[] value)
