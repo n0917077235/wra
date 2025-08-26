@@ -191,7 +191,9 @@ const buttonState = ref('default'); // 'default', 'active', 'error'
 
     //產生等震度圖
     async function createmap() {
-        let res = await apiClient.get('Earthquake/Isoseismal', { responseType:"blob" });
+        let eventTime= ruleForm.event.split('(')[0];
+        let t = encodeURIComponent(eventTime);
+        let res = await apiClient.get(`Earthquake/Isoseismal?eventTime=${t}`, { responseType:"blob" });
         let reader = new FileReader();
 
         reader.onloadend = function () {

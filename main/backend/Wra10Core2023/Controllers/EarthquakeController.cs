@@ -7,6 +7,7 @@ using System.Net.Sockets;
 using System.Reflection;
 using System.Text;
 using Wra10Core2023.Models;
+using Wra10Core2023.Util;
 using SqlHelper = Wra10Core2023.Util.SQLHelper;
 
 namespace Wra10Core2023.Controllers;
@@ -21,7 +22,8 @@ public class EarthquakeController : Controller
     string? videoImagePath = "";
     private string? virtualImagePath = "";
 
-    public EarthquakeController(ILogger<EarthquakeController> logger, IConfiguration configuration, IWebHostEnvironment hostingEnvironment)
+    public EarthquakeController(ILogger<EarthquakeController> logger, IConfiguration configuration, 
+        IWebHostEnvironment hostingEnvironment)
     {
         _logger = logger;
         _configuration = configuration;
@@ -30,218 +32,46 @@ public class EarthquakeController : Controller
         virtualImagePath = _configuration["VirtualVideoImage:Path"];
     }
 
-    private bool Connect2Docker(string userId, string eventTime)
+    private string GetInputFile(string eventTime)
     {
-        StreamWriter file = new StreamWriter(@"D:\ApiDebug\Tcp_" + DateTime.Now.ToString("yyyyMMdd_HHmmss_fff") + ".txt");
-        string serverIp = _configuration["IsoseismalMap:ServerIP"];
-        int port = 15001;
-        int.TryParse(_configuration["IsoseismalMap:ServerPort"], out port);
-        bool result = false;
-        TcpClient tcpClient = new TcpClient();
-        string json = $"{{ \"userId\":\"{userId}\", \"eventTime\":\"{eventTime}\"}}";
-        file.WriteLine(json);
+        SqlParameter[] parameters = [new("@eventTime", eventTime)];
+        var sqlHelper = SiteUtil.MainDB(_configuration);
+        var dt = sqlHelper.ExecuteStoreProcedureQuery("sp_Isoseismal", parameters);
+        var sb = new StringBuilder();
+        sb.AppendLine("N,E,震度");
 
-        if (tcpClient.ConnectAsync(serverIp, port).Wait(TimeSpan.FromSeconds(5)))
+        foreach (var row in dt.Rows.Cast<DataRow>())
         {
-            NetworkStream netStream = tcpClient.GetStream();
-            byte[] sendBuffer = Encoding.UTF8.GetBytes(json);
-            netStream.Write(sendBuffer);
-
-            file.WriteLine("sent");
-
-            byte[] receiveBuffer = new byte[1024];
-            int bytesReceived = netStream.Read(receiveBuffer);
-            string data = Encoding.UTF8.GetString(receiveBuffer.AsSpan(0, bytesReceived));
-            file.WriteLine("read:" + data);
-            if (data.IndexOf("Processed") != -1)
-            {
-                file.WriteLine("true");
-                result = true;
-            }
-            netStream.Close();
-            tcpClient.Close();
+            sb.AppendLine($"{row[2]},{row[3]},{row[4]}");
         }
-        file.WriteLine(result);
-        file.Close();
-        return result;
+
+        return sb.ToString();
     }
 
-    [Authorize]
-    [HttpGet]
-    [Route("IsoseismalTest")]
-    public async Task<IActionResult> GetIsoseismalMap(string userId, string eventTime)
+    private async Task<byte[]> GenerateImageAsync(string eventTime)
     {
-        StreamWriter file = new StreamWriter(@"D:\ApiDebug\EQ_" + DateTime.Now.ToString("yyyyMMdd_HHmmss_fff") + ".txt");
-        IsoseismalMapData mapData = new IsoseismalMapData(false, string.Empty, string.Empty, null);
-        try
-        {
-            string webRootPath = _hostingEnvironment.ContentRootPath;
-            string inputPath = _configuration["IsoseismalMap:inputPath"];
-            string outputPath = _configuration["IsoseismalMap:outputPath"];
-            string inputFile = inputPath + "\\" + userId + ".txt";
-            string outputTextFile = outputPath + "\\" + userId + ".txt";
-            string outputJsonFile = outputPath + "\\" + userId + ".geojson";
-
-            if (!String.IsNullOrEmpty(eventTime))
-            {
-                List<SqlParameter> parameters = new List<SqlParameter>();
-                SqlHelper sqlHelper = new SqlHelper(_configuration.GetConnectionString("Water2022"));
-                parameters.Add(new SqlParameter("@eventTime", eventTime));
-                DataTable dt = sqlHelper.ExecuteStoreProcedureQuery("sp_Isoseismal", parameters.ToArray());
-
-                StreamWriter sw1 = new StreamWriter(inputPath + "\\" + userId + ".txt");
-                sw1.WriteLine("N,E,震度");
-
-                StreamWriter sw2 = new StreamWriter(outputPath + "\\" + userId + ".txt");
-                sw2.WriteLine("ID,Name,N,E,震度");
-                for (int i = 0; i < dt.Rows.Count; i++)
-                {
-                    sw1.WriteLine(dt.Rows[i][2].ToString() + "," + dt.Rows[i][3].ToString() + "," + dt.Rows[i][4].ToString());
-                    sw2.WriteLine(dt.Rows[i][0].ToString() + "," + dt.Rows[i][1].ToString() + "," + dt.Rows[i][2].ToString() + "," + dt.Rows[i][3].ToString() + "," + dt.Rows[i][4].ToString());
-                }
-                sw1.Close();
-                sw2.Close();
-                string? exeFormat = _configuration["IsoseismalMap:exePath"];
-                string workDir = _configuration["IsoseismalMap:workDir"];
-                string pythonArg = userId + ".txt";
-                string Arguments = $"/C docker run --rm -v {workDir}:/container bsjacky/numerical_dem /bin/bash -c \"cd /container; python srec_interpolate.py {pythonArg} log_plot\"";
-                //string Arguments = $"/C dk.bat {workDir} {pythonArg}";
-                //string arg=String.Format(exeFormat, workDir, userId + ".txt");
-                //int nIndex = exe.LastIndexOf('\\');
-                file.WriteLine(Arguments);
-                file.Flush();
-                //if (nIndex != -1)
-                //{
-                //    workDir = exe.Substring(0, nIndex + 1);
-                //}
-                ProcessStartInfo startInfo = new ProcessStartInfo
-                {
-                    FileName = "cmd.exe",
-                    Arguments = Arguments,
-                    RedirectStandardOutput = false,
-                    RedirectStandardError = false,
-                    UseShellExecute = false,
-                    CreateNoWindow = true,
-                    WorkingDirectory = workDir,
-                };
-
-                file.WriteLine("processs start");
-                file.Flush();
-                using (Process process = new Process { StartInfo = startInfo })
-                {
-                    process.Start();
-
-
-                    //string output = process.StandardOutput.ReadToEnd();
-                    //string error = process.StandardError.ReadToEnd();
-                    int processId = process.Id;
-                    file.WriteLine("process id: " + processId);
-
-                    //await process.WaitForExitAsync();
-                    process.WaitForExit();
-
-                    file.WriteLine("processs finished");
-                    file.WriteLine("processs exit:" + process.ExitCode);
-                    if (process.ExitCode == 0)
-                    {
-                        file.WriteLine("exitcode=0");
-                        file.Flush();
-
-                        StreamReader sr1 = new StreamReader(outputJsonFile);
-                        string geoJson = sr1.ReadToEnd();
-                        sr1.Close();
-
-                        StreamReader sr2 = new StreamReader(outputTextFile);
-                        string line = null;
-                        List<object> lstInfo = new List<object>();
-                        while (!String.IsNullOrEmpty((line = sr2.ReadLine())))
-                        {
-                            lstInfo.Add(line);
-                        }
-                        sr2.Close();
-
-
-
-
-                        //string imagePath = Path.Combine(videoImagePath, CamName);// +@"\snapshot.jpg";
-                        string dstImage = Path.Combine(webRootPath, videoImagePath) + @"/" + userId + "_twd97.png";
-                        string srcImage = Path.Combine(outputPath, userId + "_twd97.png");
-                        //string dstImage = Path.Combine(webRootPath, userId + "_twd97.png");
-                        file.WriteLine("scr:" + srcImage);
-                        file.WriteLine("dst:" + srcImage);
-                        file.Flush();
-                        System.IO.File.Copy(srcImage, dstImage, true);
-
-                        var imageUrl = new Uri($"{Request.Scheme}://{Request.Host}/" + virtualImagePath + @"/" + userId + "_twd97.png");
-                        file.WriteLine("imgUrl:" + imageUrl);
-                        file.Close();
-                        mapData.Result = true;
-                        mapData.InfoList = lstInfo;
-                        mapData.ImageUrl = imageUrl.ToString();
-                        mapData.GeoJson = geoJson;
-                        return Ok(mapData);
-                    }
-                    else
-                    {
-                        //file.WriteLine("Error:");
-                        //file.WriteLine(error);
-                        //file.Flush();
-                        return BadRequest(mapData);
-                    }
-
-                }
-
-            }
-            else
-            {
-                string dstImage = Path.Combine(webRootPath, videoImagePath) + @"/" + userId + "_twd97.png";
-                if (System.IO.File.Exists(dstImage) && System.IO.File.Exists(outputJsonFile) && System.IO.File.Exists(outputTextFile))
-                {
-                    StreamReader sr1 = new StreamReader(outputJsonFile);
-                    string geoJson = sr1.ReadToEnd();
-                    sr1.Close();
-
-                    StreamReader sr2 = new StreamReader(outputTextFile);
-                    string line = null;
-                    List<object> lstInfo = new List<object>();
-                    while (!String.IsNullOrEmpty((line = sr2.ReadLine())))
-                    {
-                        lstInfo.Add(line);
-                    }
-                    sr2.Close();
-                    var imageUrl = new Uri($"{Request.Scheme}://{Request.Host}/" + virtualImagePath + @"/" + userId + "_twd97.png");
-                    mapData.Result = true;
-                    mapData.InfoList = lstInfo;
-                    mapData.ImageUrl = imageUrl.ToString();
-                    mapData.GeoJson = geoJson;
-                    return Ok(mapData);
-                }
-                return BadRequest(mapData);
-            }
-
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(ex.Message);
-        }
-    }
-
-    public static async Task<byte[]> GenerateImageAsync()
-    {
+        var input = GetInputFile(eventTime);
         var dir = FindDir();
+        var f = Path.Combine(dir, "Input/input.txt");
+        await System.IO.File.WriteAllTextAsync(f, input);
+        return await RunGeneratorAsync(dir);
+    }
+
+    private static async Task<byte[]> RunGeneratorAsync(string dir)
+    {
         ClearDir(Path.Combine(dir, "Output"));
         var process = new Process();
         var startInfo = new ProcessStartInfo();
         startInfo.WindowStyle = System.Diagnostics.ProcessWindowStyle.Hidden;
         startInfo.FileName = "cmd.exe";
         startInfo.Arguments = "/C python -m venv .venv && .venv\\Scripts\\activate && " +
-            "python srec_interpolate.py sample.txt log_plot";
+            "python srec_interpolate.py input.txt log_plot";
         startInfo.WorkingDirectory = dir;
         process.StartInfo = startInfo;
         process.Start();
         await process.WaitForExitAsync();
-        Console.WriteLine(process.ExitCode);
-        var file = Path.Combine(dir, @"Output\sample_twd97.png");
+        if (process.ExitCode != 0) throw new Exception($"python exit code={process.ExitCode}");
+        var file = Path.Combine(dir, @"Output\input_twd97.png");
         return await System.IO.File.ReadAllBytesAsync(file);
     }
 
@@ -268,18 +98,9 @@ public class EarthquakeController : Controller
     [Authorize]
     [HttpGet]
     [Route("Isoseismal")]
-    public async Task<IActionResult> GetIsoseismalMap()
+    public async Task<IActionResult> GetIsoseismalMap(string eventTime)
     {
-        //IsoseismalMapData mapData = new IsoseismalMapData(false, string.Empty, string.Empty, null);
-
-        //if (iMap == null)
-        //{
-        //    return BadRequest(mapData);
-        //}
-
-        //string eventTime = iMap.eventTime;
-
-        var bytes = await GenerateImageAsync();
+        var bytes = await GenerateImageAsync(eventTime);
         return File(bytes, "image/png");
     }
 
