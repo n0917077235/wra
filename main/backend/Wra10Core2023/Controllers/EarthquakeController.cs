@@ -162,9 +162,9 @@ public class EarthquakeController : Controller
         return Ok(events);
     }
 
-    private record EqEvent(string Time, bool HasIsoseismalMap);
+    public record EqEvent(string Time, bool HasIsoseismalMap);
 
-    private IEnumerable<EqEvent> GetEQEvents(int year, int month, float intensity)
+    public IEnumerable<EqEvent> GetEQEvents(int year, int month, float intensity)
     {
         SqlParameter[] parameters =
         [

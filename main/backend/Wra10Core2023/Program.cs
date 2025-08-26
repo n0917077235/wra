@@ -10,6 +10,7 @@ using System.Reflection;
 using System.Text;
 using Wra10Core2023.Controllers;
 using Wra10Core2023.Models;
+using Wra10Core2023.Util;
 
 namespace Wra10Core2023;
 
@@ -165,21 +166,9 @@ public class Program
             {
                 app.UseDeveloperExceptionPage();
                 app.UseSwagger();
-                app.UseSwaggerUI(c =>
-                {
-                    //c.SwaggerEndpoint("/swagger/v1/swagger.json", "StaticFiles v1");
-                    //c.RoutePrefix = "";
-                });
-                /*
-                app.UseSwaggerUI(config =>
-                {
-                    config.ConfigObject.AdditionalItems["syntaxHighlight"] = new Dictionary<string, object>
-                    {
-                        ["activated"] = false
-                    };
-                });*/
+                app.UseSwaggerUI(c => { });
             }
-            
+
             var assemblyDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
             var webPageDir = Path.Combine(assemblyDir, "WebPage");
 
@@ -244,23 +233,9 @@ public class Program
                 FileProvider = new PhysicalFileProvider(filesDir),
                 RequestPath = "/Files",
             });
-        }
-    }
 
-    public class AlphabeticalDocumentFilter : IDocumentFilter
-    {
-        public void Apply(OpenApiDocument swaggerDoc, DocumentFilterContext context)
-        {
-            // Order paths (actions) alphabetically
-            var orderedPaths = new OpenApiPaths();
-
-            foreach (var path in swaggerDoc.Paths.OrderBy(p => p.Key, StringComparer.Ordinal))
-            {
-                orderedPaths.Add(path.Key, path.Value);
-            }
-
-            // Set the Paths property to the ordered paths
-            swaggerDoc.Paths = orderedPaths;
+            BinStore.CreateTableIfNeeded(Configuration);
+            if (env.IsProduction()) _ = IsoseismalUtil.Loop();
         }
     }
 }
