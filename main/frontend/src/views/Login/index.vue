@@ -128,6 +128,10 @@ const generateRandomCode = (): string => {
 };
 
 refreshVerificationCode();
+
+document.addEventListener('keydown', event => {
+    if (event.key === 'Enter') submitForm(ruleFormRef.value); 
+});
 </script>
 
 <style lang="scss" scoped>
