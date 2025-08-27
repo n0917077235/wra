@@ -5,9 +5,11 @@ namespace Wra10Core2023.Util;
 
 public static class SiteUtil
 {
-    public static SQLHelper MainDB(this IConfiguration c)
+    public static IConfiguration Config;
+
+    public static SQLHelper MainDB()
     {
-        return new(c.GetConnectionString("Water2022"));
+        return new(Config.GetConnectionString("Water2022"));
     }
 
     public static string? GetUserName(this HttpContext ctx)

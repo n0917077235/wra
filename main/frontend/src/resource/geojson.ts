@@ -46,6 +46,7 @@ export interface GetIsoseismalResponse {
     imageUrl: string;
     infoList: Array<string>;
 }
+
 export async function apiGetIsoseismal(infos: GetIsoseismalRequest): Promise<GetIsoseismalResponse|null> {
     let response;
     try {
@@ -55,13 +56,14 @@ export async function apiGetIsoseismal(infos: GetIsoseismalRequest): Promise<Get
     } catch (e:any) { return null ; }
 }
 
-    export async function getGetStationGps(): Promise<string> {
-        const response = await apiClient.get<string>(
-            '/GeoJson/GetStationGps',
-            {},
-        );
-        return response.data;
-    }
+export async function getGetStationGps(): Promise<string> {
+    const response = await apiClient.get<string>(
+        '/GeoJson/GetStationGps',
+        {},
+    );
+    return response.data;
+}
+
 export async function getGeoJsonLayer(): Promise<{ [key: string]: string }> {
     const fileName = await apiGetGeoJsonFileNmae();
     const data = await apiGetGeoJsonDataByFileName(fileName);

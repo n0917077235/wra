@@ -5,7 +5,7 @@ namespace Wra10Core2023.Util;
 
 public static class Drawings
 {
-    public static void CreateTableIfNeeded(IConfiguration c)
+    public static void CreateTableIfNeeded()
     {
         var q = @"
             IF OBJECT_ID('MapDrawings', 'U') IS NULL
@@ -25,10 +25,10 @@ public static class Drawings
             END
             ";
 
-        c.MainDB().ExecuteQuery(q);
+        SiteUtil.MainDB().ExecuteNonQuery(q);
     }
 
-    public static void Update(IConfiguration c, string userId, string name, string geojson)
+    public static void Update(string userId, string name, string geojson)
     {
         var q = $@"
             UPDATE MapDrawings SET geojson=@geojson WHERE userId=@uid AND name=@name;
@@ -45,30 +45,30 @@ public static class Drawings
             new("geojson", geojson)
         ];
 
-        c.MainDB().ExecuteNonQuery(q, p);
+        SiteUtil.MainDB().ExecuteNonQuery(q, p);
     }
 
-    public static string Get(IConfiguration c, string userId, string name)
+    public static string Get(string userId, string name)
     {
         var q = $@"SELECT geojson FROM MapDrawings WHERE userId=@uid AND name=@name";
         SqlParameter[] p = [new("uid", userId), new("name", name)];
-        var table = c.MainDB().ExecuteQuery(q, p);
+        var table = SiteUtil.MainDB().ExecuteQuery(q, p);
         return table.Rows[0].GetStr("geojson");
     }
 
-    public static IEnumerable<string> GetNames(IConfiguration c, string userId)
+    public static IEnumerable<string> GetNames(string userId)
     {
         var q = $@"SELECT name FROM MapDrawings WHERE userId=@uid";
         SqlParameter[] p = [new("uid", userId)];
-        var table = c.MainDB().ExecuteQuery(q, p);
+        var table = SiteUtil.MainDB().ExecuteQuery(q, p);
         return table.Rows.Cast<DataRow>().Select(x => x.GetStr("name"));
     }
 
-    public static void Delete(IConfiguration c, string userId, string name)
+    public static void Delete(string userId, string name)
     {
         var q = $@"DELETE FROM MapDrawings WHERE userId=@uid AND name=@name";
         SqlParameter[] p = [new("uid", userId), new("name", name)];
-        c.MainDB().ExecuteNonQuery(q, p);
+        SiteUtil.MainDB().ExecuteNonQuery(q, p);
     }
 
 }
