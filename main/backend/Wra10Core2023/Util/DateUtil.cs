@@ -18,5 +18,4 @@ public static class DateUtil
         if (!TryParseFormat(s, format, out var d)) throw new ArgumentException();
         return d;
     }
-
 }

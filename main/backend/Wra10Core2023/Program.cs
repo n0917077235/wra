@@ -5,7 +5,6 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using Swashbuckle.AspNetCore.SwaggerGen;
 using System.Reflection;
 using System.Text;
 using Wra10Core2023.Controllers;
@@ -32,6 +31,7 @@ public class Program
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
+            SiteUtil.Config = configuration;
         }
 
         public void ConfigureServices(IServiceCollection services)
@@ -180,10 +180,10 @@ public class Program
             });
 
 #if !DEBUG
-                // Do not use https redirection during debugging.
-                // It would lead to request errors in the browsers 
-                // due to untrusted TLS certificates
-                app.UseHttpsRedirection();
+            // Do not use https redirection during debugging.
+            // It would lead to request errors in the browsers 
+            // due to untrusted TLS certificates
+            app.UseHttpsRedirection();
 #endif
             app.UseStaticFiles();
             app.UseRouting();
@@ -234,8 +234,8 @@ public class Program
                 RequestPath = "/Files",
             });
 
-            BinStore.CreateTableIfNeeded(Configuration);
-            if (env.IsProduction()) _ = IsoseismalUtil.Loop();
+            //if (env.IsProduction())
+            _ = IsoseismalUtil.Loop();
         }
     }
 }

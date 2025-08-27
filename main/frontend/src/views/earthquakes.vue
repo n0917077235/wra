@@ -48,22 +48,15 @@
                             @click="clearcondition">
                         重置條件
                     </el-button>
-                    <el-button type="primary" key="buttonKey"
-                            class="custom-button sm:w-fit"
-                            @click="createmap" :disabled="isButtonDisabled || !ruleForm.event.includes('(')">
-                        產生等震度圖
-                    </el-button>
-                    <el-button :type="buttonType" :key="buttonKey" v-show="shouldShowButton"
-                            class="custom-button sm:w-fit" id="btn102"
-                            @click="downloadmap" :disabled="downloadurl==''">
-                        {{ buttonText }}
-                    </el-button>
                 </div>
             </div>
 
         </el-form>
 
-        <img :src="imageData"></img>
+        <a v-if="imageData" :href="imageData" target="_blank">
+            <img :src="imageData"></img>
+        </a>
+
         <div v-if="hasData"
              class="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-4">
             <el-card v-for="(event, index) in EQresult" :key="index" class="p-2" @click="showHistoryChart(event)">
@@ -114,6 +107,7 @@
         apiGetEQEventRange,
         EQEventDetailResponse,
     } from '@/resource/earthquakes';
+    
     import { reactive, ref, watch, onMounted, nextTick, computed } from 'vue';
     import { apiClient } from '@/resource/index';
     import { apiGetIsoseismal, GetIsoseismalRequest, GetIsoseismalResponse } from '@/resource/geojson';
@@ -121,14 +115,13 @@
     Chart.register(LineController, LineElement, PointElement, LinearScale, Title, CategoryScale);
     import { useStore } from 'vuex';
     import { Line } from 'vue-chartjs';
-    const store2 = useStore();
-    const userId = computed<string>(() => store2.state.user.userId);
      
     const imageData = ref(null);
     const hasData = ref<boolean>(false);
     const currentYear = new Date().getFullYear().toString();
     const currentMonth = (new Date().getMonth() + 1).toString();
     const options = [{ value: '2', label: '2' }, { value: '3', label: '3' }, { value: '4', label: '4' }, { value: '5.1', label: '5弱' }, { value: '5.9', label: '5強' }, { value: '6.1', label: '6弱' }, { value: '6.9', label: '6強' }, { value: '7', label: '7' }];
+    
     const ruleForm = reactive<EarthquakeBySearchPayload>({
         year: currentYear,
         month: currentMonth,
@@ -138,15 +131,19 @@
         hasChart: false,
         intensity: '3',
     });
+
     const ruleRange = reactive<EarthquakeByRange>({
         range: '',
         eventTime: '',
         intensity: '',
     });
+
     const ruleEvent = reactive<EarthquakeBySensorId>({ sensorId: '', eventTag: '', });
+    
     onMounted((): void => {
         init();
     });
+
     async function init(): Promise<void> {
         ruleForm.year = currentYear;
         ruleForm.month = currentMonth;
@@ -158,40 +155,10 @@
             }
         });
     }
-    const shouldShowButton = computed(() => {
-        // 顯示與否 下載圖檔
-        return producting.value;//downloadurl.value !== ''; 
-    });
-    const producting = ref(false);
-    const isButtonDisabled = ref(false);
-    const buttonKey = ref(0);
-    const createsuccess = ref(true);
-    const downloadurl = ref("");
-    // 狀態變數
-    const buttonState = ref('default'); // 'default', 'active', 'error'
-
-    // 動態變化按鈕的顏色和文字
-    const buttonType = computed(() => {
-        if (!createsuccess.value) {
-            return 'danger'; // 失敗時變紅色
-        } else {
-            return 'primary'; // 否則是藍色
-        }
-    });
-
-    const buttonText = computed(() => {
-        if (!createsuccess.value) {
-            return '系統錯誤';
-        } else if (downloadurl.value != "") {
-            return '開啟圖檔';
-        } else {
-            return '正在產生...';
-        }
-    });
-
+    
     //產生等震度圖
-    async function createmap() {
-        let eventTime= ruleForm.event.split('(')[0];
+    async function getIsoseismalMap() {
+        let eventTime = ruleRange.eventTime;
         let t = encodeURIComponent(eventTime);
         let res = await apiClient.get(`Earthquake/Isoseismal?eventTime=${t}`, { responseType:"blob" });
         let reader = new FileReader();
@@ -200,34 +167,9 @@
             imageData.value = reader.result;
         };
         
-        let blob=res.data;
+        let blob = res.data;
         reader.readAsDataURL(blob);
     }
-
-    function downloadmap() {
-        if (downloadurl.value == "") return;
-        window.open(downloadurl.value, '_blank');
-        // 建立一個 <a> 標籤
-        //const link = document.createElement('a');
-        // 將 href 設置為下載的文件的 URL
-        //link.href = downloadurl.value;
-        // 設置下載的文件名
-        //link.download = downloadurl.value;
-        // 模擬點擊下載
-        //document.body.appendChild(link);
-        //link.click();
-        // 完成後從 DOM 中移除這個元素
-        //document.body.removeChild(link);
-    }
-    watch(() => ruleForm.event, (newVal): void => {
-        if (newVal.includes('(')) {
-            isButtonDisabled.value = false;
-        }
-        downloadurl.value = "";
-        producting.value = false;
-        createsuccess.value = true;
-
-    });
 
     function clearcondition() {
         ruleForm.checked1 = true;
@@ -426,8 +368,7 @@
             });
             // 彈出視窗
             showChartDialog.value = true;
-        }
-        
+        }        
     });
 
     const EQresult = ref<EQEventResponse[]>([]);
@@ -442,19 +383,19 @@
             console.error(error);
         }
     };
+
     let dictEventDetail: { [key: string]: EQEventDetailResponse} = {};
 
     const getApiGetEQEventDetail = async (): Promise<void> => {
         try {
             if (ruleEvent.eventTag == "") return;
             let k = (ruleEvent.eventTag + "," + ruleEvent.sensorId) as string;
-            //alert(k);
+            
             if (dictEventDetail[k] == null) {
                 const response = await apiGetEQEventDetail(ruleEvent);
                 if (response) {
                     EventDetail.value = response;
-                    dictEventDetail[k]=response;
-                    //alert(response.length);
+                    dictEventDetail[k] = response;
                 }
             } else {
                 EventDetail.value = dictEventDetail[k];
@@ -470,12 +411,19 @@
 
         if (eventOptions.value.length > 0) {
             ruleForm.event = eventOptions.value[0];
-            ruleRange.eventTime = ruleForm.event.split('(')[0];
+            updateRuleRange();
         }
     };
 
     const updateRuleRange = () => {
-       ruleRange.eventTime = ruleForm.event.split('(')[0]; 
+        let words = ruleForm.event.split('(');
+        ruleRange.eventTime = words[0];
+
+        if (words.length >= 2) {
+            getIsoseismalMap();
+        } else {
+            imageData.value = null;
+        }
     }
 
     const getRuleRange = (form: EarthquakeBySearchPayload): string => {
