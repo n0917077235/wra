@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using System.Text.Json;
-using Notify.Services;
+using Wra10Core2023.Services;
 
 using Microsoft.Data.SqlClient;
 using SqlHelper = Wra10Core2023.Util.SQLHelper;

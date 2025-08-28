@@ -11,7 +11,6 @@ using System.Data;
 using Microsoft.Data.SqlClient;
 
 using Wra10Core2023.Models;
-using EarthquakeInfoApi.Models;
 
 using Wra10Core2023.Services;
 using System.Runtime.Versioning;
