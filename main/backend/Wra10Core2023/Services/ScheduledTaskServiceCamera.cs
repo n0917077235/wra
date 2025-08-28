@@ -16,11 +16,11 @@ using System.Net.Http;
 using System.Globalization;
 
 using Wra10Core2023.Models;
-using Notify.Services;
+using Wra10Core2023.Services;
 
 using NCrontab;
 
-namespace ScheduledTask.Services
+namespace Wra10Core2023.Services
 {
     public class ScheduledTaskServiceCamera : BackgroundService
     {
@@ -70,7 +70,7 @@ namespace ScheduledTask.Services
 
                         DataTable dt;
                         List<CameraSearch> lstCamera = new List<CameraSearch>();
-                        string? conn = _configuration.GetConnectionString("WaterToANCAD");
+                        string? conn = _configuration.GetConnectionString("Water2022");
                         SqlHelper sqlHelper;
 
                         if (conn != null)

@@ -14,7 +14,7 @@ using System.Drawing;
 // using System.Windows.Forms.DataVisualization.Charting; Chart命名衝突
 
 
-namespace LineWebhookApi.Controllers
+namespace Wra10Core2023.Controllers
 {
     [ApiController]
     [Route("webhook")]
@@ -28,7 +28,7 @@ namespace LineWebhookApi.Controllers
         public LineWebhookController(IWebHostEnvironment env, IConfiguration configuration)
         {
             _configuration = configuration;
-            conn = _configuration.GetConnectionString("WaterToANCAD");
+            conn = _configuration.GetConnectionString("Water2022");
             sqlHelper = new SqlHelper(conn);
             _env = env;
         }

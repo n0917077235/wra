@@ -34,7 +34,7 @@ namespace Wra10Core2023.Controllers
         public DeviceRepairHistoryController(IConfiguration configuration)
         {
             _configuration = configuration;
-            conn = _configuration.GetConnectionString("WaterToANCAD");
+            conn = _configuration.GetConnectionString("Water2022");
             sqlHelper = new SqlHelper(conn);
         }
 

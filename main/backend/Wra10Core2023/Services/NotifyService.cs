@@ -7,7 +7,7 @@ using System.Collections.Generic;
 using Newtonsoft.Json;
 using Wra10Core2023.Models;
 
-namespace Notify.Services
+namespace Wra10Core2023.Services
 {
     public class NotifyService
     {
