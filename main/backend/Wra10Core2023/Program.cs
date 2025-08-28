@@ -186,7 +186,7 @@ public class Program
             // Do not use https redirection during debugging.
             // It would lead to request errors in the browsers 
             // due to untrusted TLS certificates
-            app.UseHttpsRedirection();
+            // app.UseHttpsRedirection();
 #endif
             app.UseStaticFiles();
             app.UseRouting();
