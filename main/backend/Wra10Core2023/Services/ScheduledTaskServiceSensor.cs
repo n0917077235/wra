@@ -8,10 +8,10 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using NCrontab;
 using SqlHelper = Wra10Core2023.Util.SQLHelper;
-using Notify.Services;
+using Wra10Core2023.Services;
 using Microsoft.Data.SqlClient;
 
-namespace ScheduledTask.Services
+namespace Wra10Core2023.Services
 {
     public class ScheduledTaskServiceSensor : BackgroundService
     {
@@ -45,7 +45,7 @@ namespace ScheduledTask.Services
                     {
                         Console.WriteLine($"Sensor任務執行時間: {now}");
 
-                        string? conn = _configuration.GetConnectionString("WaterToANCAD");
+                        string? conn = _configuration.GetConnectionString("Water2022");
                         if (conn == null)
                         {
                             Console.WriteLine("無法取得資料庫連線字串");

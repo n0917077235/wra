@@ -203,6 +203,14 @@
             >
               查詢
             </el-button>
+            <el-button
+              v-if="historyDevices.length"
+              type="primary"
+              class="ml-2"
+              @click="downloadHistoryExcel"
+            >
+              下載 Excel
+            </el-button>
           </div>
           <!-- 查詢結果表格 -->
           <el-tabs v-model="activeYearTab" tab-position="top" style="margin-top: 24px;">
@@ -277,6 +285,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { apiUploadDeviceRepairExcel, apiSaveDeviceRepairHistory, apiQueryDeviceRepairHistory, apiGetDeviceRepairOptions, apiDeleteDeviceRepairYear } from '@/resource/devicerepair'
 import { ElButton, ElTable, ElTableColumn, ElInput, ElTabs, ElTabPane, ElDropdown, ElSelect } from 'element-plus'
+import * as XLSX from 'xlsx'
 
 const activeTab = ref('upload')
 const selectedFile = ref<File | null>(null)
@@ -544,6 +553,34 @@ async function handleDeleteYear() {
   } catch (e) {
     deleteResult.value = { success: false }
   }
+}
+
+function downloadHistoryExcel() {
+  if (!historyDevices.value.length) return
+
+  const workbook = XLSX.utils.book_new()
+
+  historyDevices.value.forEach(group => {
+    // 表頭
+    const header = ['設備名稱', '單位', ...group.stationList]
+    // 資料
+    const data = group.devices.map(device => {
+      return [
+        device.name,
+        device.unit,
+        ...group.stationList.map(station => device.stationCounts[station] ?? 0)
+      ]
+    })
+    // 合併表頭和資料
+    const sheetData = [header, ...data]
+    // 建立工作表
+    const worksheet = XLSX.utils.aoa_to_sheet(sheetData)
+    // 加入工作表到 workbook，名稱用年份
+    XLSX.utils.book_append_sheet(workbook, worksheet, String(group.year))
+  })
+
+  // 下載
+  XLSX.writeFile(workbook, '設備維修查詢.xlsx')
 }
 </script>
 

@@ -1,4 +1,4 @@
-namespace EarthquakeInfoApi.Models
+namespace Wra10Core2023.Models
 {
         public class EarthquakeInfo
     {

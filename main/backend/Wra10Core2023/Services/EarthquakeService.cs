@@ -7,10 +7,9 @@ using Microsoft.Data.SqlClient;
 using SqlHelper = Wra10Core2023.Util.SQLHelper;
 
 using Wra10Core2023.Models;
-using EarthquakeInfoApi.Models;
 using System.Runtime.Versioning;
 
-namespace Earthquake.Services
+namespace Wra10Core2023.Services
 {
     [SupportedOSPlatform("windows")]
     public class EarthquakeService
@@ -30,7 +29,7 @@ namespace Earthquake.Services
 
             try
             {
-                string? conn = _configuration.GetConnectionString("WaterToANCAD");
+                string? conn = _configuration.GetConnectionString("Water2022");
                 if (conn == null)
                 {
                     throw new Exception("無法取得資料庫連線字串");
@@ -70,7 +69,7 @@ namespace Earthquake.Services
 
             try
             {
-                string? conn = _configuration.GetConnectionString("WaterToANCAD");
+                string? conn = _configuration.GetConnectionString("Water2022");
                 if (conn == null)
                 {
                     Console.WriteLine("無法取得資料庫連線字串");

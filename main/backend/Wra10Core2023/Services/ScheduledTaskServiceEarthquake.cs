@@ -11,10 +11,8 @@ using System.Data;
 using Microsoft.Data.SqlClient;
 
 using Wra10Core2023.Models;
-using EarthquakeInfoApi.Models;
 
-using Notify.Services;
-using Earthquake.Services;
+using Wra10Core2023.Services;
 using System.Runtime.Versioning;
 
 using SqlHelper = Wra10Core2023.Util.SQLHelper;
@@ -22,7 +20,7 @@ using NCrontab;
 
 using NCrontab;
 
-namespace ScheduledTask.Services
+namespace Wra10Core2023.Services
 {
     [SupportedOSPlatform("windows")]
     public class ScheduledTaskServiceEarthquake : BackgroundService
