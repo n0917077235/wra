@@ -2,12 +2,12 @@ import MapUtil from "./mapUtil";
 
 export default class GateImages {
     static images = [
-        'reddoorclose.png',
-        'reddooropen.png',
-        'reddoorclose_y.png',
-        'reddooropen_y.png',
-        'reddoorclose_r.png',
-        'reddooropen_r.png',
+        'gateclose.png',
+        'gateopen.png',
+        'gateclose_y.png',
+        'gateopen_y.png',
+        'gateclose_r.png',
+        'gateopen_r.png',
     ];
 
     static getImageIndex(value, feature, sensorInfo) {
