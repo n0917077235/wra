@@ -2,10 +2,8 @@ using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using System.Reflection;
 using System.Text;
 using Wra10Core2023.Controllers;
 using Wra10Core2023.Models;
@@ -172,16 +170,6 @@ public class Program
                 app.UseSwaggerUI(c => { });
             }
 
-            var assemblyDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-            var webPageDir = Path.Combine(assemblyDir, "WebPage");
-
-            app.UseFileServer(new FileServerOptions
-            {
-                FileProvider = new PhysicalFileProvider(webPageDir),
-                RequestPath = "/Webpage",
-                EnableDefaultFiles = true
-            });
-
 #if !DEBUG
             // Do not use https redirection during debugging.
             // It would lead to request errors in the browsers 
@@ -230,14 +218,6 @@ public class Program
             });
             */
 
-            var filesDir = Path.Combine(assemblyDir, "Files");
-            app.UseStaticFiles(new StaticFileOptions
-            {
-                FileProvider = new PhysicalFileProvider(filesDir),
-                RequestPath = "/Files",
-            });
-
-            //if (env.IsProduction())
             _ = IsoseismalUtil.Loop();
         }
     }
