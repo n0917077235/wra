@@ -167,7 +167,7 @@ function getStationLayerLines() {
 
 function getSensorLayerLines() {
     let sensors = SensorProps.all
-        .filter(x => x.layerId !== LayerDef.SLIDING_DOOR)
+        .filter(x => x.layerId !== LayerDef.SLIDING_GATE)
         .map(x => ({
             layerId: x.layerId,
             text: x.text,
