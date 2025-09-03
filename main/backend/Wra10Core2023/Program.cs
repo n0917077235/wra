@@ -186,12 +186,12 @@ public class Program
             // due to untrusted TLS certificates
             // app.UseHttpsRedirection();
 #endif
+
             app.UseStaticFiles();
             app.UseRouting();
-
             app.UseCors(myPolicy);
-
             app.UseSession();
+
             /*
             app.Use(async (context, next) =>
             {
@@ -227,6 +227,16 @@ public class Program
                 FileProvider = new PhysicalFileProvider(Configuration["VideoImage:Path"])
             });
             */
+
+            app.Use(async (context, next) =>
+            {
+                await next();
+
+                if (context.Response.StatusCode == 404)
+                {
+                    context.Response.Redirect("/");
+                }
+            });
 
             _ = IsoseismalUtil.Loop();
         }
