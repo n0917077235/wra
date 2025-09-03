@@ -40,29 +40,26 @@ python -m venv .venv
 - Open browser, go to `http://localhost:8080`
 
 # Deploy
-
-* Deploy backend
-  - `cd main\backend`
-  - Delete all files and directories in `bin\Release`
-  - Run `dotnet build -c Release --self-contained -r win-x64`
-  - The build result can be found in `main\backend\Wra10Core2023\bin\Release`
-  - Copy the result to server: `C:\main\backend`should contain `Wra10Core2023.exe` 
-
-* Zip the folder `frontend` and `srec_proj`. Then copy to server. 
-
-* On the server, `C:\main` should contain 3 folders:
-  - `frontend`
-  - `backend`
-  - `srec_proj`
-
-* Setup port forwarding so that HTTP requests are redirected to port 8080.
-* In `frontend\.env`, set `VUE_APP_DEBUG=1`. Set `VUE_APP_API_URL_DEBUG` to publicly accessibly url of the backend.
 * Install python 3.12.10 on server
 * Install node.js v22 on server
 
-* Start backend
-  - `cd C:\main\backend\Wra10Core2023\bin\Release\net6.0-windows10.0.17763.0`
-  - Run `Wra10Core2023.exe`
+* Build backend
+  - `cd main\backend`
+  - Delete all files and directories in `bin\Release`
+  - Run `dotnet build -c Release --self-contained -r win-x64`
+  - The build result can be found in `main\backend\Wra10Core2023\bin\Release\net6.0-windows10.0.17763.0\win-x64`
+  - Copy the result to server: `C:\main\backend`. The folder should contain `Wra10Core2023.exe` 
 
-* Start frontend `cd C:\main\frontend && npm run serve`
-* Visit `localhost:8080`
+* Compile frontend
+  - In `frontend\.env`, set `VUE_APP_DEBUG=0`. Set `VUE_APP_API_URL_DEBUG` to public url.
+  - `cd main\frontend && npm run build`
+  - Copy the resulting static files in `dist` to server: `C:\main\backend\Webpage`
+
+* Copy the folder `srec_proj` to server: `C:\main\srec_proj` 
+
+* On the server, `C:\main` should contain 2 folders:
+  - `backend`
+  - `srec_proj`
+
+* Start backend: `cd C:\main\backend && Wra10Core2023.exe`
+* Use IIS reverse proxy to direct HTTP requests to http://localhost:5000
