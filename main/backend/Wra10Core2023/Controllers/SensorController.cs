@@ -19,6 +19,7 @@ using System.Runtime.Intrinsics.X86;
 using System.Text;
 using System.Text.Encodings;
 using System.Web;
+using Windows.AI.MachineLearning;
 using Windows.Devices.Sensors;
 using Wra10Core2023.Models;
 using Wra10Core2023.Util;
@@ -900,9 +901,8 @@ public class SensorController : ControllerBase
                 sensor.areaName = "";
                 sensor.stationNameA = dt.Rows[i]["stationNameA"].ToString(); ;
                 sensor.sensorNameA = dt.Rows[i]["camName"].ToString(); ;
-
                 sensor.sensorId = dt.Rows[i]["camId"].ToString();
-                sensor.stream = new Uri($"{Request.Scheme}://{Request.Host}/" + _configuration["VirtualVideoImage:path"] + @"/" + sensor.sensorId + ".jpg").ToString();
+                sensor.stream = GetCctvImageUrl(sensor.sensorId);
                 sensor.lastDataTime = "";
                 sensor.lastDataTimePrev = "";
                 sensor.value1 = 0;
@@ -977,7 +977,7 @@ public class SensorController : ControllerBase
                 int.TryParse(row["eqgrade"].ToString(), out eqGrade);
                 sensor.eqGrade = eqGrade;
 
-                if (sensor.sensorType.ToLower() == "waterlevel") 
+                if (sensor.sensorType.ToLower() == "waterlevel")
                     lstWaters.Add(sensor);
                 else if (sensor.sensorType.ToLower() == "gate")
                     lstGates.Add(sensor);
@@ -1019,7 +1019,7 @@ public class SensorController : ControllerBase
                 sensor.stationNameA = dt.Rows[i]["stationnameA"].ToString(); ;
                 sensor.sensorNameA = dt.Rows[i]["camName"].ToString(); ;
                 sensor.sensorId = dt.Rows[i]["camId"].ToString();
-                sensor.stream = new Uri($"{Request.Scheme}://{Request.Host}/" + _configuration["VirtualVideoImage:Path"] + @"/" + sensor.sensorId + ".jpg").ToString();
+                sensor.stream = GetCctvImageUrl(sensor.sensorId);
                 sensor.lastDataTime = "";
                 sensor.lastDataTimePrev = "";
                 sensor.value1 = 0;
@@ -1043,6 +1043,21 @@ public class SensorController : ControllerBase
         }
 
         return Ok(lstStations);
+    }
+
+    private string GetCctvImageUrl(string sensorId) =>
+        GetCctvImageUrlByFile(_configuration, Request, $"{sensorId}.jpg");
+
+    public static string GetCctvImageUrlByFile(IConfiguration c,
+        HttpRequest Request, string file)
+    {
+        var path = c["VirtualVideoImage:Path"];
+
+        var unescaped = SiteUtil.RemoteVideoImageEnabled
+            ? $"{SiteUtil.RemoteVideoImageUrl}/{path}/{file}"
+            : $"{Request.Scheme}://{Request.Host}/{path}/{file}";
+
+        return new Uri(unescaped).ToString();
     }
 
     [Authorize]
@@ -1148,7 +1163,7 @@ public class SensorController : ControllerBase
     {
         if (parameters == "none") return ("", "");
         var t = JToken.Parse(parameters);
-        var f = (string key)=>string.Join(",", t[key].ToObject<string[]>());
+        var f = (string key) => string.Join(",", t[key].ToObject<string[]>());
         return (f("areas"), f("sensorTypes"));
     }
 

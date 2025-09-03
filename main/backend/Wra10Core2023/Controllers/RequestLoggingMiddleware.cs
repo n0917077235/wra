@@ -16,7 +16,7 @@ namespace Wra10Core2023.Controllers
         private readonly RequestDelegate _next;
         private readonly ILogger<RequestLoggingMiddleware> _logger;
         private readonly IConfiguration _configuration;
-        //private readonly UserManager<AppUser> _userManager;
+
         public RequestLoggingMiddleware(RequestDelegate next, ILogger<RequestLoggingMiddleware> logger, IConfiguration configuration)
         {
             _next = next;

@@ -519,7 +519,6 @@ public class GeoJsonController : ControllerBase
             {
                 { "id", dt.Rows[i]["camid"].ToString() },
                 { "name", dt.Rows[i]["camname"].ToString()+";"+new Uri($"{Request.Scheme}://{Request.Host}/" + _configuration["VirtualVideoImage:Path"] + @"/" + dt.Rows[i]["camid"].ToString()+".jpg").ToString() },
-
             };
 
             var feature = new Feature(geometry, properties);
