@@ -2,8 +2,8 @@ const path = require('path');
 const { defineConfig } = require('@vue/cli-service');
 
 module.exports = defineConfig({
-  // publicPath: process.env.NODE_ENV === 'production' ? '/pt/' : '/',
-  publicPath: process.env.NODE_ENV === 'production' ? '/2023/' : '/',
+  publicPath: '/',
+  // publicPath: process.env.NODE_ENV === 'production' ? '/2023/' : '/',
   transpileDependencies: true,
   chainWebpack: (config) => {
     config.plugins.delete('preload');

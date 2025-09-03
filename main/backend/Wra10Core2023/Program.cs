@@ -2,8 +2,10 @@ using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using System.Reflection;
 using System.Text;
 using Wra10Core2023.Controllers;
 using Wra10Core2023.Models;
@@ -64,7 +66,6 @@ public class Program
                     ValidateLifetime = true,
                     ValidateIssuerSigningKey = true,
                     ClockSkew = TimeSpan.Zero,
-                    //NameClaimType = "name",
                 };
             })
             .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
@@ -155,7 +156,6 @@ public class Program
                             new string[] {}
                         }
                     });
-                //c.DocumentFilter<AlphabeticalDocumentFilter>();
             });
 
             // Add any other services you need here
@@ -169,6 +169,16 @@ public class Program
                 app.UseSwagger();
                 app.UseSwaggerUI(c => { });
             }
+
+            var assemblyDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+            var webPageDir = Path.Combine(assemblyDir, "WebPage");
+
+            app.UseFileServer(new FileServerOptions
+            {
+                FileProvider = new PhysicalFileProvider(webPageDir),
+                RequestPath = "",
+                EnableDefaultFiles = true
+            });
 
 #if !DEBUG
             // Do not use https redirection during debugging.

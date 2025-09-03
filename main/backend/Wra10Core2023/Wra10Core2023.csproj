@@ -44,10 +44,14 @@
   <ItemGroup>
     <Folder Include="GeoJson\" />
     <Folder Include="Data\" />
+    <Folder Include="Webpage\" />
   </ItemGroup>
 
   <ItemGroup>
     <None Update="Data\規劃科水位計.csv">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Webpage\dummy">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
