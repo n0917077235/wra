@@ -15,8 +15,6 @@ public class EarthquakeController : Controller
     private readonly ILogger<EarthquakeController> _logger;
     private readonly IConfiguration _configuration;
     private readonly IWebHostEnvironment _hostingEnvironment;
-    string? videoImagePath = "";
-    private string? virtualImagePath = "";
 
     public EarthquakeController(ILogger<EarthquakeController> logger, IConfiguration configuration,
         IWebHostEnvironment hostingEnvironment)
@@ -24,8 +22,6 @@ public class EarthquakeController : Controller
         _logger = logger;
         _configuration = configuration;
         _hostingEnvironment = hostingEnvironment;
-        videoImagePath = _configuration["VideoImage:Path"];
-        virtualImagePath = _configuration["VirtualVideoImage:Path"];
     }
 
     [Authorize]

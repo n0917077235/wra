@@ -159,8 +159,6 @@ namespace Wra10Core2023.Controllers
                 foreach (DataRow row in dt.Rows)
                 {
                     // Get the root URL
-                    //string rootUrl = _urlHelper.Action(row["StreamMain"].ToString(), "VideoImage", null, _urlHelper.ActionContext.HttpContext.Request.Scheme);
-                    //var rootUrl = new Uri($"{Request.Scheme}://{Request.Host}/" + virtualImagePath + @"/" + row["StreamMain"].ToString());
                     string webRootPath = _hostingEnvironment.ContentRootPath;
                     CameraSearch camera = null;
                     string camName = row["StreamMain"].ToString();
