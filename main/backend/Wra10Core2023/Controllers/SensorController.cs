@@ -918,14 +918,13 @@ public class SensorController : ControllerBase
                 sensor.unit = "";
                 sensor.remark = "";
                 lstStations.Add(sensor);
-
             }
-            //Context.Response.Write(jsonStation);
         }
         catch (Exception ex)
         {
             return BadRequest(ex.Message);
         }
+
         return Ok(lstStations.ToList());
     }
 
@@ -977,7 +976,8 @@ public class SensorController : ControllerBase
                 int eqGrade = 0;
                 int.TryParse(row["eqgrade"].ToString(), out eqGrade);
                 sensor.eqGrade = eqGrade;
-                if (sensor.sensorType.ToLower() == "waterlevel")
+
+                if (sensor.sensorType.ToLower() == "waterlevel") 
                     lstWaters.Add(sensor);
                 else if (sensor.sensorType.ToLower() == "gate")
                     lstGates.Add(sensor);
@@ -990,18 +990,10 @@ public class SensorController : ControllerBase
             return BadRequest(ex.Message);
         }
 
-        for (int i = 0; i < lstWaters.Count; i++)
-        {
-            lstStations.Add(lstWaters[i]);
-        }
-        for (int i = 0; i < lstGates.Count; i++)
-        {
-            lstStations.Add(lstGates[i]);
-        }
-        for (int i = 0; i < lstOthers.Count; i++)
-        {
-            lstStations.Add(lstOthers[i]);
-        }
+        lstStations.AddRange(lstWaters);
+        lstStations.AddRange(lstGates);
+        lstStations.AddRange(lstOthers);
+
         try
         {
             string sql = @"
@@ -1043,7 +1035,6 @@ public class SensorController : ControllerBase
                 sensor.unit = "";
                 sensor.remark = "";
                 lstStations.Add(sensor);
-
             }
         }
         catch (Exception ex)
@@ -1051,7 +1042,7 @@ public class SensorController : ControllerBase
             return BadRequest(ex.Message);
         }
 
-        return Ok(lstStations.ToList());
+        return Ok(lstStations);
     }
 
     [Authorize]
