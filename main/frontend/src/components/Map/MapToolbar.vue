@@ -105,7 +105,8 @@ function clear() {
 }
 
 img {
-    height: 25px;
+    width: 8.8vw;
+    max-width: 32px;
     display: inline-block;
     background-color: #fff;
     cursor: pointer;
