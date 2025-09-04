@@ -20,15 +20,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="Data\規劃科水位計.csv" />
-    <None Remove="GeoJson\a河川區域線.geojson" />
-    <None Remove="GeoJson\b用地範圍線.geojson" />
-    <None Remove="GeoJson\c治理計畫線.geojson" />
-    <None Remove="GeoJson\堤防管理里程%28堤防護岸線%29.geojson" />
-    <None Remove="GeoJson\堤防管理里程%28里程樁點%29.geojson" />
-  </ItemGroup>
-
-  <ItemGroup>
     <Content Include="Data\規劃科水位計.csv">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
