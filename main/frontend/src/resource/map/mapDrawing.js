@@ -106,7 +106,7 @@ export default class MapDrawing {
       map.forEachFeatureAtPixel(event.pixel, f => {
         if (first !== null) return;
         first = f;
-      }, { layerFilter });
+      }, { layerFilter, hitTolerance: 10 });
 
       if (first === null) return;
 
