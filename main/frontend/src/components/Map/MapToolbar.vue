@@ -2,7 +2,7 @@
     <div class="box">
         <div v-for="x in getCurrentItems()" class="item">
             <div class="vl" v-if="x.isDivider"></div>
-            <img v-else :src="getIconUrl(x.icon)" @click="x.action">
+            <img v-else :src="getIconUrl(x.icon)" @click="onItemClicked(x)" :style="itemStyle(x)">
         </div>
     </div>
     <DrawingMenu :mode="fileMode" :load="load" :save="save" :changesUnsaved="changesUnsaved" @closed="onMenuClose">
@@ -10,7 +10,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, computed, ref, defineProps } from 'vue';
+import { onMounted, computed, ref, defineProps, reactive } from 'vue';
 import MapDrawing from '@/resource/map/mapDrawing';
 import DrawingMenu from './DrawingMenu.vue';
 import FileMode from '@/resource/map/fileMode.js';
@@ -21,18 +21,18 @@ let fileMode = ref(FileMode.HIDDEN);
 let props = defineProps(['map', 'layers']);
 let drawing = new MapDrawing(props.map, props.layers, changesUnsaved, fileMode, editing);
 
-let items = [
-    { icon: 'cursor.png', action: () => drawing.setType('none') },
-    { icon: 'text.png', action: () => drawing.setType('text') },
-    { icon: 'icon_map.png', action: () => drawing.setType('marker') },
-    { icon: 'line.png', action: () => drawing.setType('length') },
-    { icon: 'polygon.png', action: () => drawing.setType('area') },
+let items = reactive([
+    { icon: 'cursor.png', action: () => drawing.setType('none'), isTool: true, active: false },
+    { icon: 'text.png', action: () => drawing.setType('text'), isTool: true, active: false },
+    { icon: 'icon_map.png', action: () => drawing.setType('marker'), isTool: true, active: false },
+    { icon: 'line.png', action: () => drawing.setType('length'), isTool: true, active: false },
+    { icon: 'polygon.png', action: () => drawing.setType('area'), isTool: true, active: false },
     { isDivider: true },
     { icon: 'folder.png', action: () => { fileMode.value = FileMode.OPEN } },
     { icon: 'save.png', action: () => { fileMode.value = FileMode.SAVE } },
     { icon: 'clear.png', action: () => clear() },
     { icon: 'delete.png', isEditor: true, action: () => drawing.deleteSelected() },
-];
+]);
 
 onMounted(() => {
     window.addEventListener('beforeunload', e => {
@@ -43,6 +43,26 @@ onMounted(() => {
     });
 });
 
+function onItemClicked(x) {
+    if (x.isTool) {
+        for (let y of items.filter(x => x.isTool)) y.active = false;
+        x.active = true;
+    }
+
+    x.action();
+}
+
+function itemStyle(x) {
+    if (x.active) {
+        return {
+            backgroundColor: '#bce3ff',
+            borderRadius: '5px',
+        };
+    }
+
+    return {};
+}
+
 function getIconUrl(icon) {
     return require(`@/assets/image/map/${icon}`);
 }
@@ -50,6 +70,7 @@ function getIconUrl(icon) {
 function getCurrentItems() {
     return items.filter(x => !x.isEditor || editing.value);
 }
+
 function onMenuClose() {
     fileMode.value = FileMode.HIDDEN;
 }
