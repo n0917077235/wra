@@ -24,7 +24,7 @@ namespace Wra10Core2023.Controllers
     public class VideoImageController : Controller
     {
         private readonly IConfiguration _configuration;
-        string? videoImagePath="";
+        string? videoImagePath = "";
         string? conn = "";
         private readonly IWebHostEnvironment _hostingEnvironment;
         private string? virtualImagePath = "";
@@ -32,12 +32,12 @@ namespace Wra10Core2023.Controllers
         string login = "";
         string password = "";
         string driveLetter = "Q:";
-        public VideoImageController(IConfiguration configuration, IWebHostEnvironment hostingEnvironment) 
+        public VideoImageController(IConfiguration configuration, IWebHostEnvironment hostingEnvironment)
         {
             _configuration = configuration;
             _hostingEnvironment = hostingEnvironment;
             videoImagePath = _configuration["VideoImage:Path"];
-            conn=_configuration.GetConnectionString("Water2022");
+            conn = _configuration.GetConnectionString("Water2022");
             virtualImagePath = _configuration["VirtualVideoImage:Path"];
             bool.TryParse(_configuration["VideoImage:NetDrive"], out bNetDrive);
             login = _configuration["VideoImage:Login"];
@@ -59,10 +59,10 @@ namespace Wra10Core2023.Controllers
                 dt = sqlHelper.ExecuteQuery("sp_GetCameraAll");
                 foreach (DataRow row in dt.Rows)
                 {
-                    decimal x=(decimal)0.0, y=(decimal)0.0;
+                    decimal x = (decimal)0.0, y = (decimal)0.0;
                     decimal.TryParse(row["X"].ToString(), out x);
                     decimal.TryParse(row["Y"].ToString(), out y);
-                    int sx=0, sy = 0;
+                    int sx = 0, sy = 0;
                     int.TryParse(row["ScreenX"].ToString(), out sx);
                     int.TryParse(row["ScreenY"].ToString(), out sy);
                     Camera camera = new Camera
@@ -73,7 +73,7 @@ namespace Wra10Core2023.Controllers
                         AreaName = row["AreaName"].ToString(),
                         StationID = row["StationID"].ToString(),
                         StationNameA = row["StationNameA"].ToString(),
-                        X =x,
+                        X = x,
                         Y = y,
                         StreamMain = row["StreamMain"].ToString(),
                         ScreenX = sx,
@@ -104,17 +104,14 @@ namespace Wra10Core2023.Controllers
                 List<SqlParameter> lstParams = new List<SqlParameter>();
                 lstParams.Add(new SqlParameter("@areaId", String.IsNullOrEmpty(areaId) ? DBNull.Value : areaId));
                 dt = sqlHelper.ExecuteStoreProcedureQuery("sp_GetCameraByAreaId", lstParams.ToArray());
-                
+
                 foreach (DataRow row in dt.Rows)
                 {
                     decimal x = (decimal)0.0, y = (decimal)0.0;
                     decimal.TryParse(row["X"].ToString(), out x);
                     decimal.TryParse(row["Y"].ToString(), out y);
-                    // Get the root URL
-                    //string rootUrl = _urlHelper.Action(row["StreamMain"].ToString(), "VideoImage", null, _urlHelper.ActionContext.HttpContext.Request.Scheme);
-                    var rootUrl = new Uri($"{Request.Scheme}://{Request.Host}/"+ virtualImagePath+@"/"+ row["StreamMain"].ToString());
-                    
-                    
+                    var rootUrl = RowToImageUrl(row);
+
                     CameraSimple camera = new CameraSimple
                     {
                         StationID = row["StationID"].ToString(),
@@ -122,8 +119,8 @@ namespace Wra10Core2023.Controllers
                         CamName = row["CamName"].ToString(),
                         X = x,
                         Y = y,
-                        StreamMain = rootUrl.ToString(),
-                        
+                        StreamMain = rootUrl,
+
                     };
                     lstCamera.Add(camera);
                 }
@@ -131,10 +128,16 @@ namespace Wra10Core2023.Controllers
             return Ok(lstCamera.ToList());
         }
 
+        private string RowToImageUrl(DataRow row)
+        {
+            return SensorController.GetCctvImageUrlByFile(_configuration,
+                Request, row["StreamMain"].ToString());
+        }
+
         [HttpPost]
         [Authorize(AuthenticationSchemes = "Bearer")]
         [Route("GetCameraBySearch")]
-        public IActionResult GetCameraBySearch(string? areaId, string? stationId,bool? isAlarm, string? keyword)
+        public IActionResult GetCameraBySearch(string? areaId, string? stationId, bool? isAlarm, string? keyword)
         {
             DataTable dt;
             List<CameraSearch> lstCamera = new List<CameraSearch>();
@@ -168,7 +171,7 @@ namespace Wra10Core2023.Controllers
                     string fileTime = new FileInfo(imagePath).LastWriteTime.ToString("yyyy-MM-dd HH:mm:ss)");
                     bFile = System.IO.File.Exists(videoImagePath + @"\" + camName);
                     int nAlarm = -1;
-                    var rootUrl = new Uri($"{Request.Scheme}://{Request.Host}/" + virtualImagePath + @"/" + row["StreamMain"].ToString());
+                    var rootUrl = RowToImageUrl(row);
                     FileContentResult fcr = null;
                     int alarmMins = 30;
                     int.TryParse(_configuration["VideoImage:Alarm"], out alarmMins);
@@ -180,7 +183,7 @@ namespace Wra10Core2023.Controllers
                             nAlarm = 1;
                         else
                             nAlarm = 0;
-                        
+
                         //byte[] imageBytes = System.IO.File.ReadAllBytes(imagePath);
 
                         //string contentType = GetImageContentType(camName);
@@ -205,7 +208,7 @@ namespace Wra10Core2023.Controllers
                             camera = new CameraSearch
                             {
                                 StationNameA = row["StationNameA"].ToString(),
-                                StreamMain =rootUrl.ToString(),
+                                StreamMain = rootUrl.ToString(),
                                 isAlarm = nAlarm,
                                 CamName = row["CamName"].ToString()
                             };
@@ -226,8 +229,8 @@ namespace Wra10Core2023.Controllers
                             lstCamera.Add(camera);
                         }
                     }
-                    
-                    
+
+
                 }
             }
             return Ok(lstCamera.ToList());
@@ -244,10 +247,10 @@ namespace Wra10Core2023.Controllers
             if (conn != null)
             {
                 SqlHelper sqlHelper = new SqlHelper(conn);
-                
+
                 List<SqlParameter> lstParams = new List<SqlParameter>();
                 lstParams.Add(new SqlParameter("@areaId", String.IsNullOrEmpty(areaId) ? DBNull.Value : areaId));
-                dt = sqlHelper.ExecuteStoreProcedureQuery("sp_GetCameraByAreaId",lstParams.ToArray());
+                dt = sqlHelper.ExecuteStoreProcedureQuery("sp_GetCameraByAreaId", lstParams.ToArray());
                 foreach (DataRow row in dt.Rows)
                 {
                     decimal x = (decimal)0.0, y = (decimal)0.0;
@@ -256,7 +259,8 @@ namespace Wra10Core2023.Controllers
                     int sx = 0, sy = 0;
                     int.TryParse(row["ScreenX"].ToString(), out sx);
                     int.TryParse(row["ScreenY"].ToString(), out sy);
-                    var rootUrl = new Uri($"{Request.Scheme}://{Request.Host}/" + virtualImagePath + @"/" + row["StreamMain"].ToString());
+                    var rootUrl = RowToImageUrl(row);
+                    
                     Camera camera = new Camera
                     {
                         CamID = row["CamID"].ToString().Replace("\r", "").Replace("\n", ""),
@@ -412,7 +416,7 @@ namespace Wra10Core2023.Controllers
             string webRootPath = _hostingEnvironment.ContentRootPath;
 
             //string imagePath = Path.Combine(videoImagePath, CamName);// +@"\snapshot.jpg";
-            string imagePath = Path.Combine(webRootPath, videoImagePath)+@"/"+CamName;
+            string imagePath = Path.Combine(webRootPath, videoImagePath) + @"/" + CamName;
             if (bNetDrive)
             {
                 NetworkDriveAccess networkDriveAccess = new NetworkDriveAccess();
@@ -449,7 +453,7 @@ namespace Wra10Core2023.Controllers
             }
             else
             {
-                return "application/octet-stream"; 
+                return "application/octet-stream";
             }
         }
     }
@@ -558,6 +562,6 @@ namespace Wra10Core2023.Controllers
         }
     }
 
-    
+
 
 }

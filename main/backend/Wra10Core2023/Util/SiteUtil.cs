@@ -7,6 +7,9 @@ public static class SiteUtil
 {
     public static IConfiguration Config;
 
+    public static bool RemoteVideoImageEnabled => bool.Parse(Config["RemoteVideoImage:Enable"]);
+    public static string RemoteVideoImageUrl => Config["RemoteVideoImage:Url"];
+
     public static SQLHelper MainDB()
     {
         return new(Config.GetConnectionString("Water2022"));

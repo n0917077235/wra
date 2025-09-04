@@ -13,10 +13,10 @@
                 <hr>
                 <div v-for="sensor in props.content.sensors">
                     <div>感測器:
-                        <a v-if="sensor.getSensorPageUrl()" :href="sensor.getSensorPageUrl()" 
-                            class="link" target="_blank">
+                        <router-link v-if="sensor.getSensorPageUrl()" :to="sensor.getSensorPageUrl()"
+                          class="link">
                             {{ sensor.name }}
-                        </a>
+                        </router-link>
                         <span v-else>{{ sensor.name }}</span>
                     </div>
                     <div>監測時間: {{ sensor.lastDataTime }}</div>

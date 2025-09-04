@@ -20,6 +20,36 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Data\規劃科水位計.csv" />
+    <None Remove="GeoJson\a河川區域線.geojson" />
+    <None Remove="GeoJson\b用地範圍線.geojson" />
+    <None Remove="GeoJson\c治理計畫線.geojson" />
+    <None Remove="GeoJson\堤防管理里程%28堤防護岸線%29.geojson" />
+    <None Remove="GeoJson\堤防管理里程%28里程樁點%29.geojson" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Data\規劃科水位計.csv">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="GeoJson\a河川區域線.geojson">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="GeoJson\b用地範圍線.geojson">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="GeoJson\c治理計畫線.geojson">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="GeoJson\堤防管理里程(堤防護岸線).geojson">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="GeoJson\堤防管理里程(里程樁點).geojson">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="DotNetZip" Version="1.16.0" />
     <PackageReference Include="EPPlus" Version="8.1.0" />
     <PackageReference Include="GeoJSON.Net" Version="1.2.19" />
@@ -42,15 +72,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="GeoJson\" />
-    <Folder Include="Data\" />
     <Folder Include="Webpage\" />
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="Data\規劃科水位計.csv">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
     <None Update="Webpage\dummy">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
