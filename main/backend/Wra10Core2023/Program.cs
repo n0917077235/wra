@@ -17,6 +17,7 @@ public class Program
 {
     public static void Main(string[] args)
     {
+        AppDomain.CurrentDomain.ProcessExit += (s, e) => SiteUtil.AncadDataHandler?.Stop();
         CreateWebHostBuilder(args).Build().Run();
     }
 
@@ -239,6 +240,7 @@ public class Program
             });
 
             _ = IsoseismalUtil.Loop();
+            SiteUtil.AncadDataHandler.StartListening();
         }
     }
 }

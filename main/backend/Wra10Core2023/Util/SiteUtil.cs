@@ -1,5 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc.Routing;
-using System.Security.Claims;
+﻿using System.Security.Claims;
+using Wra10Core2023.Util.AncadSensor;
 
 namespace Wra10Core2023.Util;
 
@@ -9,6 +9,9 @@ public static class SiteUtil
 
     public static bool RemoteVideoImageEnabled => bool.Parse(Config["RemoteVideoImage:Enable"]);
     public static string RemoteVideoImageUrl => Config["RemoteVideoImage:Url"];
+    public static string AncadSensorKey => Config["AncadSensor:Key"];
+    public static int AncadSensorPort => int.Parse(Config["AncadSensor:Port"]);
+    public static SocketDataHandler AncadDataHandler = new();
 
     public static SQLHelper MainDB()
     {
