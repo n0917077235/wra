@@ -77,7 +77,8 @@ namespace Wra10Core2023.Services
                             var channelToken = _configuration["Line:channelAccessToken"];
                             var groupId = _configuration["Line:GroupId"];
                             var filename = checker.GenerateCombinedImage(EQMainlist);
-                            string picurl = $"https://testdotnet6.softrend.com.tw/output/{filename}";
+                            string lineurl = _configuration["Line:lineBackendUrl"];
+                            string picurl = $"{lineurl}/output/{filename}";
                             Console.WriteLine($"圖片網址: {picurl}");
                             var message = "⚠️警戒通報\n地震發生!!地震儀總覽如下圖";
 

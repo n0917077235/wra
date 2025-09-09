@@ -19,6 +19,7 @@ using Wra10Core2023.Models;
 using Wra10Core2023.Services;
 
 using NCrontab;
+using Wra10Core2023.Util;
 
 namespace Wra10Core2023.Services
 {
@@ -96,7 +97,8 @@ namespace Wra10Core2023.Services
                             Console.WriteLine($"攝影機數量：{lstCamera.Count}");
                             foreach (var cam in lstCamera.Take(5)) //測試所以不檢查全部
                             {
-                                string imageUrl = $"https://rivermonitoring.wra10.gov.tw/fx/videoimages/{cam.StreamMain}";
+                                string apiurl = SiteUtil.RemoteVideoImageUrl;
+                                string imageUrl = $"{apiurl}/videoimages/{cam.StreamMain}";
                                 DateTimeOffset? lastModified = await GetLastModifiedAsync(imageUrl);
 
                                 if (lastModified.HasValue)

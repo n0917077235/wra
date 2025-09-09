@@ -14,6 +14,8 @@ using Microsoft.Data.SqlClient;
 using System.Net.Http;
 using System.Globalization;
 
+using Wra10Core2023.Util;
+
 namespace Wra10Core2023.Services
 {
     public class ScheduledTaskServiceList : BackgroundService
@@ -134,7 +136,7 @@ namespace Wra10Core2023.Services
                             if (isAlarm == 1)
                             {
                                 // 用影像 URL 取得最後修改時間
-                                string imageUrl = $"https://rivermonitoring.wra10.gov.tw/fx/videoimages/{camName}";
+                                string imageUrl = $"{SiteUtil.RemoteVideoImageUrl}/videoimages/{camName}";
                                 DateTimeOffset? lastModified = await GetLastModifiedAsync(imageUrl);
 
                                 string duration = "無法取得時間";

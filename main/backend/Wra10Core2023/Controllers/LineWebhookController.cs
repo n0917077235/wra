@@ -13,11 +13,13 @@ using Wra10Core2023.Models;
 using System.Drawing;
 // using System.Windows.Forms.DataVisualization.Charting; Chart命名衝突
 
+using Wra10Core2023.Util;
+
 
 namespace Wra10Core2023.Controllers
 {
     [ApiController]
-    [Route("webhook")]
+    [Route("api/webhook")]
     public class LineWebhookController : ControllerBase
     {
         private readonly IConfiguration _configuration;
@@ -634,7 +636,8 @@ namespace Wra10Core2023.Controllers
                 };
                 sqlHelper.ExecuteNonQuery(sql, sn_parameters);
                 string messageText = $"監視器：{camName} 最新畫面";
-                string ImageUrl = $"https://rivermonitoring.wra10.gov.tw/fx/videoimages/{camId}.jpg";
+                string apiurl = SiteUtil.RemoteVideoImageUrl;
+                string ImageUrl = $"{apiurl}/videoimages/{camId}.jpg";
                 await notify.ReplyImageAsync(replyToken, messageText, ImageUrl);
             }
             else
@@ -684,7 +687,8 @@ namespace Wra10Core2023.Controllers
                 return;
             }
             string filename = GenerateChartAndSave(result_dt, userInfo.Unit, startDate, endDate, userInfo.Area, userInfo.SensorName, userInfo.Type);
-            string imageUrl = $"https://{Request.Host}/output/{filename}";
+            string lineurl = _configuration["Line:lineBackendUrl"];
+            string imageUrl = $"{lineurl}/output/{filename}";
             string chartTitle = $"{userInfo.Area} {userInfo.SensorName}\n{startDate:yyyy-MM-dd} 至 {endDate:yyyy-MM-dd}\n感測器資料圖表";
             await notify.ReplyImageAsync(replyToken, chartTitle, imageUrl, imageUrl);
         }
