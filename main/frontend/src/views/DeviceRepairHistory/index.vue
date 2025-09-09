@@ -287,7 +287,7 @@ import { apiUploadDeviceRepairExcel, apiSaveDeviceRepairHistory, apiQueryDeviceR
 import { ElButton, ElTable, ElTableColumn, ElInput, ElTabs, ElTabPane, ElDropdown, ElSelect } from 'element-plus'
 import * as XLSX from 'xlsx'
 
-const activeTab = ref('upload')
+const activeTab = ref('history')
 const selectedFile = ref<File | null>(null)
 const year = ref<number>(0)
 const devices = ref<any[]>([])
@@ -315,6 +315,14 @@ onMounted(async () => {
     yearOptions.value = res.years || []
     deviceOptions.value = res.devices || []
     stationOptions.value = res.stations || []
+    
+    // 自動初始化查詢參數
+    queryYears.value = [...yearOptions.value]
+    queryDevices.value = [...deviceOptions.value]
+    queryStations.value = [...stationOptions.value]
+    
+    // 自動執行查詢，顯示歷史數據
+    await searchHistory()
   } catch (e) {
     console.error(e)
   }

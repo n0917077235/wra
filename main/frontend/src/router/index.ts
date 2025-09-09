@@ -18,8 +18,8 @@ const routes: Array<RouteRecordRaw> = [
         component: () =>
           import(/* webpackChunkName: "cctv" */ '@/views/CCTV/index.vue'),
         meta: {
-            routerName: '監視站總覽',
-            requiresAuth: true
+          routerName: '監視站總覽',
+          requiresAuth: true
         },
       },
       {
@@ -29,8 +29,8 @@ const routes: Array<RouteRecordRaw> = [
           import(/* webpackChunkName: "gmap" */ '@/views/gmap.vue'),
         meta: {
           clearMainPadding: 1,
-            routerName: '監測站總覽',
-            requiresAuth: true
+          routerName: '監測站總覽',
+          requiresAuth: true
         },
       },
       {
@@ -40,8 +40,8 @@ const routes: Array<RouteRecordRaw> = [
           import(/* webpackChunkName: "test1" */ '@/views/TEST1/index.vue'),
         meta: {
           clearMainPadding: 1,
-            routerName: '員山子總覽',
-            requiresAuth: true
+          routerName: '員山子總覽',
+          requiresAuth: true
         },
       },
       {
@@ -51,8 +51,8 @@ const routes: Array<RouteRecordRaw> = [
           import(/* webpackChunkName: "test2" */ '@/views/TEST2/index.vue'),
         meta: {
           clearMainPadding: 1,
-            routerName: '龍壽總覽',
-            requiresAuth: true
+          routerName: '龍壽總覽',
+          requiresAuth: true
         },
       },
       {
@@ -62,8 +62,8 @@ const routes: Array<RouteRecordRaw> = [
           import(/* webpackChunkName: "test3" */ '@/views/TEST3/index.vue'),
         meta: {
           clearMainPadding: 1,
-            routerName: '地圖總覽',
-            requiresAuth: true
+          routerName: '地圖總覽',
+          requiresAuth: true
         },
       },
       {
@@ -73,8 +73,19 @@ const routes: Array<RouteRecordRaw> = [
           import(/* webpackChunkName: "test4" */ '@/views/TEST4/index.vue'),
         meta: {
           clearMainPadding: 1,
-            routerName: '雙北橫移門啟閉',
-            requiresAuth: true
+          routerName: '雙北橫移門啟閉',
+          requiresAuth: true
+        },
+      },
+      {
+        path: 'riverlevel',
+        name: 'riverlevel',
+        component: () =>
+          import(/* webpackChunkName: "riverlevel" */ '@/views/RiverLevel/index.vue'),
+        meta: {
+          clearMainPadding: 1,
+          routerName: '河川水位',
+          requiresAuth: true
         },
       },
       {
@@ -84,8 +95,8 @@ const routes: Array<RouteRecordRaw> = [
           import(/* webpackChunkName: "test5" */ '@/views/TEST5/index.vue'),
         meta: {
           clearMainPadding: 1,
-            routerName: '淡水河水位',
-            requiresAuth: true
+          routerName: '淡水河水位',
+          requiresAuth: true
         },
       },
       {
@@ -95,8 +106,8 @@ const routes: Array<RouteRecordRaw> = [
           import(/* webpackChunkName: "test6" */ '@/views/TEST6/index.vue'),
         meta: {
           clearMainPadding: 1,
-            routerName: '員山子水位',
-            requiresAuth: true
+          routerName: '員山子水位',
+          requiresAuth: true
         },
       },
       {
@@ -106,8 +117,8 @@ const routes: Array<RouteRecordRaw> = [
           import(/* webpackChunkName: "test7" */ '@/views/TEST7/index.vue'),
         meta: {
           clearMainPadding: 1,
-            routerName: '目視檢查成果',
-            requiresAuth: true
+          routerName: '目視檢查成果',
+          requiresAuth: true
         },
       },
       {
@@ -117,8 +128,8 @@ const routes: Array<RouteRecordRaw> = [
           import(/* webpackChunkName: "test8" */ '@/views/TEST8/index.vue'),
         meta: {
           clearMainPadding: 1,
-            routerName: '防水建造物圖資',
-            requiresAuth: true
+          routerName: '防水建造物圖資',
+          requiresAuth: true
         },
       },
       {
@@ -128,8 +139,8 @@ const routes: Array<RouteRecordRaw> = [
           import(/* webpackChunkName: "test9" */ '@/views/TEST9/index.vue'),
         meta: {
           clearMainPadding: 1,
-            routerName: '透地雷達圖資',
-            requiresAuth: true
+          routerName: '透地雷達圖資',
+          requiresAuth: true
         },
       },
       {
@@ -139,8 +150,8 @@ const routes: Array<RouteRecordRaw> = [
           import(/* webpackChunkName: "test10" */ '@/views/TEST10/index.vue'),
         meta: {
           clearMainPadding: 1,
-            routerName: '自訂套圖',
-            requiresAuth: true
+          routerName: '自訂套圖',
+          requiresAuth: true
         },
       },
       {
@@ -150,8 +161,8 @@ const routes: Array<RouteRecordRaw> = [
           import(/* webpackChunkName: "test10" */ '@/views/TEST10-1/index.vue'),
         meta: {
           clearMainPadding: 1,
-            routerName: '1.1 地震儀總覽',
-            requiresAuth: true
+          routerName: '1.1 地震儀總覽',
+          requiresAuth: true
         },
       },
       {
@@ -161,8 +172,8 @@ const routes: Array<RouteRecordRaw> = [
           import(/* webpackChunkName: "test10" */ '@/views/TEST10-2/index.vue'),
         meta: {
           clearMainPadding: 1,
-            routerName: '1.1 員山子影像總覽',
-            requiresAuth: true
+          routerName: '1.1 員山子影像總覽',
+          requiresAuth: true
         },
       },
       {
@@ -172,99 +183,99 @@ const routes: Array<RouteRecordRaw> = [
           import(/* webpackChunkName: "test10" */ '@/views/TEST10-3/index.vue'),
         meta: {
           clearMainPadding: 1,
-            routerName: '1.2 橫移門影像總覽', requiresAuth: true
+          routerName: '1.2 橫移門影像總覽', requiresAuth: true
         },
+      },
+      {
+        path: 'test10-4',
+        name: 'test10-4',
+        component: () =>
+          import(/* webpackChunkName: "test10" */ '@/views/TEST10-4/index.vue'),
+        meta: {
+          clearMainPadding: 1,
+          routerName: '2.1 沉陷計-(1/2)', requiresAuth: true
         },
-        {
-            path: 'test10-4',
-            name: 'test10-4',
-            component: () =>
-                import(/* webpackChunkName: "test10" */ '@/views/TEST10-4/index.vue'),
-            meta: {
-                clearMainPadding: 1,
-                routerName: '2.1 沉陷計-(1/2)', requiresAuth: true
-            },
+      },
+      {
+        path: 'test10-5',
+        name: 'test10-5',
+        component: () =>
+          import(/* webpackChunkName: "test10" */ '@/views/TEST10-5/index.vue'),
+        meta: {
+          clearMainPadding: 1,
+          routerName: '2.2 沉陷計-(2/2)', requiresAuth: true
         },
-        {
-            path: 'test10-5',
-            name: 'test10-5',
-            component: () =>
-                import(/* webpackChunkName: "test10" */ '@/views/TEST10-5/index.vue'),
-            meta: {
-                clearMainPadding: 1,
-                routerName: '2.2 沉陷計-(2/2)', requiresAuth: true
-            },
+      },
+      {
+        path: 'test10-6',
+        name: 'test10-6',
+        component: () =>
+          import(/* webpackChunkName: "test10" */ '@/views/TEST10-6/index.vue'),
+        meta: {
+          clearMainPadding: 1,
+          routerName: '2.3 裂縫計-全', requiresAuth: true
         },
-        {
-            path: 'test10-6',
-            name: 'test10-6',
-            component: () =>
-                import(/* webpackChunkName: "test10" */ '@/views/TEST10-6/index.vue'),
-            meta: {
-                clearMainPadding: 1,
-                routerName: '2.3 裂縫計-全', requiresAuth: true
-            },
+      },
+      {
+        path: 'test10-7',
+        name: 'test10-7',
+        component: () =>
+          import(/* webpackChunkName: "test10" */ '@/views/TEST10-7/index.vue'),
+        meta: {
+          clearMainPadding: 1,
+          routerName: '2.4 傾斜計-(1/3)', requiresAuth: true
         },
-        {
-            path: 'test10-7',
-            name: 'test10-7',
-            component: () =>
-                import(/* webpackChunkName: "test10" */ '@/views/TEST10-7/index.vue'),
-            meta: {
-                clearMainPadding: 1,
-                routerName: '2.4 傾斜計-(1/3)', requiresAuth: true
-            },
+      },
+      {
+        path: 'test10-8',
+        name: 'test10-8',
+        component: () =>
+          import(/* webpackChunkName: "test10" */ '@/views/TEST10-8/index.vue'),
+        meta: {
+          clearMainPadding: 1,
+          routerName: '2.5 傾斜計-(2/3)', requiresAuth: true
         },
-        {
-            path: 'test10-8',
-            name: 'test10-8',
-            component: () =>
-                import(/* webpackChunkName: "test10" */ '@/views/TEST10-8/index.vue'),
-            meta: {
-                clearMainPadding: 1,
-                routerName: '2.5 傾斜計-(2/3)', requiresAuth: true
-            },
+      },
+      {
+        path: 'test10-9',
+        name: 'test10-9',
+        component: () =>
+          import(/* webpackChunkName: "test10" */ '@/views/TEST10-9/index.vue'),
+        meta: {
+          clearMainPadding: 1,
+          routerName: '2.6 傾斜計-(3/3)', requiresAuth: true
         },
-        {
-            path: 'test10-9',
-            name: 'test10-9',
-            component: () =>
-                import(/* webpackChunkName: "test10" */ '@/views/TEST10-9/index.vue'),
-            meta: {
-                clearMainPadding: 1,
-                routerName: '2.6 傾斜計-(3/3)', requiresAuth: true
-            },
+      },
+      {
+        path: 'test10-10',
+        name: 'test10-10',
+        component: () =>
+          import(/* webpackChunkName: "test10" */ '@/views/TEST10-10/index.vue'),
+        meta: {
+          clearMainPadding: 1,
+          routerName: '3.1 監測站影像', requiresAuth: true
         },
-        {
-            path: 'test10-10',
-            name: 'test10-10',
-            component: () =>
-                import(/* webpackChunkName: "test10" */ '@/views/TEST10-10/index.vue'),
-            meta: {
-                clearMainPadding: 1,
-                routerName: '3.1 監測站影像', requiresAuth: true
-            },
+      },
+      {
+        path: 'test10-11',
+        name: 'test10-11',
+        component: () =>
+          import(/* webpackChunkName: "test10" */ '@/views/TEST10-11/index.vue'),
+        meta: {
+          clearMainPadding: 1,
+          routerName: '3.2 規劃課影像', requiresAuth: true
         },
-        {
-            path: 'test10-11',
-            name: 'test10-11',
-            component: () =>
-                import(/* webpackChunkName: "test10" */ '@/views/TEST10-11/index.vue'),
-            meta: {
-                clearMainPadding: 1,
-                routerName: '3.2 規劃課影像', requiresAuth: true
-            },
+      },
+      {
+        path: 'test10-12',
+        name: 'test10-12',
+        component: () =>
+          import(/* webpackChunkName: "test10" */ '@/views/TEST10-12/index.vue'),
+        meta: {
+          clearMainPadding: 1,
+          routerName: '3.3 水利署監測站', requiresAuth: true
         },
-        {
-            path: 'test10-12',
-            name: 'test10-12',
-            component: () =>
-                import(/* webpackChunkName: "test10" */ '@/views/TEST10-12/index.vue'),
-            meta: {
-                clearMainPadding: 1,
-                routerName: '3.3 水利署監測站', requiresAuth: true
-            },
-        },
+      },
       {
         path: 'Earthquakes',
         name: 'Earthquakes',
@@ -274,7 +285,7 @@ const routes: Array<RouteRecordRaw> = [
           ),
         meta: {
           clearMainPadding: 1,
-            routerName: '地震儀總覽', requiresAuth: true
+          routerName: '地震儀總覽', requiresAuth: true
         },
       },
       {
@@ -284,7 +295,7 @@ const routes: Array<RouteRecordRaw> = [
           import(/* webpackChunkName: "test11" */ '@/views/TEST11/index.vue'),
         meta: {
           clearMainPadding: 1,
-            routerName: '文件下載', requiresAuth: true
+          routerName: '文件下載', requiresAuth: true
         },
       },
       {
@@ -294,7 +305,7 @@ const routes: Array<RouteRecordRaw> = [
           import(/* webpackChunkName: "test12" */ '@/views/DeviceRepairHistory/index.vue'),
         meta: {
           clearMainPadding: 1,
-            routerName: '設備修繕履歷', requiresAuth: true
+          routerName: '設備修繕履歷', requiresAuth: true
         },
       },
       {
@@ -305,7 +316,7 @@ const routes: Array<RouteRecordRaw> = [
             /* webpackChunkName: "cctv-search" */ '@/views/CCTVSearch/index.vue'
           ),
         meta: {
-            routerName: '監控資料查詢', requiresAuth: true
+          routerName: '監控資料查詢', requiresAuth: true
         },
         children: [
           {
@@ -319,10 +330,10 @@ const routes: Array<RouteRecordRaw> = [
             component: () =>
               import(
                 /* webpackChunkName: "cctv-search-monitor" */ '@/views/CCTVSearch/Monitor/index.vue'
-                  ),
-              meta: {
-                  requiresAuth: true
-              },
+              ),
+            meta: {
+              requiresAuth: true
+            },
           },
           {
             path: 'sensor',
@@ -330,10 +341,10 @@ const routes: Array<RouteRecordRaw> = [
             component: () =>
               import(
                 /* webpackChunkName: "cctv-search-sensor" */ '@/views/CCTVSearch/Sensor/index.vue'
-                  ),
-              meta: {
-                  requiresAuth: true
-              },
+              ),
+            meta: {
+              requiresAuth: true
+            },
           },
         ],
       },
@@ -366,23 +377,23 @@ const router = createRouter({
 router.beforeEach((to, from, next) => {
   //判斷版本是否一致 不一致則更新
   //versionTood.isNewVersion();
-    // 確保在每次路由變更前檢查登入狀態
-    const isAuthenticated = store.getters['user/isAuthenticated'];
+  // 確保在每次路由變更前檢查登入狀態
+  const isAuthenticated = store.getters['user/isAuthenticated'];
   if (typeof to.meta?.routerName === 'string') {
     document.title = '淡水河流域監測系統';
   } else if (to.name === 'login') {
     document.title = '淡水河流域監測系統';
   }
-    if (to.matched.some(record => record.meta.requiresAuth)) {
-        // 需要登入的頁面
-        if (isAuthenticated) {
-            next(); // 允許進入頁面
-        } else {
-            next('/login'); // 重定向到登入頁面
-        }
+  if (to.matched.some(record => record.meta.requiresAuth)) {
+    // 需要登入的頁面
+    if (isAuthenticated) {
+      next(); // 允許進入頁面
     } else {
-        next(); // 允許進入非需登入頁面
+      next('/login'); // 重定向到登入頁面
     }
+  } else {
+    next(); // 允許進入非需登入頁面
+  }
 });
 
 export default router;
