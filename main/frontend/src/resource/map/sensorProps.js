@@ -55,7 +55,7 @@ export default class SensorProps {
         },
         {
             layerId: LayerDef.LEVEL,
-            text: '水位計',
+            text: '管理科水位計',
             dot: 'red-dot',
             getIcons: null,
             unit: 'm',
