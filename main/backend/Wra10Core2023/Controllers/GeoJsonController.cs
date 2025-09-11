@@ -338,41 +338,6 @@ public class GeoJsonController : ControllerBase
     }
 
     [Authorize]
-    [HttpPost]
-    [Route("GetCCTVGpsByArea")]
-    public string GetCCTVGpsByArea(string? areaId)
-    {
-        var sqlHelper = SiteUtil.MainDB();
-        string cmd = @"select camid,camname,a.x,a.y,streamMain from Cameras a 
-       inner join stations b on a.StationID=b.StationID 
-                           where isnull(a.X,0)!=0 and isnull(a.y,0)!=0 and areaId=@areaId order by channel";// and station!=10096";
-        List<SqlParameter> lstParam = new List<SqlParameter>();
-        lstParam.Add(new SqlParameter("@AreaId", areaId));
-        DataTable dt = sqlHelper.ExecuteQuery(cmd, lstParam.ToArray());
-        var pointList = new List<Feature>();
-        for (int i = 0; i < dt.Rows.Count; i++)
-        {
-            var geometry = new Point(new Position(double.Parse(dt.Rows[i]["y"].ToString()), double.Parse(dt.Rows[i]["x"].ToString())));
-            var properties = new Dictionary<string, object>
-            {
-                { "id", dt.Rows[i]["camid"].ToString() },
-                { "name", dt.Rows[i]["camname"].ToString()+";"+_configuration["VirtualVideoImage:Path"]+dt.Rows[i]["streammain"].ToString() },
-
-            };
-
-            var feature = new Feature(geometry, properties);
-            pointList.Add(feature);
-            //collection.Features.Add(feature);
-        }
-        string json = JsonConvert.SerializeObject(pointList);
-        json = @"{
-  ""type"": ""FeatureCollection"",
-  ""features"":" + json + "}";
-
-        return json;
-    }
-
-    [Authorize]
     [HttpGet]
     [Route("GetBankGps")]
     public string GetBankGps()
@@ -507,30 +472,32 @@ public class GeoJsonController : ControllerBase
     public string GetCCTVGps()
     {
         var sqlHelper = SiteUtil.MainDB();
-        string cmd = @"select camid,camname,a.x,a.y,streamMain from Cameras a 
-       inner join stations b on a.StationID=b.StationID 
-                           where isnull(a.X,0)!=0 and isnull(a.y,0)!=0 ";// and station!=10096";
-        DataTable dt = sqlHelper.ExecuteQuery(cmd);
-        var pointList = new List<Feature>();
-        for (int i = 0; i < dt.Rows.Count; i++)
+
+        var cmd = @"
+            select camid,camname,a.x,a.y,streamMain from Cameras a 
+            inner join stations b on a.StationID=b.StationID 
+            where isnull(a.X,0)!=0 and isnull(a.y,0)!=0 
+        ";
+
+        var dt = sqlHelper.ExecuteQuery(cmd);
+
+        var pointList = dt.Rows.Cast<DataRow>().Select(row =>
         {
-            var geometry = new Point(new Position(double.Parse(dt.Rows[i]["y"].ToString()), double.Parse(dt.Rows[i]["x"].ToString())));
+            var geometry = new Point(new Position((double)row.GetDecimal("y"), (double)row.GetDecimal("x")));
+            var camid = row.GetStr("camid");
+            var f = $"{camid}.jpg";
+            var url = SensorController.GetCctvImageUrlByFile(_configuration, Request, f);
+
             var properties = new Dictionary<string, object>
             {
-                { "id", dt.Rows[i]["camid"].ToString() },
-                { "name", dt.Rows[i]["camname"].ToString()+";"+new Uri($"{Request.Scheme}://{Request.Host}/" + _configuration["VirtualVideoImage:Path"] + @"/" + dt.Rows[i]["camid"].ToString()+".jpg").ToString() },
+                { "id", camid },
+                { "name", row.GetStr("camname") + ";" + url },
             };
 
-            var feature = new Feature(geometry, properties);
-            pointList.Add(feature);
-        }
+            return new Feature(geometry, properties);
+        });
 
-        string json = JsonConvert.SerializeObject(pointList);
-        json = @"{
-  ""type"": ""FeatureCollection"",
-  ""features"":" + json + "}";
-
-        return json;
+        return ToFeatureCollectionJson(pointList);
     }
 
     [Authorize]

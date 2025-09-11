@@ -27,18 +27,17 @@ namespace Wra10Core2023.Controllers
         string? videoImagePath = "";
         string? conn = "";
         private readonly IWebHostEnvironment _hostingEnvironment;
-        private string? virtualImagePath = "";
         bool bNetDrive = false;
         string login = "";
         string password = "";
         string driveLetter = "Q:";
+
         public VideoImageController(IConfiguration configuration, IWebHostEnvironment hostingEnvironment)
         {
             _configuration = configuration;
             _hostingEnvironment = hostingEnvironment;
             videoImagePath = _configuration["VideoImage:Path"];
             conn = _configuration.GetConnectionString("Water2022");
-            virtualImagePath = _configuration["VirtualVideoImage:Path"];
             bool.TryParse(_configuration["VideoImage:NetDrive"], out bNetDrive);
             login = _configuration["VideoImage:Login"];
             password = _configuration["VideoImage:Password"];

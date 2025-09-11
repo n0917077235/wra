@@ -171,22 +171,33 @@ public class Program
                 app.UseSwaggerUI(c => { });
             }
 
-            var assemblyDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-            var webPageDir = Path.Combine(assemblyDir, "WebPage");
-
-            app.UseFileServer(new FileServerOptions
+            if (!env.IsDevelopment())
             {
-                FileProvider = new PhysicalFileProvider(webPageDir),
-                RequestPath = "",
-                EnableDefaultFiles = true
-            });
+                var assemblyDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+                var webPageDir = Path.Combine(assemblyDir, "WebPage");
 
-#if !DEBUG
-            // Do not use https redirection during debugging.
-            // It would lead to request errors in the browsers 
-            // due to untrusted TLS certificates
-            // app.UseHttpsRedirection();
-#endif
+                app.UseFileServer(new FileServerOptions
+                {
+                    FileProvider = new PhysicalFileProvider(webPageDir),
+                    RequestPath = "",
+                    EnableDefaultFiles = true
+                });
+
+                app.Use(async (context, next) =>
+                {
+                    await next();
+
+                    if (context.Response.StatusCode == 404)
+                    {
+                        context.Response.Redirect("/");
+                    }
+                });
+
+                // Do not use https redirection during debugging.
+                // It would lead to request errors in the browsers 
+                // due to untrusted TLS certificates
+                // app.UseHttpsRedirection();
+            }
 
             app.UseStaticFiles();
             app.UseRouting();
@@ -228,16 +239,6 @@ public class Program
                 FileProvider = new PhysicalFileProvider(Configuration["VideoImage:Path"])
             });
             */
-
-            app.Use(async (context, next) =>
-            {
-                await next();
-
-                if (context.Response.StatusCode == 404)
-                {
-                    context.Response.Redirect("/");
-                }
-            });
 
             _ = IsoseismalUtil.Loop();
             SiteUtil.AncadDataHandler.StartListening();
