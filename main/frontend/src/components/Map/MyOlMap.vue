@@ -103,7 +103,7 @@
             <hr>
             <div id="baseMaps" class="layer-content">
                 <label><input type="checkbox" id="layer21" @click="toggleLayer('layer21')"> 雙北橫移門即時啟閉<img
-                        src='@/assets/image/blackdooropen.png' width="20" height="20"
+                        src='@/assets/image/blackdoorhalfopen.png' width="20" height="20"
                         style="float:right; margin-right:5px;"></label><br>
                 <label><input type="checkbox" id="layer22" @click="toggleLayer('layer22')"> 我的標記 </label>
                 <br>

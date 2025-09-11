@@ -89,6 +89,7 @@ export default class SensorProps {
             dot: null,
             getIcons: () => [
                 require('@/assets/image/blackdoorclose.png'),
+                require('@/assets/image/blackdoorhalfopen.png'),
                 require('@/assets/image/blackdooropen.png')
             ],
             unit: '%',
