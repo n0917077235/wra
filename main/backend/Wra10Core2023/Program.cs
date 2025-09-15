@@ -10,6 +10,7 @@ using System.Text;
 using Wra10Core2023.Controllers;
 using Wra10Core2023.Models;
 using Wra10Core2023.Util;
+using Wra10Core2023.Util.Earthquake;
 
 namespace Wra10Core2023;
 
@@ -240,7 +241,8 @@ public class Program
             });
             */
 
-            _ = IsoseismalUtil.Loop();
+            _ = IsoseismalUtil.LoopAsync();
+            _ = EarthquakeCwa.LoopAsync();
             SiteUtil.AncadDataHandler.StartListening();
         }
     }

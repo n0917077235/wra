@@ -1,9 +1,12 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using GeoJSON.Net.Geometry;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
+using Newtonsoft.Json.Linq;
 using System.Data;
 using Wra10Core2023.Models;
 using Wra10Core2023.Util;
+using Wra10Core2023.Util.Earthquake;
 using SqlHelper = Wra10Core2023.Util.SQLHelper;
 
 namespace Wra10Core2023.Controllers;
@@ -85,6 +88,38 @@ public class EarthquakeController : Controller
     {
         var events = IsoseismalUtil.GetEQEvents(year, month, intensity);
         return Ok(events);
+    }
+
+    [Authorize]
+    [HttpGet]
+    [Route("GetCwaEventLatest")]
+    public string GetCwaEventLatest()
+    {
+        var item = EarthquakeCwa.GetLatest();
+        return GeoJsonController.ToFeatureCollectionJson(item.GetFeatures());
+    }
+
+    [Authorize]
+    [HttpGet]
+    [Route("GetCwaEvents")]
+    public string GetCwaEvents()
+    {
+        // get events in 1 year
+        var now = DateTime.Now;
+        var start = now.AddYears(-1);
+        var events = EarthquakeCwa.Get(start, now);
+        return JToken.FromObject(events).ToString();
+    }
+
+    [Authorize]
+    [HttpGet]
+    [Route("GetCwaEvent")]
+    public string GetCwaEvent(string time)
+    {
+        // get event closest to the specified time
+        var t = DateUtil.ParseFormat(time, "yyyy-MM-dd HH:mm:ss");
+        var item = EarthquakeCwa.FindClosest(t);
+        return GeoJsonController.ToFeatureCollectionJson(item.GetFeatures());
     }
 
     [Authorize]

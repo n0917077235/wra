@@ -113,6 +113,7 @@
             </div>
         </div>
         <map-toolbar v-if="pMap && showDrawingToolbar" :map="pMap" :layers="layers"></map-toolbar>
+        <cwa-eq-toolbar v-if="pMap && showCwaEqToolbar" :map="pMap" :layers="layers"></cwa-eq-toolbar>
         <Popup :overlay="popup.overlay" :content="popup.content" @initialized="onPopupInit"></Popup>
     </div>
 </template>
@@ -131,6 +132,7 @@ import LayerMap from '@/resource/map/layerMap';
 import LayerDef from '@/resource/layerDef';
 import SensorProps from '@/resource/map/sensorProps';
 import StationProps from '@/resource/map/stationProps';
+import CwaEqToolbar from './CwaEqToolbar.vue';
 
 const store2 = useStore();
 const pMap = ref();
@@ -141,6 +143,7 @@ const NetworkMapsExpanded = ref(false);
 const SafeManageMapsExpanded = ref(false);
 const RiverThreeMapsExpanded = ref(false);
 const showDrawingToolbar = ref(false);
+const showCwaEqToolbar = ref(false);
 const menuVisible = ref(true);
 let layers = new LayerMap();
 
@@ -178,8 +181,8 @@ function getSensorLayerLines() {
         ...sensors,
         {
             layerId: 'layer12',
-            text: '等震度圖',
-            icon: require('@/assets/image/intensityblack.png'),
+            text: '氣象署地震儀',
+            icon: require('@/assets/image/blue_dot_.png'),
         },
     ];
 }
@@ -315,6 +318,7 @@ function toggleLayerGroup(groupId) {
 const markers = Array<TGOS.TGMarker>();
 
 function updateToolbarVisibility(layerGroup, visible) {
+    if (layerGroup === 'layer12') showCwaEqToolbar.value = visible;
     if (layerGroup === LayerDef.DRAWING) showDrawingToolbar.value = visible;
 }
 
@@ -347,9 +351,7 @@ function getLayerGeojsonUrls(layerGroup) {
     if (sensor !== undefined) return single(sensor.geojsonUrl);
     let station = StationProps.find(layerGroup);
     if (station !== undefined) return single(station.geojsonUrl);
-
-    if (layerGroup === 'layer12') return single("/Earthquake/GetEQEventRangeIntensity");
-    // also: 等震度圖 await addLayer(layerId, "等震度圖");
+    if (layerGroup === 'layer12') return single(`/Earthquake/GetCwaEventLatest`);
 
     if (layerGroup === 'layer13') {
         let baseUrl = '/GeoJson/GetGeoJsonDataByFileName?fileName=';
@@ -380,41 +382,6 @@ function getLayerGeojsonUrls(layerGroup) {
 
 // Returns null if data is not available.
 async function getLayers(layerId, funcName) {
-    if (layerId == "layer12") {
-        let infos = { eventTime: "" };
-        let v = await apiGetIsoseismal(infos);
-        let layers = [];
-
-        if (v == null) {
-            //提示未找到等震度圖
-            let el = document.getElementById(layerId);
-            el.checked = false;
-            return null;
-        }
-
-        let layer2 = {
-            type: "FeatureCollection",
-            features: v.infoList.slice(2).map((info) => {
-                const [id, name, latitude, longitude, intensity] = info.split(";");
-                return {
-                    type: "Feature",
-                    geometry: {
-                        type: "Point",
-                        coordinates: [parseFloat(longitude), parseFloat(latitude)],
-                    },
-                    properties: {
-                        id,
-                        name,
-                        intensity,
-                        //image: '@/assets/image/Station_WaterGate_.png', // 根據震度選擇圖片
-                    },
-                };
-            }),
-        };
-
-        return [v.geoJson, layer2];
-    }
-
     return [await apiGetGps(funcName)];
 }
 

@@ -1,7 +1,7 @@
 ﻿using Microsoft.Data.SqlClient;
 using System.Data;
 
-namespace Wra10Core2023.Util;
+namespace Wra10Core2023.Util.Earthquake;
 
 public static class IsoseismalStore
 {

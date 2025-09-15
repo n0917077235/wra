@@ -76,7 +76,7 @@ export default class MapUtil {
         }
 
         if (layerId == 'layer12') {
-            let intensity = feature.get('intensity');
+            let intensity = feature.get('Intensity');
             let index = MapUtil._eqIntensities.indexOf(intensity);
             return index >= 0 ? index : 0;
         }
