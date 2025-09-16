@@ -101,14 +101,14 @@ public class EarthquakeController : Controller
 
     [Authorize]
     [HttpGet]
-    [Route("GetCwaEvents")]
-    public string GetCwaEvents()
+    [Route("GetCwaEventTimes")]
+    public string GetCwaEventTimes()
     {
         // get events in 1 year
         var now = DateTime.Now;
         var start = now.AddYears(-1);
-        var events = EarthquakeCwa.Get(start, now);
-        return JToken.FromObject(events).ToString();
+        var times = EarthquakeCwa.GetTimes(start, now);
+        return JToken.FromObject(times).ToString();
     }
 
     [Authorize]

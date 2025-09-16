@@ -113,7 +113,7 @@
             </div>
         </div>
         <map-toolbar v-if="pMap && showDrawingToolbar" :map="pMap" :layers="layers"></map-toolbar>
-        <cwa-eq-toolbar v-if="pMap && showCwaEqToolbar" :map="pMap" :layers="layers"></cwa-eq-toolbar>
+        <cwa-eq-toolbar v-if="pMap && showCwaEqToolbar" :layers="layers"></cwa-eq-toolbar>
         <Popup :overlay="popup.overlay" :content="popup.content" @initialized="onPopupInit"></Popup>
     </div>
 </template>

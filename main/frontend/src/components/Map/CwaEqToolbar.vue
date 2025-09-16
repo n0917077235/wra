@@ -2,7 +2,7 @@
     <div class="box">
         地震時間&nbsp;
         <select v-model="selectedTime" @change="updateLayer">
-            <option v-for="x in all" :value="x.Time">{{ x.Time }}</option>
+            <option v-for="x in all" :value="x">{{ x }}</option>
         </select>
     </div>
 </template>
@@ -11,21 +11,20 @@
 import { onMounted, computed, ref, defineProps, reactive } from 'vue';
 import { apiClient } from '@/resource/index.ts';
 
-let props = defineProps(['map', 'layers']);
+let props = defineProps(['layers']);
 let selectedTime = ref(undefined);
 let all = ref([]);
 
 onMounted(async () => {
-    let res = await apiClient.get('/Earthquake/GetCwaEvents');
-    let arr = res.data.reverse().map(x => ({ Time: x.Time.replace('T', ' '), Points: x.Points }));
+    let res = await apiClient.get('/Earthquake/GetCwaEventTimes');
+    let arr = res.data.reverse().map(x => x.replace('T', ' '));
     all.value = arr;
-    if (arr.length > 0) selectedTime.value = arr[0].Time;
+    if (arr.length > 0) selectedTime.value = arr[0];
 });
 
 async function updateLayer() {
     let t = encodeURIComponent(selectedTime.value);
     let res = await apiClient.get(`/Earthquake/GetCwaEvent?time=${t}`)
-    
     let allLayers = props.layers.get('layer12');
     if (allLayers.length === 0) return null;
     let layer = allLayers[0];
@@ -51,5 +50,12 @@ async function updateLayer() {
     border: 1px black solid;
     border-radius: 8px;
     padding: 6px;
+}
+
+select {
+    padding: 5px;
+    border-radius: 6px;
+    background-color: #fff;
+    border: 1px #999 solid;
 }
 </style>

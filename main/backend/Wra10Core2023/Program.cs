@@ -242,7 +242,6 @@ public class Program
             */
 
             _ = IsoseismalUtil.LoopAsync();
-            _ = EarthquakeCwa.LoopAsync();
             SiteUtil.AncadDataHandler.StartListening();
         }
     }
