@@ -182,7 +182,7 @@ function getSensorLayerLines() {
         {
             layerId: 'layer12',
             text: '氣象署地震儀',
-            icon: require('@/assets/image/blue_dot_.png'),
+            icon: require('@/assets/image/intensity3.png'),
         },
     ];
 }
