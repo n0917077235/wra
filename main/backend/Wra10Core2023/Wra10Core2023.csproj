@@ -20,6 +20,17 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Data\eq_sim.csv" />
+    <None Remove="Data\wra10_sim.csv" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Data\eq_sim.csv">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\wra10_sim.csv">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="Data\規劃科水位計.csv">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>

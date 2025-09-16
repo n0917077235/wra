@@ -27,7 +27,7 @@ public class EarthquakeController : Controller
         _hostingEnvironment = hostingEnvironment;
     }
 
-    [Authorize]
+    // Allow outside connections becuase the images may be shared by url.
     [HttpGet]
     [Route("Isoseismal")]
     public IActionResult GetIsoseismalMap(string eventTime)

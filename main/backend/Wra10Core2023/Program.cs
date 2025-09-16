@@ -174,8 +174,7 @@ public class Program
 
             if (!env.IsDevelopment())
             {
-                var assemblyDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-                var webPageDir = Path.Combine(assemblyDir, "WebPage");
+                var webPageDir = new DirectoryInfo("Webpage").FullName;
 
                 app.UseFileServer(new FileServerOptions
                 {
@@ -243,6 +242,8 @@ public class Program
 
             _ = IsoseismalUtil.LoopAsync();
             SiteUtil.AncadDataHandler.StartListening();
+            //IsoseismalUtil.GetEQEvents(2025, 9, 3);
+            EarthquakeSim.Insert(new DateTime(2025, 9, 16, 8, 0, 0));
         }
     }
 }

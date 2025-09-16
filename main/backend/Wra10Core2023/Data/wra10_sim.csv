@@ -1,0 +1,4 @@
+﻿SensorId,RecordTime,Intensity,EventTag,FileName
+EQ0001,{time},3,20250531114430_4413,test
+EQ0002,{time},4,20250527130321_4619,test
+EQ0003,{time},3,20250603101610_4616,test

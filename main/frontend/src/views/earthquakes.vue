@@ -53,8 +53,8 @@
 
         </el-form>
 
-        <a v-if="imageData" :href="imageData" target="_blank">
-            <img :src="imageData"></img>
+        <a v-if="imageUrl" :href="imageUrl" target="_blank">
+            <img :src="imageUrl"></img>
         </a>
 
         <div v-if="hasData"
@@ -116,7 +116,7 @@
     import { useStore } from 'vuex';
     import { Line } from 'vue-chartjs';
      
-    const imageData = ref(null);
+    const imageUrl = ref(null);
     const hasData = ref<boolean>(false);
     const currentYear = new Date().getFullYear().toString();
     const currentMonth = (new Date().getMonth() + 1).toString();
@@ -156,19 +156,11 @@
         });
     }
     
-    //產生等震度圖
-    async function getIsoseismalMap() {
+    function updateImageUrl() {
         let eventTime = ruleRange.eventTime;
         let t = encodeURIComponent(eventTime);
-        let res = await apiClient.get(`Earthquake/Isoseismal?eventTime=${t}`, { responseType:"blob" });
-        let reader = new FileReader();
-
-        reader.onloadend = function () {
-            imageData.value = reader.result;
-        };
-        
-        let blob = res.data;
-        reader.readAsDataURL(blob);
+        let url = apiClient.defaults.baseURL + `/Earthquake/Isoseismal?eventTime=${t}`;
+        imageUrl.value = url;
     }
 
     function clearcondition() {
@@ -420,9 +412,9 @@
         ruleRange.eventTime = words[0];
 
         if (words.length >= 2) {
-            getIsoseismalMap();
+            updateImageUrl();
         } else {
-            imageData.value = null;
+            imageUrl.value = null;
         }
     }
 
