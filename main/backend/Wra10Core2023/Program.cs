@@ -15,6 +15,12 @@ namespace Wra10Core2023;
 
 public class Program
 {
+    // This website is supposed to be deployed under
+    // http://rivermonitoring.wra10.gov.tw/v2
+    // because the frontend embeds many other sites from the same domain
+    // and CORS required our site to be deployed with subfolder url.
+    private const string PublicPath = "/v2";
+
     public static void Main(string[] args)
     {
         AppDomain.CurrentDomain.ProcessExit += (s, e) => SiteUtil.AncadDataHandler?.Stop();
@@ -182,11 +188,12 @@ public class Program
 
                     if (context.Response.StatusCode == 404)
                     {
-                        context.Response.Redirect("/");
+                        context.Response.Redirect(PublicPath);
                     }
                 });
             }
 
+            app.UsePathBase(PublicPath);
             app.UseStaticFiles();
             app.UseRouting();
             app.UseCors(myPolicy);

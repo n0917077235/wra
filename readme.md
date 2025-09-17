@@ -35,7 +35,7 @@ python -m venv .venv
 ## Then, run frontend
 - `cd main\frontend`
 - Run `npm run serve`
-- Open browser, go to `http://localhost:8080`
+- Open browser, go to `http://localhost:8080/v2`
 
 # Deploy
 * Install python 3.12.10 on server
@@ -47,6 +47,7 @@ python -m venv .venv
   - Run `dotnet build -c Release --self-contained -r win-x64`
   - The build result can be found in `main\backend\Wra10Core2023\bin\Release\net6.0-windows10.0.17763.0\win-x64`
   - Copy the result to server: `C:\main\backend`. The folder should contain `Wra10Core2023.exe` 
+  - Configure connection strings in `appsettings.json` as required
 
 * Compile frontend
   - In `frontend\.env`, set `VUE_APP_API_URL` to the public url of backend.
@@ -60,7 +61,12 @@ python -m venv .venv
   - `srec_proj`
 
 * Start backend: `cd C:\main\backend && Wra10Core2023.exe`
-* Use IIS reverse proxy to direct HTTP requests to http://localhost:5000
+
+* On server, run nginx with config file `nginx.conf`
+* Site is now online at `http://localhost`
+* On main server that manages the domain, setup HTTPS, and use  
+  IIS reverse proxy to direct HTTP requests, E.g.
+  - pass `http://rivermonitoring.wra10.gov.tw/v2` to http://{server_ip}/v2
 
 # Test isoseismal map generation
 * Open a browser, go to:
