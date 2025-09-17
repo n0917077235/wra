@@ -1,35 +1,19 @@
 <template>
   <el-form :inline="true" :model="ruleForm" class="flex flex-wrap">
     <el-form-item label="資料時間" prop="dateTime">
-      <el-date-picker
-        v-model="ruleForm.dateTime"
-        type="datetimerange"
-        format="YYYY-MM-DD HH:mm:ss"
-      />
+      <el-date-picker v-model="ruleForm.dateTime" type="datetimerange" format="YYYY-MM-DD HH:mm:ss" />
     </el-form-item>
 
-    <wra-select
-      v-model="ruleForm.range"
-      label="資料間隔"
-      name="range"
-      :options="options"
-      value-name="value"
-      label-name="label"
-      class="w-full sm:w-fit"
-      style="width:200px"
-    ></wra-select>
+    <wra-select v-model="ruleForm.range" label="資料間隔" name="range" :options="options" value-name="value"
+      label-name="label" class="w-full sm:w-fit" style="width:200px"></wra-select>
 
-    <el-button
-      type="primary"
-      class="icon-button mb-2 w-full sm:w-fit"
-      @click="submit"
-    >
+    <el-button type="primary" class="icon-button mb-2 w-full sm:w-fit" @click="submit">
       <el-icon :size="32" class="cursor-pointer">
         <app-icon icon-name="icon_search_button"></app-icon>
       </el-icon>
     </el-button>
 
-    <el-button type="primary" class="icon-button w-full sm:w-fit">
+    <el-button type="primary" class="icon-button w-full sm:w-fit" @click="download">
       <el-icon :size="32" class="cursor-pointer">
         <el-icon :size="19">
           <app-icon icon-name="icon_download"></app-icon>
@@ -42,8 +26,12 @@
 <script setup lang="ts">
 import { reactive, ref, watch } from 'vue';
 
-const emits = defineEmits(['submit']);
-    
+const emits = defineEmits<{
+  (e: 'submit', payload: RuleForm): void
+  (e: 'download', payload: RuleForm): void
+}>()
+
+
 interface Option {
   value: number;
   label: string;
@@ -136,6 +124,16 @@ const formatDate2 = (date: Date): string => {
 const submit = (): void => {
   emits('submit', ruleForm);
 };
+
+const download = (): void => {
+  // 把目前的查詢條件丟給父層，父層用「查到的 tableData」來匯出
+  emits('download', {
+    ...ruleForm,
+    // 確保是純值（避免某些情況的 Proxy 影響）
+    dateTime: [...ruleForm.dateTime] as [string, string],
+    idateTime: [...ruleForm.idateTime] as [string, string],
+  })
+}
 
 getInitDateTime();
 submit();
