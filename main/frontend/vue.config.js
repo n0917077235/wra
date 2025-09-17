@@ -5,6 +5,19 @@ module.exports = defineConfig({
   publicPath: '/',
   // publicPath: process.env.NODE_ENV === 'production' ? '/2023/' : '/',
   transpileDependencies: true,
+  devServer: {
+    host: '0.0.0.0',
+    allowedHosts: 'all',
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+    },
+    historyApiFallback: true,
+    hot: true,
+    https: true,
+    client: {
+      webSocketURL: 'auto://0.0.0.0:0/ws',
+    },
+  },
   chainWebpack: (config) => {
     config.plugins.delete('preload');
     config.plugins.delete('prefetch');

@@ -58,9 +58,26 @@ namespace Wra10Core2023.Services
                         var today = DateTime.Now;
                         var list = checker.GetEQEventRangeIntensity(today.Year, today.Month, 3);
                         var latest = "";
+                        bool shouldNotify = false;
                         if (list.Count > 0 && list[0] is object[] firstRow && firstRow.Length > 0)
                         {
                             latest = firstRow[0]?.ToString() ?? "";
+                            
+                            // 檢查是否已經通報過
+                            string checkSql = "SELECT COUNT(1) FROM EarthquakeNotifys WHERE Latest = @Latest";
+                            var sqlHelper = new SqlHelper(_configuration.GetConnectionString("Water2022"));
+                            var parameters = new SqlParameter[] { new SqlParameter("@Latest", latest) };
+                            int reportCount = sqlHelper.ExecuteScaler(checkSql, parameters);
+
+                            if (reportCount > 0)
+                            {
+                                // 已經通報過，跳過通報部分
+                                Console.WriteLine($"地震事件 {latest} 已經通報過，跳過此次通報");
+                            }
+                            else
+                            {
+                                shouldNotify = true;
+                            }
                         }
 
                         var EQMainlist = checker.GetEQEvents("-1", latest);
@@ -72,18 +89,24 @@ namespace Wra10Core2023.Services
                                 count++;
                         }
 
-                        if (count >= 3)
+                        if (count >= 3 && shouldNotify)
                         {
                             var channelToken = _configuration["Line:channelAccessToken"];
                             var groupId = _configuration["Line:GroupId"];
                             var filename = checker.GenerateCombinedImage(EQMainlist);
-                            string lineurl = _configuration["Line:lineBackendUrl"];
+                            string lineurl = _configuration["Line:lineUrl"];
                             string picurl = $"{lineurl}/output/{filename}";
                             Console.WriteLine($"圖片網址: {picurl}");
                             var message = "⚠️警戒通報\n地震發生!!地震儀總覽如下圖";
 
                             var notify = new NotifyService(channelToken, _configuration);
                             await notify.PushImageAsync(groupId, message, picurl);
+
+                            // 記錄已通報的地震事件
+                            string insertSql = "INSERT INTO EarthquakeNotifys (Latest) VALUES (@Latest)";
+                            var sqlHelper = new SqlHelper(_configuration.GetConnectionString("Water2022"));
+                            var parameters = new SqlParameter[] { new SqlParameter("@Latest", latest) };
+                            sqlHelper.ExecuteNonQuery(insertSql, parameters);
                         }
                     }
                     catch (Exception ex)

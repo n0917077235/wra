@@ -54,14 +54,17 @@ namespace Wra10Core2023.Services
 
                         var sqlHelper = new SqlHelper(conn);
 
-                        // 取出全部 Sensors 資料
-                        string sql = "SELECT * FROM Sensors";
+                        // 取出全部 Sensors 資料，並關聯 Areas 表格
+                        string sql = @"SELECT s.*, a.AreaName 
+                                     FROM Sensors s 
+                                     LEFT JOIN Areas a ON s.AreaID = a.AreaID";
                         DataTable dt = sqlHelper.ExecuteQuery(sql);
 
                         foreach (DataRow row in dt.Rows)
                         {
                             string sensorId = row["sensorId"]?.ToString() ?? "";
                             string sensorNameA = row["sensorNameA"]?.ToString() ?? "";
+                            string areaName = row["AreaName"]?.ToString() ?? "";
                             DateTime? lastDataTime = row["LastDataTime"] as DateTime?;
                             double LastValue1 = row["LastValue1"] != DBNull.Value ? Convert.ToDouble(row["LastValue1"]) : double.NaN;
                             int isDisc = row["isDisc"] != DBNull.Value ? Convert.ToInt32(row["isDisc"]) : 0;
@@ -90,7 +93,7 @@ namespace Wra10Core2023.Services
 
                                     string channelToken = _configuration["Line:channelAccessToken"];
                                     string groupId = _configuration["Line:groupId"];
-                                    string message = $"🔍❌缺測通報\n站點名稱：{sensorNameA}\r\n感測器超過30分鐘沒有新資料";
+                                    string message = $"🔍❌缺測通報\n站點名稱：{areaName} {sensorNameA}\r\n感測器超過30分鐘沒有新資料";
 
                                     var notify = new NotifyService(channelToken, _configuration);
                                     if (lat.HasValue && lng.HasValue)

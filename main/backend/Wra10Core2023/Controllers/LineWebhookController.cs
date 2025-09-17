@@ -51,6 +51,15 @@ namespace Wra10Core2023.Controllers
                     var type = ev.GetProperty("type").GetString();
                     var replyToken = ev.GetProperty("replyToken").GetString();
                     var source = ev.GetProperty("source");
+                    
+                    // 檢查訊息來源類型
+                    var sourceType = source.GetProperty("type").GetString();
+                    if (sourceType == "group" || sourceType == "room")
+                    {
+                        // 如果是來自群組或聊天室的訊息，直接忽略不處理
+                        return Ok();
+                    }
+                    
                     var userId = source.GetProperty("userId").GetString();
 
                     // 取得使用者狀態
@@ -687,7 +696,7 @@ namespace Wra10Core2023.Controllers
                 return;
             }
             string filename = GenerateChartAndSave(result_dt, userInfo.Unit, startDate, endDate, userInfo.Area, userInfo.SensorName, userInfo.Type);
-            string lineurl = _configuration["Line:lineBackendUrl"];
+            string lineurl = _configuration["Line:lineUrl"];
             string imageUrl = $"{lineurl}/output/{filename}";
             string chartTitle = $"{userInfo.Area} {userInfo.SensorName}\n{startDate:yyyy-MM-dd} 至 {endDate:yyyy-MM-dd}\n感測器資料圖表";
             await notify.ReplyImageAsync(replyToken, chartTitle, imageUrl, imageUrl);

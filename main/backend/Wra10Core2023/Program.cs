@@ -22,7 +22,11 @@ public class Program
     }
 
     public static IWebHostBuilder CreateWebHostBuilder(string[] args) =>
-        WebHost.CreateDefaultBuilder(args).UseStartup<Startup>();
+        WebHost.CreateDefaultBuilder(args).UseStartup<Startup>()
+        .ConfigureKestrel(options =>
+        {
+            options.ListenAnyIP(5000); // 允許外部訪問 HTTP
+        });
 
     public class Startup
     {
@@ -113,11 +117,11 @@ public class Program
             */
 
             // 加入 定時排程，取消註解就會啟動
-            // services.AddHostedService<ScheduledTask.Services.ScheduledTaskServiceSystem>();
-            // services.AddHostedService<ScheduledTask.Services.ScheduledTaskServiceList>();
-            // services.AddHostedService<ScheduledTask.Services.ScheduledTaskServiceSensor>();
-            // services.AddHostedService<ScheduledTask.Services.ScheduledTaskServiceCamera>();
-            // services.AddHostedService<ScheduledTask.Services.ScheduledTaskServiceEarthquake>();
+            // services.AddHostedService<Wra10Core2023.Services.ScheduledTaskServiceSystem>();
+            // services.AddHostedService<Wra10Core2023.Services.ScheduledTaskServiceList>();
+            // services.AddHostedService<Wra10Core2023.Services.ScheduledTaskServiceSensor>();
+            // services.AddHostedService<Wra10Core2023.Services.ScheduledTaskServiceCamera>();
+            // services.AddHostedService<Wra10Core2023.Services.ScheduledTaskServiceEarthquake>();
 
             services.AddControllers();
             services.AddDistributedMemoryCache();
