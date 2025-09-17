@@ -64,4 +64,11 @@ public static class IsoseismalStore
         SqlParameter[] p = [new("bytes", image), new("t", time)];
         SiteUtil.MainDB().ExecuteNonQuery(q, p);
     }
+
+    public static void Delete(DateTime time)
+    {
+        var q = "DELETE FROM IsoseismalStore WHERE eventTime=@t";
+        SqlParameter[] p = [new("t", time)];
+        SiteUtil.MainDB().ExecuteNonQuery(q, p);
+    }
 }

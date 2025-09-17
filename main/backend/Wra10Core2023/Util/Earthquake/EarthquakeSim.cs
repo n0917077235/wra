@@ -1,5 +1,4 @@
 ﻿using Microsoft.Data.SqlClient;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 namespace Wra10Core2023.Util.Earthquake;
 
@@ -9,14 +8,13 @@ public static class EarthquakeSim
     {
         InsertCwa(t);
         InsertWra10(t);
-        Console.WriteLine("earthquake sim inserted");
     }
 
-    public static void Clear(DateTime t)
+    public static void Delete(DateTime t)
     {
-        ClearCwa(t);
-        ClearWra10(t);
-        Console.WriteLine("earthquake sim cleared");
+        DeleteCwa(t);
+        DeleteWra10(t);
+        IsoseismalStore.Delete(t);
     }
 
     private static void InsertCwa(DateTime t)
@@ -51,7 +49,7 @@ public static class EarthquakeSim
         }
     }
 
-    private static void ClearCwa(DateTime t)
+    private static void DeleteCwa(DateTime t)
     {
         var q = "DELETE FROM EQOpenData WHERE EQNo=99999 AND OriginTime=@t";
         SqlParameter[] p = [new("t", t)];
@@ -86,7 +84,7 @@ public static class EarthquakeSim
         }
     }
 
-    private static void ClearWra10(DateTime t)
+    private static void DeleteWra10(DateTime t)
     {
         var q = "DELETE FROM EarthquakeMain WHERE FileName='test' AND RecordTime=@t";
         SqlParameter[] p = [new("t", t)];

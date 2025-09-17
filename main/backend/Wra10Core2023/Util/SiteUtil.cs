@@ -12,6 +12,7 @@ public static class SiteUtil
     public static string AncadSensorKey => Config["AncadSensor:Key"];
     public static int AncadSensorPort => int.Parse(Config["AncadSensor:Port"]);
     public static string CwaToken => Config["CwaToken"];
+    public static string DevAccessToken => Config["DevAccessToken"];
     public static SocketDataHandler AncadDataHandler = new();
 
     public static SQLHelper MainDB()

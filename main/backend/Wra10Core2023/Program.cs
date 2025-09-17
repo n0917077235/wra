@@ -5,7 +5,6 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using System.Reflection;
 using System.Text;
 using Wra10Core2023.Controllers;
 using Wra10Core2023.Models;
@@ -38,13 +37,7 @@ public class Program
 
         public void ConfigureServices(IServiceCollection services)
         {
-            /*
-            services.Configure<IdentityOptions>(options =>
-                options.ClaimsIdentity.UserIdClaimType = ClaimTypes.NameIdentifier);
-            */
-
             services.AddIdentity<User, IdentityRole>()
-                //.AddEntityFrameworkStores<AppDbContext>()
                 .AddDefaultTokenProviders();
 
             services.AddAuthentication(options =>
@@ -192,11 +185,6 @@ public class Program
                         context.Response.Redirect("/");
                     }
                 });
-
-                // Do not use https redirection during debugging.
-                // It would lead to request errors in the browsers 
-                // due to untrusted TLS certificates
-                // app.UseHttpsRedirection();
             }
 
             app.UseStaticFiles();
@@ -221,13 +209,6 @@ public class Program
             app.UseMiddleware<RequestLoggingMiddleware>();
             app.UseEndpoints(endpoints =>
             {
-                /*
-                endpoints.MapControllerRoute(name: "mycustom",
-                     pattern: "GetHome",
-                     defaults: new { controller = "Home", action = "GetDetails" });
-                endpoints.MapControllerRoute(name: "default",
-                         pattern: "{controller=Home}/{action=Index}/{system?}");
-                */
                 endpoints.MapControllers();
             });
 
@@ -242,8 +223,6 @@ public class Program
 
             _ = IsoseismalUtil.LoopAsync();
             SiteUtil.AncadDataHandler.StartListening();
-            //IsoseismalUtil.GetEQEvents(2025, 9, 3);
-            EarthquakeSim.Insert(new DateTime(2025, 9, 16, 8, 0, 0));
         }
     }
 }

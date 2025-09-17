@@ -206,4 +206,30 @@ public class EarthquakeController : Controller
             return BadRequest(ex.Message);
         }
     }
+
+    // Allow outside connections. Use HttpGet for easy testing in browsers.
+    [HttpGet]
+    [Route("Simulate")]
+    public string Simulate(string action, string time, string key)
+    {
+        if (key != SiteUtil.DevAccessToken) throw new UnauthorizedAccessException();
+        var format = "yyyyMMddHHmmss";
+        var t = DateUtil.ParseFormat(time, format);
+
+        if (action == "insert")
+        {
+            EarthquakeSim.Insert(t);
+
+            return $"Inserted simulated datapoints for {t}. " +
+                $"Please wait for 2 minutes for isoseismal map";
+        }
+
+        if (action == "delete")
+        {
+            EarthquakeSim.Delete(t);
+            return $"Deleted datapoints for {t}.";
+        }
+
+        throw new NotSupportedException();
+    }
 }

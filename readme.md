@@ -34,8 +34,6 @@ python -m venv .venv
 
 ## Then, run frontend
 - `cd main\frontend`
-- Open file `.env`, set `VUE_APP_DEBUG=1`
-  If you want to connect to the backend at WRA, set `VUE_APP_DEBUG=0`
 - Run `npm run serve`
 - Open browser, go to `http://localhost:8080`
 
@@ -51,7 +49,7 @@ python -m venv .venv
   - Copy the result to server: `C:\main\backend`. The folder should contain `Wra10Core2023.exe` 
 
 * Compile frontend
-  - In `frontend\.env`, set `VUE_APP_DEBUG=0`. Set `VUE_APP_API_URL_DEBUG` to public url.
+  - In `frontend\.env`, set `VUE_APP_API_URL` to the public url of backend.
   - `cd main\frontend && npm run build`
   - Copy the resulting static files in `dist` to server: `C:\main\backend\Webpage`
 
@@ -63,3 +61,14 @@ python -m venv .venv
 
 * Start backend: `cd C:\main\backend && Wra10Core2023.exe`
 * Use IIS reverse proxy to direct HTTP requests to http://localhost:5000
+
+# Test isoseismal map generation
+* Open a browser, go to:
+  `{VUE_APP_API_URL}/Earthquake/Simulate?action=insert&time=20250917080000&key=9d5i2tzbx3ilrke2it5o6o`
+
+* If simulated data points are generated, you will see a message.
+
+* To clear the simulated data points, go to:
+  `{VUE_APP_API_URL}/Earthquake/Simulate?action=delete&time=20250917080000&key=9d5i2tzbx3ilrke2it5o6o`
+  
+* If data points are deleted, you will see a message.
