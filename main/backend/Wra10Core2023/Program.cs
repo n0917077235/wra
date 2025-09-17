@@ -5,16 +5,22 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using System.Reflection;
 using System.Text;
 using Wra10Core2023.Controllers;
 using Wra10Core2023.Models;
 using Wra10Core2023.Util;
+using Wra10Core2023.Util.Earthquake;
 
 namespace Wra10Core2023;
 
 public class Program
 {
+    // This website is supposed to be deployed under
+    // http://rivermonitoring.wra10.gov.tw/v2
+    // because the frontend embeds many other sites from the same domain
+    // and CORS required our site to be deployed with subfolder url.
+    private const string PublicPath = "/v2";
+
     public static void Main(string[] args)
     {
         AppDomain.CurrentDomain.ProcessExit += (s, e) => SiteUtil.AncadDataHandler?.Stop();
@@ -37,13 +43,7 @@ public class Program
 
         public void ConfigureServices(IServiceCollection services)
         {
-            /*
-            services.Configure<IdentityOptions>(options =>
-                options.ClaimsIdentity.UserIdClaimType = ClaimTypes.NameIdentifier);
-            */
-
             services.AddIdentity<User, IdentityRole>()
-                //.AddEntityFrameworkStores<AppDbContext>()
                 .AddDefaultTokenProviders();
 
             services.AddAuthentication(options =>
@@ -173,8 +173,7 @@ public class Program
 
             if (!env.IsDevelopment())
             {
-                var assemblyDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-                var webPageDir = Path.Combine(assemblyDir, "WebPage");
+                var webPageDir = new DirectoryInfo("Webpage").FullName;
 
                 app.UseFileServer(new FileServerOptions
                 {
@@ -189,16 +188,12 @@ public class Program
 
                     if (context.Response.StatusCode == 404)
                     {
-                        context.Response.Redirect("/");
+                        context.Response.Redirect(PublicPath);
                     }
                 });
-
-                // Do not use https redirection during debugging.
-                // It would lead to request errors in the browsers 
-                // due to untrusted TLS certificates
-                // app.UseHttpsRedirection();
             }
 
+            app.UsePathBase(PublicPath);
             app.UseStaticFiles();
             app.UseRouting();
             app.UseCors(myPolicy);
@@ -221,13 +216,6 @@ public class Program
             app.UseMiddleware<RequestLoggingMiddleware>();
             app.UseEndpoints(endpoints =>
             {
-                /*
-                endpoints.MapControllerRoute(name: "mycustom",
-                     pattern: "GetHome",
-                     defaults: new { controller = "Home", action = "GetDetails" });
-                endpoints.MapControllerRoute(name: "default",
-                         pattern: "{controller=Home}/{action=Index}/{system?}");
-                */
                 endpoints.MapControllers();
             });
 
@@ -240,7 +228,7 @@ public class Program
             });
             */
 
-            _ = IsoseismalUtil.Loop();
+            _ = IsoseismalUtil.LoopAsync();
             SiteUtil.AncadDataHandler.StartListening();
         }
     }

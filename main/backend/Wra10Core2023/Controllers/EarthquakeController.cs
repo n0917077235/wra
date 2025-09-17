@@ -1,9 +1,12 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using GeoJSON.Net.Geometry;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
+using Newtonsoft.Json.Linq;
 using System.Data;
 using Wra10Core2023.Models;
 using Wra10Core2023.Util;
+using Wra10Core2023.Util.Earthquake;
 using SqlHelper = Wra10Core2023.Util.SQLHelper;
 
 namespace Wra10Core2023.Controllers;
@@ -24,7 +27,7 @@ public class EarthquakeController : Controller
         _hostingEnvironment = hostingEnvironment;
     }
 
-    [Authorize]
+    // Allow outside connections becuase the images may be shared by url.
     [HttpGet]
     [Route("Isoseismal")]
     public IActionResult GetIsoseismalMap(string eventTime)
@@ -85,6 +88,38 @@ public class EarthquakeController : Controller
     {
         var events = IsoseismalUtil.GetEQEvents(year, month, intensity);
         return Ok(events);
+    }
+
+    [Authorize]
+    [HttpGet]
+    [Route("GetCwaEventLatest")]
+    public string GetCwaEventLatest()
+    {
+        var item = EarthquakeCwa.GetLatest();
+        return GeoJsonController.ToFeatureCollectionJson(item.GetFeatures());
+    }
+
+    [Authorize]
+    [HttpGet]
+    [Route("GetCwaEventTimes")]
+    public string GetCwaEventTimes()
+    {
+        // get events in 1 year
+        var now = DateTime.Now;
+        var start = now.AddYears(-1);
+        var times = EarthquakeCwa.GetTimes(start, now);
+        return JToken.FromObject(times).ToString();
+    }
+
+    [Authorize]
+    [HttpGet]
+    [Route("GetCwaEvent")]
+    public string GetCwaEvent(string time)
+    {
+        // get event closest to the specified time
+        var t = DateUtil.ParseFormat(time, "yyyy-MM-dd HH:mm:ss");
+        var item = EarthquakeCwa.FindClosest(t);
+        return GeoJsonController.ToFeatureCollectionJson(item.GetFeatures());
     }
 
     [Authorize]
@@ -170,5 +205,31 @@ public class EarthquakeController : Controller
         {
             return BadRequest(ex.Message);
         }
+    }
+
+    // Allow outside connections. Use HttpGet for easy testing in browsers.
+    [HttpGet]
+    [Route("Simulate")]
+    public string Simulate(string action, string time, string key)
+    {
+        if (key != SiteUtil.DevAccessToken) throw new UnauthorizedAccessException();
+        var format = "yyyyMMddHHmmss";
+        var t = DateUtil.ParseFormat(time, format);
+
+        if (action == "insert")
+        {
+            EarthquakeSim.Insert(t);
+
+            return $"Inserted simulated datapoints for {t}. " +
+                $"Please wait for 2 minutes for isoseismal map";
+        }
+
+        if (action == "delete")
+        {
+            EarthquakeSim.Delete(t);
+            return $"Deleted datapoints for {t}.";
+        }
+
+        throw new NotSupportedException();
     }
 }

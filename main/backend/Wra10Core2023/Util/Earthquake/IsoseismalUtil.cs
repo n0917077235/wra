@@ -5,13 +5,13 @@ using System.Diagnostics;
 using System.Reflection;
 using System.Text;
 
-namespace Wra10Core2023.Util;
+namespace Wra10Core2023.Util.Earthquake;
 
 public static class IsoseismalUtil
 {
     private const string LastRunYearMonthId = "isoseismal.last_run";
 
-    public static async Task Loop()
+    public static async Task LoopAsync()
     {
         IsoseismalStore.CreateTableIfNeeded();
 
@@ -113,7 +113,7 @@ public static class IsoseismalUtil
         var input = GetInputFile(eventTime);
         var dir = FindDir();
         var f = Path.Combine(dir, "Input/input.txt");
-        await System.IO.File.WriteAllTextAsync(f, input);
+        await File.WriteAllTextAsync(f, input);
         return await RunGeneratorAsync(dir);
     }
 
@@ -122,7 +122,7 @@ public static class IsoseismalUtil
         ClearDir(Path.Combine(dir, "Output"));
         var process = new Process();
         var startInfo = new ProcessStartInfo();
-        startInfo.WindowStyle = System.Diagnostics.ProcessWindowStyle.Hidden;
+        startInfo.WindowStyle = ProcessWindowStyle.Hidden;
         startInfo.FileName = "cmd.exe";
         startInfo.Arguments = "/C python -m venv .venv && .venv\\Scripts\\activate && " +
             "python srec_interpolate.py input.txt log_plot";
@@ -132,12 +132,12 @@ public static class IsoseismalUtil
         await process.WaitForExitAsync();
         if (process.ExitCode != 0) throw new Exception($"python exit code={process.ExitCode}");
         var file = Path.Combine(dir, @"Output\input_twd97.png");
-        return await System.IO.File.ReadAllBytesAsync(file);
+        return await File.ReadAllBytesAsync(file);
     }
 
     private static void ClearDir(string dir)
     {
-        foreach (var f in Directory.GetFiles(dir)) System.IO.File.Delete(f);
+        foreach (var f in Directory.GetFiles(dir)) File.Delete(f);
     }
 
     private static string FindDir()
