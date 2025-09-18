@@ -68,6 +68,10 @@ python -m venv .venv
   IIS reverse proxy to direct HTTP requests, E.g.
   - pass `http://rivermonitoring.wra10.gov.tw/v2` to http://{server_ip}/v2
 
+* Please view this document for more info about IIS reverse proxy setup and related information
+  (file name: 關於網頁伺服器設定.pdf) 
+  https://drive.google.com/drive/folders/1zw22I2bh7ZjRwmEjXswPoZayB_grApyO?usp=sharing
+
 # Test isoseismal map generation
 * Open a browser, go to:
   `{VUE_APP_API_URL}/Earthquake/Simulate?action=insert&time=20250917080000&key=9d5i2tzbx3ilrke2it5o6o`
