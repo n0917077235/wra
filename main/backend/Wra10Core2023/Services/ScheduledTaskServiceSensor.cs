@@ -65,10 +65,15 @@ namespace Wra10Core2023.Services
                             string sensorId = row["sensorId"]?.ToString() ?? "";
                             string sensorNameA = row["sensorNameA"]?.ToString() ?? "";
                             string areaName = row["AreaName"]?.ToString() ?? "";
+                            string sensorType = row["SensorType"]?.ToString() ?? "";
                             DateTime? lastDataTime = row["LastDataTime"] as DateTime?;
                             double LastValue1 = row["LastValue1"] != DBNull.Value ? Convert.ToDouble(row["LastValue1"]) : double.NaN;
                             int isDisc = row["isDisc"] != DBNull.Value ? Convert.ToInt32(row["isDisc"]) : 0;
                             int isAlarm = row["isAlarm"] != DBNull.Value ? Convert.ToInt32(row["isAlarm"]) : 0;
+                            int thresholdAlarm = row["ThresholdAlarm"] != DBNull.Value ? Convert.ToInt32(row["ThresholdAlarm"]) : 0;
+                            double threshold1 = row["Threshold1"] != DBNull.Value ? Convert.ToDouble(row["Threshold1"]) : double.MaxValue;
+                            double threshold2 = row["Threshold2"] != DBNull.Value ? Convert.ToDouble(row["Threshold2"]) : double.MaxValue;
+                            double threshold3 = row["Threshold3"] != DBNull.Value ? Convert.ToDouble(row["Threshold3"]) : double.MaxValue;
                             double? lng = row["X"] != DBNull.Value ? Convert.ToDouble(row["X"]) : (double?)null;
                             double? lat = row["Y"] != DBNull.Value ? Convert.ToDouble(row["Y"]) : (double?)null;
 
@@ -121,7 +126,7 @@ namespace Wra10Core2023.Services
 
                                         string channelToken = _configuration["Line:channelAccessToken"];
                                         string groupId = _configuration["Line:groupId"];
-                                        string message = $"⚠️異常值通報\n站點名稱：{sensorNameA}\r\n感測器回傳異常值 (-998)";
+                                        string message = $"⚠️異常值通報\n站點名稱：{areaName} {sensorNameA}\r\n感測器回傳異常值 (-998)";
 
                                         var notify = new NotifyService(channelToken, _configuration);
                                         if (lat.HasValue && lng.HasValue)
@@ -137,6 +142,109 @@ namespace Wra10Core2023.Services
                                         isAlarm = 0;
                                         needUpdateAlarm = true;
                                     }
+
+                                    // 共用的警戒值判斷邏輯
+                                    async Task CheckThresholdAlarm(string sensorTypeString, string unitString, bool hasLevel3 = true)
+                                    {
+                                        int newThresholdAlarm = 0;
+                                        string alertLevel = "";
+
+                                        // 判斷警戒等級 (一級警戒最嚴重)
+                                        // 只在警戒值不為 NULL (不等於 MaxValue) 時才進行判斷
+                                        if (threshold1 != double.MaxValue && LastValue1 >= threshold1)
+                                        {
+                                            newThresholdAlarm = 1;
+                                            alertLevel = "一級";
+                                        }
+                                        else if (threshold2 != double.MaxValue && LastValue1 >= threshold2)
+                                        {
+                                            newThresholdAlarm = 2;
+                                            alertLevel = "二級";
+                                        }
+                                        else if (hasLevel3 && threshold3 != double.MaxValue && LastValue1 >= threshold3)
+                                        {
+                                            newThresholdAlarm = 3;
+                                            alertLevel = "三級";
+                                        }
+
+                                        // 如果警戒等級改變，更新狀態
+                                        if (newThresholdAlarm != thresholdAlarm)
+                                        {
+                                            // 發送通知的條件：
+                                            // 1. 從正常狀態(0)進入任何警戒狀態
+                                            // 2. 從較低警戒等級進入較高警戒等級
+                                            bool shouldNotify = (thresholdAlarm == 0 && newThresholdAlarm > 0) || // 從正常進入警戒
+                                                              (thresholdAlarm > 0 && newThresholdAlarm > 0 && newThresholdAlarm < thresholdAlarm); // 警戒等級提升
+
+                                            if (shouldNotify)
+                                            {
+                                                string channelToken = _configuration["Line:channelAccessToken"];
+                                                string groupId = _configuration["Line:groupId"];
+                                                string message = $"⚠️{sensorTypeString}{alertLevel}警戒通報\n" +
+                                                               $"站點名稱：{areaName} {sensorNameA}\n" +
+                                                               $"目前數值：{LastValue1:F2}{unitString}";
+
+                                                var notify = new NotifyService(channelToken, _configuration);
+                                                if (lat.HasValue && lng.HasValue)
+                                                    await notify.PushMapAlertAsync(groupId, lat.Value.ToString(), lng.Value.ToString(), message);
+                                                else
+                                                    await notify.PushTextAsync(groupId, message);
+                                            }
+
+                                            // 無論是否發送通知，都要更新狀態
+                                            thresholdAlarm = newThresholdAlarm;
+                                            needUpdateAlarm = true;
+                                        }
+                                    }
+
+                                    // 判斷水位警戒
+                                    if (sensorType == "WaterLevel")
+                                    {
+                                        await CheckThresholdAlarm("水位計", "公尺");
+                                    }
+                                    // 判斷沉陷警戒
+                                    else if (sensorType == "Sink")
+                                    {
+                                        await CheckThresholdAlarm("沉陷計", "毫米");
+                                    }
+                                    // 判斷裂縫警戒
+                                    else if (sensorType == "Crack")
+                                    {
+                                        // 裂縫計只有一二級警戒
+                                        await CheckThresholdAlarm("裂縫計", "毫米", false);
+                                    }
+                                    // 判斷傾斜計警戒（只判斷一級，且馬上通報）
+                                    else if (sensorType == "Slope")
+                                    {
+                                        int newThresholdAlarm = 0;
+                                        string alertLevel = "";
+                                        if (threshold1 != double.MaxValue && LastValue1 >= threshold1)
+                                        {
+                                            newThresholdAlarm = 1;
+                                            alertLevel = "一級";
+                                        }
+                                        // 只要一級警戒有變化就通報
+                                        if (newThresholdAlarm != thresholdAlarm)
+                                        {
+                                            bool shouldNotify = (thresholdAlarm == 0 && newThresholdAlarm == 1) ||
+                                                               (thresholdAlarm > 1 && newThresholdAlarm == 1); // 只要進入一級
+                                            if (shouldNotify)
+                                            {
+                                                string channelToken = _configuration["Line:channelAccessToken"];
+                                                string groupId = _configuration["Line:groupId"];
+                                                string message = $"⚠️傾斜計{alertLevel}警戒通報\n" +
+                                                               $"站點名稱：{areaName} {sensorNameA}\n" +
+                                                               $"目前數值：{LastValue1:F2}度";
+                                                var notify = new NotifyService(channelToken, _configuration);
+                                                if (lat.HasValue && lng.HasValue)
+                                                    await notify.PushMapAlertAsync(groupId, lat.Value.ToString(), lng.Value.ToString(), message);
+                                                else
+                                                    await notify.PushTextAsync(groupId, message);
+                                            }
+                                            thresholdAlarm = newThresholdAlarm;
+                                            needUpdateAlarm = true;
+                                        }
+                                    }
                                 }
                             }
 
@@ -146,13 +254,14 @@ namespace Wra10Core2023.Services
                             {
                                 string updateSql = @"
                                     UPDATE Sensors
-                                    SET isDisc = @isDisc, isAlarm = @isAlarm
+                                    SET isDisc = @isDisc, isAlarm = @isAlarm, ThresholdAlarm = @ThresholdAlarm
                                     WHERE SensorID = @SensorID";
 
                                 sqlHelper.ExecuteNonQuery(updateSql, new SqlParameter[]
                                 {
                                     new SqlParameter("@isDisc", isDisc),
                                     new SqlParameter("@isAlarm", isAlarm),
+                                    new SqlParameter("@ThresholdAlarm", thresholdAlarm),
                                     new SqlParameter("@SensorID", sensorId)
                                 });
                             }

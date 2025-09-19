@@ -116,12 +116,22 @@ public class Program
             });
             */
 
-            // 加入 定時排程，取消註解就會啟動
-            // services.AddHostedService<Wra10Core2023.Services.ScheduledTaskServiceSystem>();
-            // services.AddHostedService<Wra10Core2023.Services.ScheduledTaskServiceList>();
-            // services.AddHostedService<Wra10Core2023.Services.ScheduledTaskServiceSensor>();
-            // services.AddHostedService<Wra10Core2023.Services.ScheduledTaskServiceCamera>();
-            // services.AddHostedService<Wra10Core2023.Services.ScheduledTaskServiceEarthquake>();
+
+            // 加入 定時排程前，檢查Line設定
+            var lineSection = Configuration.GetSection("Line");
+            if (lineSection.Exists())
+            {
+                services.AddHostedService<Wra10Core2023.Services.ScheduledTaskServiceSystem>();
+                services.AddHostedService<Wra10Core2023.Services.ScheduledTaskServiceList>();
+                services.AddHostedService<Wra10Core2023.Services.ScheduledTaskServiceSensor>();
+                services.AddHostedService<Wra10Core2023.Services.ScheduledTaskServiceCamera>();
+                services.AddHostedService<Wra10Core2023.Services.ScheduledTaskServiceEarthquake>();
+                Console.WriteLine("定時排程服務已啟動。");
+            }
+            else
+            {
+                Console.WriteLine("[警告] 未設定 Line 區段，定時排程服務未啟動。");
+            }
 
             services.AddControllers();
             services.AddDistributedMemoryCache();
@@ -243,7 +253,7 @@ public class Program
                 }
             });
 
-            _ = IsoseismalUtil.Loop();
+            //_ = IsoseismalUtil.Loop();
             SiteUtil.AncadDataHandler.StartListening();
         }
     }
