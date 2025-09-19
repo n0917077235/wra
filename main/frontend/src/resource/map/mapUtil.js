@@ -69,10 +69,14 @@ export default class MapUtil {
             return GateImages.getImageIndex(lastValue1, feature, sensorInfo);
         }
 
-        if (layerId == LayerDef.SLIDING_GATE) return lastValue1 <= 5 ? 0 : 1;
+        if (layerId == LayerDef.SLIDING_GATE) {
+            if(lastValue1 < 2.5)return 0;
+            if(lastValue1 < 97.5)return 1;
+            return 2;
+        }
 
         if (layerId == 'layer12') {
-            let intensity = feature.get('intensity');
+            let intensity = feature.get('Intensity');
             let index = MapUtil._eqIntensities.indexOf(intensity);
             return index >= 0 ? index : 0;
         }

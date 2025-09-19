@@ -55,7 +55,7 @@ export default class SensorProps {
         },
         {
             layerId: LayerDef.LEVEL,
-            text: '水位計',
+            text: '管理科水位計',
             dot: 'red-dot',
             getIcons: null,
             unit: 'm',
@@ -89,6 +89,7 @@ export default class SensorProps {
             dot: null,
             getIcons: () => [
                 require('@/assets/image/blackdoorclose.png'),
+                require('@/assets/image/blackdoorhalfopen.png'),
                 require('@/assets/image/blackdooropen.png')
             ],
             unit: '%',

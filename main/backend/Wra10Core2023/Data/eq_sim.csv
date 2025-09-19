@@ -1,0 +1,4 @@
+﻿EQNo,OriginTime,CountyName,StationId,StationName,Latitude,Longitude,Intensity
+99999,{time},新北市,NHDH,新店,24.96,121.525,3
+99999,{time},新北市,NSX,三峽,24.939,121.374,4
+99999,{time},新北市,NTS,淡水,25.164,121.449,4

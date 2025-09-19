@@ -8,7 +8,7 @@ let LayerDef = {
     CRACK: 'layer7',                 // 裂縫計
     EARTHQUAKE: 'layer8',            // 地震
     SLOPE: 'layer9',                 // 傾斜
-    LEVEL: 'layer10',                // 水位計
+    LEVEL: 'layer10',                // 管理科水位計
     GATE: 'layer11',                 // 閘門
     SLIDING_GATE: 'layer21',         // 橫移門
     DRAWING: 'layer22',              // 自訂圖層

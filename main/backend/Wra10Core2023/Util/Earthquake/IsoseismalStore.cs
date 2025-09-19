@@ -1,7 +1,7 @@
 ﻿using Microsoft.Data.SqlClient;
 using System.Data;
 
-namespace Wra10Core2023.Util;
+namespace Wra10Core2023.Util.Earthquake;
 
 public static class IsoseismalStore
 {
@@ -62,6 +62,13 @@ public static class IsoseismalStore
             ";
 
         SqlParameter[] p = [new("bytes", image), new("t", time)];
+        SiteUtil.MainDB().ExecuteNonQuery(q, p);
+    }
+
+    public static void Delete(DateTime time)
+    {
+        var q = "DELETE FROM IsoseismalStore WHERE eventTime=@t";
+        SqlParameter[] p = [new("t", time)];
         SiteUtil.MainDB().ExecuteNonQuery(q, p);
     }
 }
