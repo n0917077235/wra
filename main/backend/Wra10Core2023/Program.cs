@@ -28,11 +28,7 @@ public class Program
     }
 
     public static IWebHostBuilder CreateWebHostBuilder(string[] args) =>
-        WebHost.CreateDefaultBuilder(args).UseStartup<Startup>()
-        .ConfigureKestrel(options =>
-        {
-            options.ListenAnyIP(5000); // 允許外部訪問 HTTP
-        });
+        WebHost.CreateDefaultBuilder(args).UseStartup<Startup>();
 
     public class Startup
     {
@@ -115,7 +111,6 @@ public class Program
                 options.LogoutPath = new PathString("/authen/Logout");
             });
             */
-
 
             // 加入 定時排程前，檢查Line設定
             var lineSection = Configuration.GetSection("Line");
@@ -242,7 +237,7 @@ public class Program
             });
             */
 
-            //_ = IsoseismalUtil.LoopAsync();
+            _ = IsoseismalUtil.LoopAsync();
             SiteUtil.AncadDataHandler.StartListening();
         }
     }
