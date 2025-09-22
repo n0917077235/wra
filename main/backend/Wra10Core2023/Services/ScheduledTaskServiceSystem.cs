@@ -124,9 +124,9 @@ namespace Wra10Core2023.Services
 
                             string displayName = $"{areaName} {stationNameA} {camName}";
 
-                            int isAlarm = row["isAlarm"] != DBNull.Value ? Convert.ToInt32(row["isAlarm"]) : 0;
+                            int isDisc = row["isDisc"] != DBNull.Value ? Convert.ToInt32(row["isDisc"]) : 0;
 
-                            if (isAlarm == 1)
+                            if (isDisc == 1)
                             {
                                 errorList.Add($"{displayName} 斷線");
                             }
