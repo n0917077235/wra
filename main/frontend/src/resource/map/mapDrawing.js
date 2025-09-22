@@ -11,18 +11,6 @@ export default class MapDrawing {
   sketch;
 
   /**
-   * The help tooltip element.
-   * @type {HTMLElement}
-   */
-  helpTooltipElement;
-
-  /**
-   * Overlay to show the help messages.
-   * @type {Overlay}
-   */
-  helpTooltip;
-
-  /**
    * The measure tooltip element.
    * @type {HTMLElement}
    */
@@ -72,13 +60,6 @@ export default class MapDrawing {
 
   _attachMap(map) {
     this.map = map;
-    map.on('pointermove', e => this.pointerMoveHandler(e));
-
-    map.getViewport().addEventListener('mouseout', () => {
-      let h = this.helpTooltipElement;
-      if (h) h.classList.add('hidden');
-    });
-
     this._enableAddMarkers();
     this._enableDeletion();
   }
@@ -161,24 +142,6 @@ export default class MapDrawing {
     map.getInteractions().forEach(x => {
       if (ol.util.getUid(x) === ol.util.getUid(this.draw)) map.removeInteraction(x);
     });
-  }
-
-  pointerMoveHandler(evt) {
-    if (this.type === 'none' || evt.dragging) return;
-    let helpMsg = '點選以開始標記';
-
-    if (this.sketch) {
-      const geom = this.sketch.getGeometry();
-      if (geom instanceof ol.geom.Polygon) {
-        helpMsg = this.continuePolygonMsg;
-      } else if (geom instanceof ol.geom.LineString) {
-        helpMsg = this.continueLineMsg;
-      }
-    }
-
-    this.helpTooltipElement.innerHTML = helpMsg;
-    this.helpTooltip.setPosition(evt.coordinate);
-    this.helpTooltipElement.classList.remove('hidden');
   }
 
   /**
@@ -287,7 +250,6 @@ export default class MapDrawing {
     });
 
     this.map.addInteraction(this.draw);
-    this.createHelpTooltip();
     this.createMeasureTooltip();
 
     let listener;
@@ -301,10 +263,10 @@ export default class MapDrawing {
         const geom = e.target;
         let output;
         if (geom instanceof ol.geom.Polygon) {
-          output = this.formatArea(geom);
+          output = `${this.formatArea(geom)}<br>(${this.continuePolygonMsg})`;
           tooltipCoord = geom.getInteriorPoint().getCoordinates();
         } else if (geom instanceof ol.geom.LineString) {
-          output = this.formatLength(geom);
+          output = `${this.formatLength(geom)}<br>${this.continueLineMsg}`;
           tooltipCoord = geom.getLastCoordinate();
         }
 
@@ -382,20 +344,6 @@ export default class MapDrawing {
   hideResult() {
     let m = this.measureTooltipElement;
     if (m) m.classList.add('hidden');
-  }
-
-  createHelpTooltip() {
-    let h = this.helpTooltipElement;
-    if (h) h.parentNode.removeChild(h);
-    this.helpTooltipElement = document.createElement('div');
-    this.helpTooltipElement.className = 'ol-tooltip hidden';
-    this.helpTooltip = new ol.Overlay({
-      element: this.helpTooltipElement,
-      offset: [15, 0],
-      positioning: 'center-left',
-    });
-
-    this.map.addOverlay(this.helpTooltip);
   }
 
   createMeasureTooltip() {
