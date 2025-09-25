@@ -44,8 +44,8 @@ python -m venv .venv
 * Build backend
   - `cd main\backend`
   - Delete all files and directories in `bin\Release`
-  - In visual studio, right click on project name > Publish
-  - Use FolderProfile5.pubxml
+  - Run `dotnet build -c Release --self-contained -r win-x64`
+  - The build result can be found in `main\backend\Wra10Core2023\bin\Release\net6.0-windows10.0.17763.0\win-x64`
   - Configure connection strings in `appsettings.json` as required
   - Copy the build result indicated in Visual Studio output messages, to server:       
     `C:\ancad\backend`. The folder should contain `Wra10Core2023.exe` 
@@ -61,11 +61,10 @@ python -m venv .venv
   - `backend`
   - `srec_proj`
 
-* Install IIS on server
-* Add a website, set the directory to an empty folder
-* Right click on the website, select 'Add application'. 
-* Set alias to `v2`. Select directory `C:\ancad\backend`
-* Site is now online at `http://localhost/v2`
+* Setup IIS: 
+* Please view this document for more info about IIS reverse proxy setup and related information
+  (file name: 關於網頁伺服器設定.pdf) 
+  https://drive.google.com/drive/folders/1zw22I2bh7ZjRwmEjXswPoZayB_grApyO?usp=sharing
 
 # Test isoseismal map generation
 * Open a browser, go to:

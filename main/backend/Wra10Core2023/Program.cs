@@ -28,7 +28,9 @@ public class Program
     }
 
     public static IWebHostBuilder CreateWebHostBuilder(string[] args) =>
-        WebHost.CreateDefaultBuilder(args).UseStartup<Startup>();
+        WebHost.CreateDefaultBuilder(args)
+        .UseStartup<Startup>()
+        .UseUrls("http://localhost:10000/");
 
     public class Startup
     {
@@ -180,6 +182,8 @@ public class Program
                 app.UseSwaggerUI(c => { });
             }
 
+            Console.WriteLine(env.ContentRootPath);
+
             if (!env.IsDevelopment())
             {
                 var webPageDir = new DirectoryInfo("Webpage").FullName;
@@ -187,7 +191,7 @@ public class Program
                 app.UseFileServer(new FileServerOptions
                 {
                     FileProvider = new PhysicalFileProvider(webPageDir),
-                    RequestPath = "",
+                    RequestPath = PublicPath,
                     EnableDefaultFiles = true
                 });
 
