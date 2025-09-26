@@ -182,8 +182,6 @@ public class Program
                 app.UseSwaggerUI(c => { });
             }
 
-            Console.WriteLine(env.ContentRootPath);
-
             if (!env.IsDevelopment())
             {
                 var webPageDir = new DirectoryInfo("Webpage").FullName;

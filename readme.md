@@ -32,6 +32,11 @@ python -m venv .venv
 - Run: `python srec_interpolate.py sample.txt log_plot`
 - Output file is in `main\srec_proj\Output`
 
+- On the test machine located at WRA, do not use virtual environment.
+  It will report that some packages are not found, despite they are already installed.
+  Install packages globally and run python globally instead. C# code is also modified 
+  to run python globally when generating isoseismal maps.
+
 ## Then, run frontend
 - `cd main\frontend`
 - Run `npm run serve`
