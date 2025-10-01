@@ -75,45 +75,24 @@ namespace Wra10Core2023.Controllers
                 int rowCount = worksheet.Dimension.Rows;
                 int colCount = worksheet.Dimension.Columns;
 
-                // 找到「項」和「次」行
-                int itemRow = 0, stationRowStart = 0, stationRowEnd = 0;
-                for (int r = 1; r <= rowCount; r++)
-                {
-                    var cell = worksheet.Cells[r, 1].Text.Trim();
-                    if (cell.Contains("項")) { itemRow = r; stationRowStart = r; }
-                    if (cell.Contains("次")) { stationRowEnd = r; break; }
-                }
-
                 // 組合站點名稱（從單位右邊開始，每一欄合併多行）
                 // ...解析 stationNames...
                 stationNames.Clear();
-                for (int col = 4; col <= colCount; col++)
+                for (int col = 3; col <= colCount; col++)
                 {
-                    var nameParts = new List<string>();
-                    for (int row = stationRowStart; row <= stationRowEnd; row++)
-                    {
-                        var part = worksheet.Cells[row, col].Text.Trim();
-                        if (!string.IsNullOrEmpty(part)) nameParts.Add(part);
-                    }
-                    var fullName = string.Join("", nameParts);
-                    // 去除前面的數字（序號），只保留站名
-                    fullName = Regex.Replace(fullName, @"^\d+", "");
-                    stationNames.Add(fullName);
+                    var n = worksheet.Cells[1, col].Text.Trim();
+                    stationNames.Add(n);
                 }
 
                 // 解析設備資料
-                for (int row = stationRowEnd + 1; row <= rowCount; row++)
+                for (int row = 2; row <= rowCount; row++)
                 {
-                    var aCell = worksheet.Cells[row, 1].Text.Trim();
-                    var name = worksheet.Cells[row, 2].Text.Trim();
-                    var unit = worksheet.Cells[row, 3].Text.Trim();
-                    if (string.IsNullOrEmpty(aCell) || string.IsNullOrEmpty(name)) continue;
-                    if (!int.TryParse(aCell, out _)) continue; // A欄不是數字跳過
-
+                    var name = worksheet.Cells[row, 1].Text.Trim();
+                    var unit = worksheet.Cells[row, 2].Text.Trim();
                     var stationCounts = new Dictionary<string, int>();
                     for (int i = 0; i < stationNames.Count; i++)
                     {
-                        int col = 4 + i;
+                        int col = 3 + i;
                         var stationName = stationNames[i];
                         if (stationName == "合計") continue; // 忽略合計
                         int count = int.TryParse(worksheet.Cells[row, col].Text.Trim(), out var c) ? c : 0;
@@ -128,10 +107,15 @@ namespace Wra10Core2023.Controllers
                     });
                 }
 
-                string yearText = worksheet.Cells[2, 1].Text.Trim();
-                var match = Regex.Match(yearText, @"(\d{3})年度");
-                if (match.Success)
-                    year = int.Parse(match.Groups[1].Value);
+                string sheetName = worksheet.Name;
+                if (sheetName.Length >= 3 && int.TryParse(sheetName.Substring(0, 3), out int parsedYear))
+                {
+                    year = parsedYear;
+                }
+                else
+                {
+                    year = 0;
+                }
             }
 
             // 以設備為主的格式寫入 txt
@@ -329,12 +313,15 @@ namespace Wra10Core2023.Controllers
             }
 
             // 站點
-            string stationSql = "SELECT DISTINCT Name FROM RepairStation ORDER BY Name";
+            string stationSql = "SELECT DISTINCT Name, Area FROM RepairStation ORDER BY Name";
             DataTable stationDt = sqlHelper.ExecuteQuery(stationSql);
-            var stations = new List<string>();
+            var stations = new List<object>();
             foreach (DataRow row in stationDt.Rows)
             {
-                stations.Add(row["Name"].ToString());
+                stations.Add(new {
+                    name = row["Name"].ToString(),
+                    area = row["Area"].ToString()
+                });
             }
 
             return Ok(new

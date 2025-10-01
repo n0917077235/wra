@@ -85,8 +85,14 @@
               </template>
             </el-table-column>
           </el-table>
-          <el-button type="primary" class="mt-4" @click="saveDevices">
-            儲存
+          <el-button 
+            type="primary" 
+            class="mt-4" 
+            @click="saveDevices"
+            :loading="isSaving"
+            :disabled="isSaving"
+          >
+            {{ isSaving ? '儲存中...' : '儲存' }}
           </el-button>
         </div>
       </div>
@@ -133,28 +139,40 @@
                   設備 <i class="el-icon-arrow-down el-icon--right"></i>
                 </span>
                 <template #dropdown>
-                  <div style="padding: 6px 6px; min-width: 200px;">
+                  <div style="padding: 6px 6px; min-width: 300px;">
                     <div style="display: flex; justify-content: space-between; align-items: center; padding: 0 6px; margin: 2px 0;">
                       <span>選擇設備</span>
                       <el-button type="text" size="small" @click="toggleSelectAllDevices">
                         {{ isAllDevicesSelected ? '取消全選' : '全選' }}
                       </el-button>
                     </div>
-                    <el-checkbox-group
-                      v-model="queryDevices"
-                      style="display: flex; flex-wrap: wrap; margin: 0px 0;"
+                    <el-input
+                      v-model="deviceSearchQuery"
+                      placeholder="搜尋設備..."
+                      clearable
+                      style="margin: 6px 0;"
                     >
-                      <el-checkbox
-                        v-for="device in deviceOptions"
-                        :key="device"
-                        :label="device"
-                        class="option-checkbox"
-                        :title="device"
+                      <template #prefix>
+                        <i class="el-icon-search"></i>
+                      </template>
+                    </el-input>
+                    <div style="max-height: 300px; overflow-y: auto;">
+                      <el-checkbox-group
+                        v-model="queryDevices"
+                        style="display: flex; flex-wrap: wrap; margin: 0px 0;"
                       >
-                        <span class="option-checkbox-label">{{ device }}</span>
-                      </el-checkbox>
-                    </el-checkbox-group>
-                    <div style="text-align: right;">
+                        <el-checkbox
+                          v-for="device in filteredDeviceOptions"
+                          :key="device"
+                          :label="device"
+                          class="option-checkbox"
+                          :title="device"
+                        >
+                          <span class="option-checkbox-label">{{ device }}</span>
+                        </el-checkbox>
+                      </el-checkbox-group>
+                    </div>
+                    <div style="text-align: right; margin-top: 6px;">
                       <el-button type="primary" size="small" @click="closeDeviceDropdown">確定</el-button>
                     </div>
                   </div>
@@ -168,28 +186,62 @@
                   站點 <i class="el-icon-arrow-down el-icon--right"></i>
                 </span>
                 <template #dropdown>
-                  <div style="padding: 6px 6px; min-width: 200px;">
+                  <div style="padding: 6px 6px; min-width: 300px;">
                     <div style="display: flex; justify-content: space-between; align-items: center; padding: 0 6px; margin: 2px 0;">
+                      <span>選擇流域</span>
+                      <el-button type="text" size="small" @click="toggleSelectAllAreas">
+                        {{ isAllAreasSelected ? '取消全選' : '全選' }}
+                      </el-button>
+                    </div>
+                    <div style="margin: 6px 0;">
+                      <el-checkbox-group v-model="selectedAreas">
+                        <el-checkbox
+                          v-for="area in areaOptions"
+                          :key="area"
+                          :label="area"
+                        >
+                          {{ area }}
+                        </el-checkbox>
+                      </el-checkbox-group>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 0 6px; margin: 8px 0 2px;">
                       <span>選擇站點</span>
                       <el-button type="text" size="small" @click="toggleSelectAllStations">
                         {{ isAllStationsSelected ? '取消全選' : '全選' }}
                       </el-button>
                     </div>
-                    <el-checkbox-group
-                      v-model="queryStations"
-                      style="display: flex; flex-wrap: wrap; margin: 0px 0;"
+                    <el-input
+                      v-model="stationSearchQuery"
+                      placeholder="搜尋站點..."
+                      clearable
+                      style="margin: 6px 0;"
                     >
-                      <el-checkbox
-                        v-for="station in stationOptions"
-                        :key="station"
-                        :label="station"
-                        class="option-checkbox"
-                        :title="station"
-                      >
-                        <span class="option-checkbox-label">{{ station }}</span>
-                      </el-checkbox>
-                    </el-checkbox-group>
-                    <div style="text-align: right;">
+                      <template #prefix>
+                        <i class="el-icon-search"></i>
+                      </template>
+                    </el-input>
+                    <div style="max-height: 300px; overflow-y: auto;">
+                      <template v-for="area in selectedAreas" :key="area">
+                        <div v-if="getStationsByArea(area).length > 0" class="area-group">
+                          <div class="area-title">{{ area }}</div>
+                          <el-checkbox-group
+                            v-model="queryStations"
+                            style="display: flex; flex-wrap: wrap; margin: 4px 0 8px;"
+                          >
+                            <el-checkbox
+                              v-for="station in getStationsByArea(area)"
+                              :key="station.name"
+                              :label="station"
+                              class="option-checkbox"
+                              :title="station.name"
+                            >
+                              <span class="option-checkbox-label">{{ station.name }}</span>
+                            </el-checkbox>
+                          </el-checkbox-group>
+                        </div>
+                      </template>
+                    </div>
+                    <div style="text-align: right; margin-top: 6px;">
                       <el-button type="primary" size="small" @click="closeStationDropdown">確定</el-button>
                     </div>
                   </div>
@@ -200,8 +252,9 @@
               type="primary"
               class="ml-8"
               @click="searchHistory"
+              :loading="isSearching"
             >
-              查詢
+              {{ isSearching ? '查詢中...' : '查詢' }}
             </el-button>
             <el-button
               v-if="historyDevices.length"
@@ -284,7 +337,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { apiUploadDeviceRepairExcel, apiSaveDeviceRepairHistory, apiQueryDeviceRepairHistory, apiGetDeviceRepairOptions, apiDeleteDeviceRepairYear } from '@/resource/devicerepair'
-import { ElButton, ElTable, ElTableColumn, ElInput, ElTabs, ElTabPane, ElDropdown, ElSelect } from 'element-plus'
+import { ElButton, ElTable, ElTableColumn, ElInput, ElTabs, ElTabPane, ElDropdown, ElSelect, ElMessage } from 'element-plus'
 import * as XLSX from 'xlsx'
 
 const activeTab = ref('history')
@@ -298,9 +351,32 @@ const queryDevices = ref<string[]>([])
 const queryStations = ref<string[]>([])
 const yearOptions = ref<string[]>(['111', '112', '113']) // 之後動態取得
 const deviceOptions = ref<string[]>(['設備A', '設備B', '設備C']) // 之後動態取得
-const stationOptions = ref<string[]>(['站點A', '站點B', '站點C']) // 之後動態取得
+const stationOptions = ref<Array<{name: string, area: string}>>([]) // 之後動態取得
+const deviceSearchQuery = ref('')
+const stationSearchQuery = ref('')
+const selectedAreas = ref<string[]>([])
 const historyData = ref<any[]>([])
 const historyDevices = ref<any[]>([])
+const areaOptions = computed(() => {
+  const areas = new Set(stationOptions.value.map(s => s.area || '不明'))
+  const sortedAreas = Array.from(areas).sort((a, b) => {
+    if (a === '不明') return 1  // 不明永遠排在最後
+    if (b === '不明') return -1 // 不明永遠排在最後
+    return a.localeCompare(b)   // 其他正常按照字母順序排序
+  })
+  return sortedAreas
+})
+
+// 根據流域取得站點
+const getStationsByArea = (area: string) => {
+  if (!stationSearchQuery.value) {
+    return stationOptions.value.filter(s => (s.area || '不明') === area)
+  }
+  const query = stationSearchQuery.value.toLowerCase()
+  return stationOptions.value.filter(s => 
+    (s.area || '不明') === area && s.name.toLowerCase().includes(query)
+  )
+}
 const historyStationList = ref<string[]>([])
 const dropdownYearRef = ref()
 const dropdownDeviceRef = ref()
@@ -308,6 +384,8 @@ const dropdownStationRef = ref()
 const activeYearTab = ref('')
 const deleteYear = ref<string>('')
 const deleteResult = ref<any>(null)
+const isSearching = ref(false)
+const isSaving = ref(false)
 
 onMounted(async () => {
   try {
@@ -319,7 +397,8 @@ onMounted(async () => {
     // 自動初始化查詢參數
     queryYears.value = [...yearOptions.value]
     queryDevices.value = [...deviceOptions.value]
-    queryStations.value = [...stationOptions.value]
+    selectedAreas.value = [...areaOptions.value]  // 預設選擇所有流域
+    queryStations.value = [...stationOptions.value]  // 這裡會保留完整的站點物件
     
     // 自動執行查詢，顯示歷史數據
     await searchHistory()
@@ -389,7 +468,10 @@ function getDeviceTotal(device, stationList) {
 }
 
 async function saveDevices() {
+    if (isSaving.value) return
+    
     try {
+        isSaving.value = true
         const devicesToSave = devices.value.map(d => {
             const stationCounts = { ...d.stationCounts }
             delete stationCounts['合計']
@@ -399,18 +481,23 @@ async function saveDevices() {
             year: year.value,
             devices: devicesToSave
         })
-        alert('儲存成功')
+        ElMessage.success('儲存成功')
     } catch (error) {
-        alert('儲存失敗')
+        ElMessage.error('儲存失敗')
+        console.error('儲存失敗:', error)
+    } finally {
+        isSaving.value = false
     }
 }
 
 async function searchHistory() {
-  // 1. 查詢參數
-  const years = queryYears.value.length ? queryYears.value : yearOptions.value
-  const devices = queryDevices.value.length ? queryDevices.value : deviceOptions.value
-  const stations = queryStations.value.length ? queryStations.value : stationOptions.value
-  console.log('查詢參數:', { years, devices, stations })
+  try {
+    isSearching.value = true
+    // 1. 查詢參數
+    const years = queryYears.value.length ? queryYears.value : yearOptions.value
+    const devices = queryDevices.value.length ? queryDevices.value : deviceOptions.value
+    const stations = queryStations.value.length ? queryStations.value.map(s => s.name || s) : stationOptions.value.map(s => s.name || s)
+    console.log('查詢參數:', { years, devices, stations })
 
   // 2. 查詢 API 回應
   const response = await apiQueryDeviceRepairHistory({
@@ -490,6 +577,14 @@ async function searchHistory() {
     const minYear = Math.min(...historyDevices.value.map(g => Number(g.year)))
     activeYearTab.value = String(minYear)
   }
+    
+    ElMessage.success('查詢完成')
+  } catch (error) {
+    console.error('查詢失敗:', error)
+    ElMessage.error('查詢失敗')
+  } finally {
+    isSearching.value = false
+  }
 }
 
 function closeYearDropdown() {
@@ -535,15 +630,50 @@ function toggleSelectAllDevices() {
   }
 }
 
-// 站點
-const isAllStationsSelected = computed(() =>
-  queryStations.value.length === stationOptions.value.length
+// 設備搜尋過濾
+const filteredDeviceOptions = computed(() => {
+  if (!deviceSearchQuery.value) return deviceOptions.value
+  const query = deviceSearchQuery.value.toLowerCase()
+  return deviceOptions.value.filter(device =>
+    device.toLowerCase().includes(query)
+  )
+})
+
+// 站點搜尋過濾
+const filteredStationOptions = computed(() => {
+  if (!stationSearchQuery.value) return stationOptions.value
+  const query = stationSearchQuery.value.toLowerCase()
+  return stationOptions.value.filter(station =>
+    station.name.toLowerCase().includes(query) || station.area.toLowerCase().includes(query)
+  )
+})
+
+// 流域
+const isAllAreasSelected = computed(() =>
+  selectedAreas.value.length === areaOptions.value.length
 )
+function toggleSelectAllAreas() {
+  if (isAllAreasSelected.value) {
+    selectedAreas.value = []
+  } else {
+    selectedAreas.value = [...areaOptions.value]
+  }
+}
+
+// 站點
+const isAllStationsSelected = computed(() => {
+  const availableStations = stationOptions.value.filter(s => 
+    selectedAreas.value.includes(s.area || '不明')
+  )
+  return queryStations.value.length === availableStations.length
+})
 function toggleSelectAllStations() {
   if (isAllStationsSelected.value) {
     queryStations.value = []
   } else {
-    queryStations.value = [...stationOptions.value]
+    queryStations.value = stationOptions.value.filter(s => 
+      selectedAreas.value.includes(s.area || '不明')
+    )
   }
 }
 
@@ -684,6 +814,19 @@ function downloadHistoryExcel() {
   text-overflow: ellipsis;
   white-space: nowrap;
   vertical-align: middle;
+}
+
+.area-group {
+  margin: 8px 0;
+}
+
+.area-title {
+  font-weight: bold;
+  color: #606266;
+  padding: 4px 8px;
+  background-color: #f5f7fa;
+  border-radius: 4px;
+  margin-bottom: 4px;
 }
 
 @media (max-width: 600px) {

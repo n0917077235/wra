@@ -28,7 +28,11 @@ public class Program
     }
 
     public static IWebHostBuilder CreateWebHostBuilder(string[] args) =>
-        WebHost.CreateDefaultBuilder(args).UseStartup<Startup>();
+        WebHost.CreateDefaultBuilder(args).UseStartup<Startup>()
+                .ConfigureKestrel(options =>
+                {
+                    options.ListenAnyIP(5000); // 允許外部訪問 HTTP
+                }); 
 
     public class Startup
     {
@@ -116,11 +120,11 @@ public class Program
             var lineSection = Configuration.GetSection("Line");
             if (lineSection.Exists())
             {
-                services.AddHostedService<Wra10Core2023.Services.ScheduledTaskServiceSystem>();
-                services.AddHostedService<Wra10Core2023.Services.ScheduledTaskServiceList>();
-                services.AddHostedService<Wra10Core2023.Services.ScheduledTaskServiceSensor>();
-                services.AddHostedService<Wra10Core2023.Services.ScheduledTaskServiceCamera>();
-                services.AddHostedService<Wra10Core2023.Services.ScheduledTaskServiceEarthquake>();
+                //services.AddHostedService<Wra10Core2023.Services.ScheduledTaskServiceSystem>();
+                //services.AddHostedService<Wra10Core2023.Services.ScheduledTaskServiceList>();
+                // services.AddHostedService<Wra10Core2023.Services.ScheduledTaskServiceSensor>();
+                // services.AddHostedService<Wra10Core2023.Services.ScheduledTaskServiceCamera>();
+                // services.AddHostedService<Wra10Core2023.Services.ScheduledTaskServiceEarthquake>();
                 Console.WriteLine("定時排程服務已啟動。");
             }
             else

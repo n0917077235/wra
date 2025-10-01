@@ -31,6 +31,16 @@ export interface SensorGeneralQueryDataResponse {
   status: string;
   userType: string;
 }
+
+export interface SensorGeneralQueryDataResponseWithThresholdAlarm {
+  areaName: string;
+  sensorNameA: string;
+  status: string;
+  lastDataTime: string;
+  lastValue: string;
+  unit: string;
+}
+
 export async function apiGetWaterSensorArea(): Promise<
   WaterSensorAreaResponse[]
 > {
@@ -57,6 +67,17 @@ export async function apiGetWaterEmbankAlarm(): Promise<
 > {
   const response = await apiClient.post<SensorGeneralQueryDataResponse[]>(
     "Sensor/GetSensorGeneralQueryData?parameters=none",
+    {},
+  );
+  
+  return response.data;
+}
+
+export async function apiGetWaterEmbankAlarmWithThresholdAlarm(): Promise<
+  SensorGeneralQueryDataResponseWithThresholdAlarm[]
+> {
+  const response = await apiClient.post<SensorGeneralQueryDataResponseWithThresholdAlarm[]>(
+    "Sensor/GetSensorGeneralQueryDataWithThresholdAlarm",
     {},
   );
   

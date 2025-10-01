@@ -40,10 +40,10 @@
                                     <tbody>
                                         <tr v-for="(c, i) in alarmrtn" :key="i">
                                             <td class="cell-text">{{ c.areaName }}</td>
-                                            <td class="cell-text">{{ c.sensorName }}</td>
+                                            <td class="cell-text">{{ c.sensorNameA }}</td>
                                             <td class="status-cell">{{ c.status }}</td>
                                             <td class="cell-text col-time">{{ c.lastDataTime }}</td>
-                                            <td class="cell-text">{{ c.value }}</td>
+                                            <td class="cell-text">{{ c.lastValue }} {{ c.unit }}</td>
                                         </tr>
                                         <tr v-if="!alarmCount">
                                             <td colspan="5" class="empty-hint">目前沒有警告。</td>
@@ -69,8 +69,8 @@ import { computed, ref, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { useStore } from 'vuex';
 import ToggleLogo from './ToggleLogo.vue';
-import { apiGetWaterEmbankAlarm, SensorGeneralQueryDataResponse } from '@/resource/sensor';
-const alarmrtn = ref<SensorGeneralQueryDataResponse[]>();
+import { apiGetWaterEmbankAlarm, apiGetWaterEmbankAlarmWithThresholdAlarm, SensorGeneralQueryDataResponse, SensorGeneralQueryDataResponseWithThresholdAlarm } from '@/resource/sensor';
+const alarmrtn = ref<SensorGeneralQueryDataResponseWithThresholdAlarm[]>();
 const route = useRoute();
 const store = useStore();
 
@@ -125,10 +125,11 @@ async function checkForAlarms() {
         alarmrtn.value = [
             {
                 areaName: '大漢溪',
-                sensorName: '塔寮坑閘門1',
-                status: '水位過高',
+                sensorNameA: '塔寮坑閘門1',
+                status: '1級警戒',
                 lastDataTime: '2025-08-07 09:15:00',
-                value: '7.12 M'
+                lastValue: '7.12',
+                unit: 'M'
             }
         ];
         shouldShowButton.value = true;
@@ -136,10 +137,9 @@ async function checkForAlarms() {
     }
 
     // 真實呼叫
-    alarmrtn.value = await apiGetWaterEmbankAlarm();
-    const alarms = alarmrtn.value.filter(item => item.status !== '');
-    alarmrtn.value = alarms;
-    shouldShowButton.value = alarms.length > 0;
+    alarmrtn.value = await apiGetWaterEmbankAlarmWithThresholdAlarm();
+    // 不需要額外過濾，因為後端 API 已經只會回傳有警報的資料
+    shouldShowButton.value = alarmrtn.value.length > 0;
 }
 
 // 當按下警告按鈕時觸發，顯示警告訊息的對話框

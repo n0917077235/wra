@@ -1159,6 +1159,60 @@ public class SensorController : ControllerBase
         return JsonConvert.SerializeObject(lstDatas);
     }
 
+    [Authorize]
+    [HttpPost]
+    [Route("GetSensorGeneralQueryDataWithThresholdAlarm")]
+    public IActionResult GetSensorGeneralQueryDataWithThresholdAlarm()
+    {
+        string? conn = _configuration.GetConnectionString("Water2022");
+        
+        try
+        {
+            SqlHelper sqlHelper = new SqlHelper(conn);
+            DataTable dt = sqlHelper.ExecuteQuery(@"
+                SELECT 
+                    a.AreaName,
+                    s.SensorNameA,
+                    CASE 
+                                           WHEN s.ThresholdAlarm <> 0 THEN CONCAT(s.ThresholdAlarm, '級警戒')
+                        WHEN s.isDisc <> 0 THEN '缺測'
+ 
+                        ELSE ''
+                    END as Status,
+                    s.LastDataTime,
+                    CASE 
+                        WHEN s.LastValue2 IS NULL OR s.LastValue2 = 0 THEN 
+                            FORMAT(s.LastValue1, '0.00')
+                        ELSE 
+                            CONCAT(FORMAT(s.LastValue1, '0.00'), ' ,', FORMAT(s.LastValue2, '0.00'))
+                    END as LastValue,
+                    stype.Unit
+                FROM Sensors s
+                INNER JOIN Areas a ON s.AreaId = a.AreaId
+                INNER JOIN SensorTypes stype ON s.SensorType = stype.SensorType
+                WHERE (s.isDisc <> 0 OR s.ThresholdAlarm <> 0)
+                ORDER BY a.AreaName, s.SensorNameA");
+
+            var results = dt.AsEnumerable().Select(row => new
+            {
+                AreaName = row["AreaName"].ToString(),
+                SensorNameA = row["SensorNameA"].ToString(),
+                Status = row["Status"].ToString(),
+                LastDataTime = row["LastDataTime"] != DBNull.Value ? 
+                    Convert.ToDateTime(row["LastDataTime"]).ToString("yyyy-MM-dd HH:mm:ss") : null,
+                LastValue = row["LastValue"].ToString(),
+                Unit = row["Unit"].ToString()
+            });
+
+            return Ok(results);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+            return BadRequest(ex.Message);
+        }
+    }
+
     private static (string areas, string sensorTypes) ParseParameters(string parameters)
     {
         if (parameters == "none") return ("", "");
