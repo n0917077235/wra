@@ -124,8 +124,7 @@ public static class IsoseismalUtil
         var startInfo = new ProcessStartInfo();
         startInfo.WindowStyle = ProcessWindowStyle.Hidden;
         startInfo.FileName = "cmd.exe";
-        startInfo.Arguments = "/C python -m venv .venv && .venv\\Scripts\\activate && " +
-            "python srec_interpolate.py input.txt log_plot";
+        startInfo.Arguments = "/C python srec_interpolate.py input.txt log_plot";
         startInfo.WorkingDirectory = dir;
         process.StartInfo = startInfo;
         process.Start();

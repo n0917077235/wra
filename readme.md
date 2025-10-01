@@ -32,6 +32,11 @@ python -m venv .venv
 - Run: `python srec_interpolate.py sample.txt log_plot`
 - Output file is in `main\srec_proj\Output`
 
+- On the test machine located at WRA, do not use virtual environment.
+  It will report that some packages are not found, despite they are already installed.
+  Install packages globally and run python globally instead. C# code is also modified 
+  to run python globally when generating isoseismal maps.
+
 ## Then, run frontend
 - `cd main\frontend`
 - Run `npm run serve`
@@ -46,28 +51,22 @@ python -m venv .venv
   - Delete all files and directories in `bin\Release`
   - Run `dotnet build -c Release --self-contained -r win-x64`
   - The build result can be found in `main\backend\Wra10Core2023\bin\Release\net6.0-windows10.0.17763.0\win-x64`
-  - Copy the result to server: `C:\main\backend`. The folder should contain `Wra10Core2023.exe` 
   - Configure connection strings in `appsettings.json` as required
+  - Copy the build result indicated in Visual Studio output messages, to server:       
+    `C:\ancad\backend`. The folder should contain `Wra10Core2023.exe` 
 
 * Compile frontend
   - In `frontend\.env`, set `VUE_APP_API_URL` to the public url of backend.
   - `cd main\frontend && npm run build`
-  - Copy the resulting static files in `dist` to server: `C:\main\backend\Webpage`
+  - Copy the resulting static files in `dist` to server: `C:\ancad\backend\Webpage`
 
-* Copy the folder `srec_proj` to server: `C:\main\srec_proj` 
+* Copy the folder `srec_proj` to server: `C:\ancad\srec_proj` 
 
-* On the server, `C:\main` should contain 2 folders:
+* On the server, `C:\ancad` should contain 2 folders:
   - `backend`
   - `srec_proj`
 
-* Start backend: `cd C:\main\backend && Wra10Core2023.exe`
-
-* On server, run nginx with config file `nginx.conf`
-* Site is now online at `http://localhost`
-* On main server that manages the domain, setup HTTPS, and use  
-  IIS reverse proxy to direct HTTP requests, E.g.
-  - pass `http://rivermonitoring.wra10.gov.tw/v2` to http://{server_ip}/v2
-
+* Setup IIS: 
 * Please view this document for more info about IIS reverse proxy setup and related information
   (file name: 關於網頁伺服器設定.pdf) 
   https://drive.google.com/drive/folders/1zw22I2bh7ZjRwmEjXswPoZayB_grApyO?usp=sharing

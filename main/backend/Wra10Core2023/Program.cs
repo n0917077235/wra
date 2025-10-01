@@ -28,11 +28,9 @@ public class Program
     }
 
     public static IWebHostBuilder CreateWebHostBuilder(string[] args) =>
-        WebHost.CreateDefaultBuilder(args).UseStartup<Startup>()
-                .ConfigureKestrel(options =>
-                {
-                    options.ListenAnyIP(5000); // 允許外部訪問 HTTP
-                }); 
+        WebHost.CreateDefaultBuilder(args)
+        .UseStartup<Startup>()
+        .UseUrls("http://localhost:10000/");
 
     public class Startup
     {
@@ -191,7 +189,7 @@ public class Program
                 app.UseFileServer(new FileServerOptions
                 {
                     FileProvider = new PhysicalFileProvider(webPageDir),
-                    RequestPath = "",
+                    RequestPath = PublicPath,
                     EnableDefaultFiles = true
                 });
 
