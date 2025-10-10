@@ -30,7 +30,11 @@ public class Program
     public static IWebHostBuilder CreateWebHostBuilder(string[] args) =>
         WebHost.CreateDefaultBuilder(args)
         .UseStartup<Startup>()
-        .UseUrls("http://localhost:10000/");
+        // .UseUrls("http://localhost:10000/");
+        .ConfigureKestrel(options =>
+{
+    options.ListenAnyIP(5000); // 允許外部訪問 HTTP
+});
 
     public class Startup
     {

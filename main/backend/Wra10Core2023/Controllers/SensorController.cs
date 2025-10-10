@@ -1174,9 +1174,9 @@ public class SensorController : ControllerBase
                     a.AreaName,
                     s.SensorNameA,
                     CASE 
-                                           WHEN s.ThresholdAlarm <> 0 THEN CONCAT(s.ThresholdAlarm, '級警戒')
+                        WHEN s.ThresholdAlarm <> 0 AND s.isDisc <> 0 THEN CONCAT(s.ThresholdAlarm, '級警戒,缺測')
+                        WHEN s.ThresholdAlarm <> 0 THEN CONCAT(s.ThresholdAlarm, '級警戒')
                         WHEN s.isDisc <> 0 THEN '缺測'
- 
                         ELSE ''
                     END as Status,
                     s.LastDataTime,

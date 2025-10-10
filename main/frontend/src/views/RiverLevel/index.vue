@@ -2,16 +2,29 @@
   <div class="search">
     <!-- 區域選擇器 -->
     <div class="control-panel">
-      <el-select v-model="selectedArea" placeholder="請選擇區域" @change="handleAreaChange">
-        <el-option
-          v-for="area in areaOptions"
-          :key="area.value"
-          :label="area.label"
-          :value="area.value"
-        />
-      </el-select>
+      <div class="select-group">
+        <el-select v-model="selectedArea" placeholder="請選擇區域" @change="handleAreaChange">
+          <el-option
+            v-for="area in areaOptions"
+            :key="area.value"
+            :label="area.label"
+            :value="area.value"
+          />
+        </el-select>
+        <div class="filter-group">
+          <el-checkbox v-model="filters.leftBank" label="左岸" />
+          <el-checkbox v-model="filters.rightBank" label="右岸" />
+          <el-checkbox v-model="filters.undefined" label="未定位" />
+        </div>
+      </div>
     </div>
-
+    <!-- 水位折線圖 -->
+    <div v-if="chartReady" class="chart-container">
+      <h3>水位折線圖</h3>
+      <div class="chart-wrapper">
+        <line-chart :data="chartData" :options="chartOptions" :key="chartUpdateKey" />
+      </div>
+    </div>
     <!-- 地圖容器 -->
     <div ref="mapContainer" class="map-container" style="height: 200px; width: 100%; position: relative;">
       <!-- 信息窗口 -->
@@ -22,28 +35,24 @@
         </div>
         <div class="info-window-content">
           <div v-if="infoWindow.sensor">
-            <div class="info-item marker-highlight"><span>目前查看:</span> {{ infoWindow.sensor.SensorNameA || `感測器 ${infoWindow.sensor.SensorID}` }}</div>
-            <div class="info-item"><span>感測器ID:</span> {{ infoWindow.sensor.SensorID }}</div>
-            <div class="info-item"><span>最新水位:</span> {{ infoWindow.sensor.LastValue1 }} {{ infoWindow.sensor.DataUnit }}</div>
+            <!-- <div class="info-item marker-highlight"><span>目前查看:</span> {{ infoWindow.sensor.SensorNameA || `感測器 ${infoWindow.sensor.SensorID}` }}</div> -->
+            <!-- <div class="info-item"><span>感測器ID:</span> {{ infoWindow.sensor.SensorID }}</div> -->
+            <div class="info-item"><span>最新水位:</span> {{ infoWindow.sensor.LastValue1 }} M</div>
+            <div class="info-item"><span>位於:</span> {{ infoWindow.sensor.Riverside == 0 ? '左岸' : infoWindow.sensor.Riverside == 1 ? '右岸' : '未定位' }}</div>
             <div class="info-item"><span>更新時間:</span> {{ infoWindow.sensor.LastDataTime }}</div>
-            <div class="info-item"><span>狀態:</span> {{ infoWindow.sensor.Status || '正常' }}</div>
+            <!-- <div class="info-item"><span>狀態:</span> {{ infoWindow.sensor.Status || '正常' }}</div> -->
           </div>
         </div>
         <!-- 連接線指示當前選中的標記 -->
         <div class="info-window-pointer"></div>
       </div>
     </div>
+
     
-    <!-- 水位折線圖 -->
-    <div v-if="chartReady" class="chart-container">
-      <h3>水位折線圖</h3>
-      <div class="chart-wrapper">
-        <line-chart :data="chartData" :options="chartOptions" :key="chartUpdateKey" />
-      </div>
-    </div>
+
 
     <!-- 感測器列表 (已註釋) -->
-    <!-- 
+    
     <div v-if="sensors.length > 0" class="sensor-list">
       <h3>感測器列表</h3>
       <el-table :data="sortedSensors" stripe style="width: 100%" class="custom-table">
@@ -52,7 +61,7 @@
         <el-table-column prop="LastDataTime" label="最後資料時間" width="180" />
         <el-table-column label="最新水位" width="120">
           <template #default="scope">
-            {{ scope.row.LastValue1 }} {{ scope.row.DataUnit }}
+            {{ scope.row.LastValue1 }} M
           </template>
         </el-table-column>
         <el-table-column label="操作" width="120">
@@ -68,21 +77,18 @@
         </el-table-column>
       </el-table>
     </div>
-    -->
+   
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted, computed, defineComponent } from 'vue'
-import { ElSelect, ElOption, ElTable, ElTableColumn, ElButton } from 'element-plus'
+import { ElSelect, ElOption, ElTable, ElTableColumn, ElButton, ElCheckbox } from 'element-plus'
 import RiverLevelAPI from '@/resource/riverlevel'
 import { Chart as ChartJS, Title, Tooltip, Legend, LineElement, CategoryScale, LinearScale, PointElement, Filler } from 'chart.js'
 import { Line } from 'vue-chartjs'
 
-// 宣告 TGOS 全域變數
-declare global {
-  const TGOS: any
-}
+declare const ol: any;
 
 // 註冊 ChartJS 組件，包括 Filler 插件用於區域填充
 ChartJS.register(Title, Tooltip, Legend, LineElement, CategoryScale, LinearScale, PointElement, Filler)
@@ -140,8 +146,15 @@ const selectedArea = ref('')
 const areaOptions = ref<{ value: string; label: string }[]>([])
 const sensors = ref<any[]>([])
 let map: any = null
-let markers: any[] = []
-let activeMarker: any = null // 添加用於保存當前活動標記的變數
+
+// 新增篩選條件
+const filters = ref({
+  leftBank: true,
+  rightBank: true,
+  undefined: true
+})
+let markers: Feature[] = []
+let activeMarker: Feature | null = null // 添加用於保存當前活動標記的變數
 const chartReady = ref(false)
 const chartUpdateKey = ref(0) // 添加用於強制圖表更新的 key
 const activeMarkerId = ref(null) // 添加活動標記的ID
@@ -163,24 +176,29 @@ const closeInfoWindow = () => {
   activeMarker = null;
 }
 
-// 按照SensorID排序的感測器列表
+// 按照RiverOrder排序的感測器列表
 const sortedSensors = computed(() => {
-  return [...sensors.value].sort((a, b) => {
-    // 將SensorID轉換為字串後進行比較
-    const idA = String(a.SensorID)
-    const idB = String(b.SensorID)
-    
-    // 如果SensorID是數字形式的字串，嘗試數字排序
-    const numA = parseInt(idA)
-    const numB = parseInt(idB)
-    
-    if (!isNaN(numA) && !isNaN(numB)) {
+  return [...sensors.value]
+    // 先篩選岸別
+    .filter(sensor => {
+      if (sensor.Riverside == 0 && filters.value.leftBank) return true;
+      if (sensor.Riverside == 1 && filters.value.rightBank) return true;
+      if ((sensor.Riverside == null || sensor.Riverside === '') && filters.value.undefined) return true;
+      return false;
+    })
+    // 再進行排序
+    .sort((a, b) => {
+      // 將 null 或空值視為 999999
+      const valueA = a.RiverOrder === null ? 999999 : parseInt(a.RiverOrder)
+      const valueB = b.RiverOrder === null ? 999999 : parseInt(b.RiverOrder)
+
+      // 如果轉換失敗也視為 999999
+      const numA = isNaN(valueA) ? 999999 : valueA
+      const numB = isNaN(valueB) ? 999999 : valueB
+
+      // 小的排前面，所以用升序排序（a - b）
       return numA - numB
-    }
-    
-    // 如果不是純數字或轉換失敗，則按字串排序
-    return idA.localeCompare(idB)
-  })
+    })
 })
 
 // 圖表數據和配置
@@ -209,13 +227,15 @@ const chartData = computed(() => {
       return defaultChartData
     }
     
-    // 從排序後的感測器中獲取數據
-    const labels = sortedSensors.value.map(sensor => sensor.SensorNameA || sensor.SensorID || '未命名')
-    const waterLevels = sortedSensors.value.map(sensor => {
+    // 從排序後的感測器中獲取數據，並過濾掉水位小於-200的資料
+    const validSensors = sortedSensors.value.filter(sensor => {
       const value = parseFloat(sensor.LastValue1)
-      return isNaN(value) ? 0 : value
+      return !isNaN(value) && value > -200
     })
-    const dataUnit = sortedSensors.value[0]?.DataUnit || ''
+    
+    const labels = validSensors.map(sensor => sensor.SensorNameA || sensor.SensorID || '未命名')
+    const waterLevels = validSensors.map(sensor => parseFloat(sensor.LastValue1))
+    const dataUnit = 'M';
     
     // 計算數據中的最小值
     let minDataValue = Math.min(...waterLevels.filter(val => !isNaN(val)))
@@ -408,8 +428,14 @@ const locateSensor = (sensor: any) => {
       // 轉換為數值以確保正確處理
       const x = parseFloat(sensor.X)
       const y = parseFloat(sensor.Y)
-      map.setCenter(new TGOS.TGPoint(x, y))
-      map.setZoom(16)  // 放大以便清楚查看
+      const coordinates = ol.proj.fromLonLat([x, y])
+      
+      // 設置地圖中心和縮放級別
+      map.getView().animate({
+        center: coordinates,
+        zoom: 16,
+        duration: 1000  // 1秒的動畫
+      });
       
       // 滾動頁面到地圖位置
       if (mapContainer.value) {
@@ -432,230 +458,161 @@ const locateSensor = (sensor: any) => {
 }
 
 // 在地圖上標記感測器
-const markSensorsOnMap = (sensorList: any[]) => {
-  if (!map) return
-  
-  // 只處理有座標的感測器
-  const validSensors = sensorList.filter(sensor => sensor.X && sensor.Y)
-  
-  console.log('有效的感測器數量:', validSensors.length)
-  
-  if (validSensors.length === 0) return
-  
-  // 計算所有座標的範圍
-  let minX = Infinity, maxX = -Infinity
-  let minY = Infinity, maxY = -Infinity
-  
-  validSensors.forEach(sensor => {
-    try {
-      const x = parseFloat(sensor.X)
-      const y = parseFloat(sensor.Y)
-      
-      // 更新座標範圍
-      minX = Math.min(minX, x)
-      maxX = Math.max(maxX, x)
-      minY = Math.min(minY, y)
-      maxY = Math.max(maxY, y)
-      
-      // 創建標記點
-      const point = new TGOS.TGPoint(x, y)
-      
-      // 定義標記選項
-      const markerOptions = {
-        flat: false,
-        visible: true,
-        label: sensor.SensorNameA,
-        labelVisible: false // 初始不顯示標籤
-      }
-      
-      // 創建標記
-      const marker = new TGOS.TGMarker(map, point, markerOptions)
-      
-      // 明確設置標題文字，這將在滑鼠懸停時顯示
-      marker.setTitle(sensor.SensorNameA)
-      
-      // 添加滑鼠懸停事件 - 僅改變游標為可點擊狀態
-      TGOS.TGEvent.addListener(marker, "mouseover", function() {
-        try {
-          // 改變游標為可點擊狀態
-          map.getDiv().style.cursor = 'pointer';
-        } catch (error) {
-          console.error('設置游標錯誤:', error);
-        }
-      });
-      
-      // 添加滑鼠離開事件 - 恢復游標
-      TGOS.TGEvent.addListener(marker, "mouseout", function() {
-        try {
-          // 恢復游標
-          map.getDiv().style.cursor = '';
-        } catch (error) {
-          console.error('恢復游標錯誤:', error);
-        }
-      });
-      
-      // 添加點擊事件
-      TGOS.TGEvent.addListener(marker, "click", function(e) {
-        try {
-          // 如果有先前活動的標記，恢復其狀態
-          if (activeMarker && activeMarker !== marker) {
-            // 使用安全的方式恢復標記狀態
-            // 不需要任何視覺效果，已移除
-          }
-          
-          // 保存當前活動標記
-          activeMarker = marker;
-          
-          // 先將地圖中心設置為標記位置
-          // const markerPosition = marker.getPosition();
-          // map.setCenter(markerPosition);
-          
-          // 適當放大地圖（如果當前縮放級別低於15）
-          // if (map.getZoom() < 15) {
-          //   map.setZoom(15);
-          // }
-          
-          // 已移除標記視覺效果，不再需要設置選中效果
-          
-          // 設置信息窗口內容
-          infoWindow.value.visible = true;
-          infoWindow.value.title = sensor.SensorNameA || `感測器 ${sensor.SensorID}`;
-          infoWindow.value.sensor = sensor;
-          
-          // 將活動標記ID保存起來，以便可以在用戶界面中顯示其連接
-          activeMarkerId.value = sensor.SensorID;
-        } catch (error) {
-          console.error('顯示信息窗口時發生錯誤:', error);
-        }
+// 建立標記的基本樣式
+const createMarkerStyle = (selected: boolean = false) => {
+  return new ol.style.Style({
+    image: new ol.style.Circle({
+      radius: selected ? 8 : 6,
+      fill: new ol.style.Fill({
+        color: selected ? '#2196F3' : '#3388ff'
+      }),
+      stroke: new ol.style.Stroke({
+        color: '#ffffff',
+        width: 2
       })
-      
-      markers.push(marker)
-    } catch (error) {
-      console.error('建立標記時發生錯誤:', error)
-    }
-  })
-  
-  // 根據標記位置自動調整地圖視圖
-  try {
-    if (validSensors.length > 0) {
-      // 計算中心點
-      const centerX = (minX + maxX) / 2
-      const centerY = (minY + maxY) / 2
-      map.setCenter(new TGOS.TGPoint(centerX, centerY))
-      
-      // 計算適當的縮放級別
-      // 根據標記的分佈範圍決定縮放級別
-      const spanX = maxX - minX
-      const spanY = maxY - minY
-      const maxSpan = Math.max(spanX, spanY)
-      
-      // 輸出最大跨度，方便調試
-      console.log('標記分佈的最大跨度:', maxSpan)
-      
-      // 根據範圍大小決定縮放級別
-      let zoomLevel
-      if (validSensors.length === 1) {
-        // 單個標記時使用較高縮放級別
-        zoomLevel = 15  // 從16降低到15，增加可視範圍
-      } else {
-        // 使用對數函數計算適當的縮放級別
-        // TGOS 地圖的縮放級別範圍通常是 0-18
-        // 這裡我們將最大跨度轉換為縮放級別 9-15
-        
-        // 經驗閾值調整：
-        // 當 maxSpan = 0.005 時，設置 zoomLevel = 14 (原本15)
-        // 當 maxSpan = 0.05 時，設置 zoomLevel = 12 (原本13)
-        // 當 maxSpan = 0.5 時，設置 zoomLevel = 9 (原本10)
-        
-        if (maxSpan < 0.005) {
-          zoomLevel = 14  // 從15降低到14，增加可視範圍
-        } else if (maxSpan < 0.01) {
-          zoomLevel = 13  // 從14降低到13
-        } else if (maxSpan < 0.05) {
-          zoomLevel = 12  // 從13降低到12
-        } else if (maxSpan < 0.1) {
-          zoomLevel = 11  // 從12降低到11
-        } else if (maxSpan < 0.2) {
-          zoomLevel = 10  // 從11降低到10
-        } else {
-          zoomLevel = 9   // 從10降低到9
-        }
-        
-        // 為了避免縮放太近或太遠，我們限制縮放級別在一個合理範圍內
-        zoomLevel = Math.max(9, Math.min(zoomLevel, 14))  // 下限從10降低到9，上限從15降低到14
-      }
-      
-      console.log('計算得到的縮放級別:', zoomLevel)
-      map.setZoom(zoomLevel)
-      
-      // 確保地圖類型設置為航照影像
-      map.setMapTypeId(TGOS.TGMapTypeId.IMAGENLSC)
-    } else {
-      // 如果沒有有效標記，則使用默認視圖（台北市）
-      map.setCenter(new TGOS.TGPoint(121.5333, 25.0383))
-      map.setZoom(11)
-      map.setMapTypeId(TGOS.TGMapTypeId.IMAGENLSC)
-    }
-  } catch (error) {
-    console.error('自動調整地圖視圖時發生錯誤:', error)
-    // 出錯時使用默認視圖
-    map.setCenter(new TGOS.TGPoint(121.5333, 25.0383))
-    map.setZoom(11)
-    map.setMapTypeId(TGOS.TGMapTypeId.IMAGENLSC)
+    })
+  });
+};
+
+// 將感測器資料轉換為地圖特徵
+const createSensorFeature = (sensor: any) => {
+  const coordinates = ol.proj.fromLonLat([
+    parseFloat(sensor.X),
+    parseFloat(sensor.Y)
+  ]);
+
+  const feature = new ol.Feature({
+    geometry: new ol.geom.Point(coordinates),
+    properties: sensor
+  });
+
+  feature.setStyle(createMarkerStyle(false));
+  return feature;
+};
+
+// 處理特徵點擊事件
+const handleFeatureClick = (feature: any) => {
+  // 重置前一個選中的標記樣式
+  if (activeMarker && activeMarker !== feature) {
+    activeMarker.setStyle(createMarkerStyle(false));
   }
-}
+
+  // 設置新的選中標記
+  activeMarker = feature;
+  feature.setStyle(createMarkerStyle(true));
+
+  // 更新信息窗口
+  const sensor = feature.get('properties');
+  infoWindow.value.visible = true;
+  infoWindow.value.title = sensor.SensorNameA || `感測器 ${sensor.SensorID}`;
+  infoWindow.value.sensor = sensor;
+  activeMarkerId.value = sensor.SensorID;
+};
+
+// 在地圖上標記感測器
+const markSensorsOnMap = (sensorList: any[]) => {
+  if (!map) return;
+
+  // 清除現有的標記
+  map.vectorSource.clear();
+  markers = [];
+
+  // 只處理有座標的感測器
+  const validSensors = sensorList.filter(sensor => sensor.X && sensor.Y);
+  console.log('有效的感測器數量:', validSensors.length);
+  if (validSensors.length === 0) return;
+
+  // 建立所有標記
+  const features = validSensors.map(createSensorFeature);
+  const extent = ol.extent.createEmpty();
+
+  // 添加標記並計算範圍
+  features.forEach(feature => {
+    map.vectorSource.addFeature(feature);
+    markers.push(feature);
+    ol.extent.extend(extent, feature.getGeometry().getExtent());
+  });
+
+  // 設置地圖視圖
+  if (!ol.extent.isEmpty(extent)) {
+    map.getView().fit(extent, {
+      padding: [50, 50, 50, 50],
+      maxZoom: 14
+    });
+  } else {
+    // 使用默認視圖（台北市）
+    map.getView().setCenter(ol.proj.fromLonLat([121.5333, 25.0383]));
+    map.getView().setZoom(11);
+  }
+
+  // 添加地圖事件監聽器
+  if (!map.clickListenerAdded) {
+    map.on('click', (e: any) => {
+      const clickedFeature = map.forEachFeatureAtPixel(e.pixel, (feature: any) => feature);
+      if (clickedFeature) {
+        handleFeatureClick(clickedFeature);
+      }
+    });
+
+    map.on('pointermove', (e: any) => {
+      const hit = map.forEachFeatureAtPixel(e.pixel, () => true);
+      map.getViewport().style.cursor = hit ? 'pointer' : '';
+    });
+
+    map.clickListenerAdded = true;
+  }
+};
 
 // 清除所有標記
 const clearMarkers = () => {
-  markers.forEach(marker => {
-    marker.setMap(null)
-  })
-  markers = []
+  if (map && map.vectorSource) {
+    map.vectorSource.clear();
+  }
+  markers = [];
   
   // 確保清除標記時也關閉信息窗口
-  closeInfoWindow()
-  activeMarkerId.value = null
+  closeInfoWindow();
+  activeMarkerId.value = null;
 }
 
 function initMap() {
   if (!mapContainer.value) return
 
-  // 初始化 TGOS 地圖，設定為航照影像
-  map = new TGOS.TGOnlineMap(
-    mapContainer.value,
-    TGOS.TGCoordSys.EPSG3857,
-    { 
-      mapTypeControl: false,  // 關閉地圖類型切換控制項
-      scaleControl: false,    // 關閉比例尺控制項
-      navigationControl: false, // 關閉導航控制項
-      disableDefaultUI: true  // 禁用所有默認UI元素
-    }
-  )
-  
-  // 設置初始位置（台北市）
-  map.setCenter(new TGOS.TGPoint(121.5333, 25.0383)) // 台北市中心點
-  map.setZoom(11)  // 縮小視角以顯示整個台北市
-  
-  // 設定地圖類型
-  map.setMapTypeId(TGOS.TGMapTypeId.IMAGENLSC)
+  // 初始化 Google 衛星圖層（純衛星圖，無標籤）
+  const satelliteLayer = new ol.layer.Tile({
+    source: new ol.source.XYZ({
+      url: 'https://mt1.google.com/vt/lyrs=s&hl=zh-TW&x={x}&y={y}&z={z}'
+    })
+  });
+
+  // 建立地圖
+  map = new ol.Map({
+    target: mapContainer.value,
+    layers: [satelliteLayer],
+    view: new ol.View({
+      center: ol.proj.fromLonLat([121.5333, 25.0383]), // 台北市中心點
+      zoom: 11
+    })
+  });
+
+  // 建立向量圖層來放置標記
+  const vectorSource = new ol.source.Vector();
+  const vectorLayer = new ol.layer.Vector({
+    source: vectorSource
+  });
+  map.addLayer(vectorLayer);
+
+  // 儲存向量圖層的引用以供後續使用
+  map.vectorLayer = vectorLayer;
+  map.vectorSource = vectorSource;
 }
 
 onMounted(() => {
   // 獲取區域列表
   fetchAreaList()
-
-  // 確保 TGOS API 已載入
-  if (typeof TGOS !== 'undefined') {
-    initMap()
-  } else {
-    // 等待 API 載入
-    const checkTGOS = setInterval(() => {
-      if (typeof TGOS !== 'undefined') {
-        clearInterval(checkTGOS)
-        initMap()
-      }
-    }, 100)
-  }
+  
+  // 初始化地圖
+  initMap()
 })
 </script>
 
@@ -720,6 +677,17 @@ onMounted(() => {
   background: #fff;
   border-radius: 4px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+  .select-group {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .filter-group {
+    display: flex;
+    gap: 12px;
+  }
 }
 
 .map-container {

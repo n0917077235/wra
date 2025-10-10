@@ -20,7 +20,11 @@
                         <!-- 警告內容：由 Canvas 改為 HTML 文字表格 + 字體大小控制 -->
                         <div class="alarm-body">
                             <div class="alarm-toolbar">
-                                <span class="table-header">警告清單（{{ alarmCount }} 筆）</span>
+                                <span class="table-header">警告清單（{{ filteredAlarms.length }} 筆）</span>
+                                <div class="filter-group">
+                                    <el-checkbox v-model="showWarning" label="警戒" />
+                                    <el-checkbox v-model="showDisc" label="缺測" />
+                                </div>
                                 <div class="toolbar-spacer"></div>
                                 <el-button size="small" @click="decFont" title="縮小字體">A-</el-button>
                                 <el-button size="small" @click="resetFont" title="重設字體">A</el-button>
@@ -38,15 +42,15 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <tr v-for="(c, i) in alarmrtn" :key="i">
+                                        <tr v-for="(c, i) in filteredAlarms" :key="i">
                                             <td class="cell-text">{{ c.areaName }}</td>
                                             <td class="cell-text">{{ c.sensorNameA }}</td>
                                             <td class="status-cell">{{ c.status }}</td>
                                             <td class="cell-text col-time">{{ c.lastDataTime }}</td>
                                             <td class="cell-text">{{ c.lastValue }} {{ c.unit }}</td>
                                         </tr>
-                                        <tr v-if="!alarmCount">
-                                            <td colspan="5" class="empty-hint">目前沒有警告。</td>
+                                        <tr v-if="!filteredAlarms.length">
+                                            <td colspan="5" class="empty-hint">目前沒有符合條件的警告。</td>
                                         </tr>
                                     </tbody>
                                 </table>
@@ -71,6 +75,22 @@ import { useStore } from 'vuex';
 import ToggleLogo from './ToggleLogo.vue';
 import { apiGetWaterEmbankAlarm, apiGetWaterEmbankAlarmWithThresholdAlarm, SensorGeneralQueryDataResponse, SensorGeneralQueryDataResponseWithThresholdAlarm } from '@/resource/sensor';
 const alarmrtn = ref<SensorGeneralQueryDataResponseWithThresholdAlarm[]>();
+
+// 過濾控制
+const showWarning = ref(true);  // 顯示警戒
+const showDisc = ref(true);     // 顯示缺測
+
+// 過濾後的警告列表
+const filteredAlarms = computed(() => {
+    if (!alarmrtn.value) return [];
+    return alarmrtn.value.filter(alarm => {
+        const hasWarning = alarm.status.includes('警戒');
+        const hasDisc = alarm.status.includes('缺測');
+        
+        // 依據勾選狀態過濾
+        return (hasWarning && showWarning.value) || (hasDisc && showDisc.value);
+    });
+});
 const route = useRoute();
 const store = useStore();
 
@@ -235,6 +255,17 @@ onMounted(() => {
     align-items: center;
     gap: 8px;
     margin-bottom: 12px;
+}
+
+.filter-group {
+    display: flex;
+    gap: 16px;
+    margin-left: 16px;
+}
+
+.filter-group :deep(.el-checkbox__label) {
+    font-size: inherit;
+    color: #000;
 }
 
 .toolbar-spacer {

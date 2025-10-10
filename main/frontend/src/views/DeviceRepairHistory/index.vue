@@ -335,7 +335,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { apiUploadDeviceRepairExcel, apiSaveDeviceRepairHistory, apiQueryDeviceRepairHistory, apiGetDeviceRepairOptions, apiDeleteDeviceRepairYear } from '@/resource/devicerepair'
 import { ElButton, ElTable, ElTableColumn, ElInput, ElTabs, ElTabPane, ElDropdown, ElSelect, ElMessage } from 'element-plus'
 import * as XLSX from 'xlsx'
@@ -659,6 +659,18 @@ function toggleSelectAllAreas() {
     selectedAreas.value = [...areaOptions.value]
   }
 }
+
+// 監聽流域選擇變化
+watch(() => selectedAreas.value, (newAreas) => {
+  // 清空當前選擇的站點
+  queryStations.value = []
+  // 全選被選中流域的所有站點
+  if (newAreas.length > 0) {
+    queryStations.value = stationOptions.value.filter(s => 
+      newAreas.includes(s.area || '不明')
+    )
+  }
+}, { immediate: true })
 
 // 站點
 const isAllStationsSelected = computed(() => {

@@ -80,21 +80,14 @@ namespace Wra10Core2023.Services
                             bool needUpdateDisc = false;
                             bool needUpdateAlarm = false;
 
-                            // 判斷缺測或異常值
+                            // 判斷缺測
                             if (lastDataTime.HasValue && (now - lastDataTime.Value).TotalMinutes > 30)
                             {
-                                // 缺測 → 優先處理
+                                // 缺測狀態處理
                                 if (isDisc != 1) // 原本不是缺測 → 更新 & 通報
                                 {
                                     isDisc = 1;
                                     needUpdateDisc = true;
-
-                                    // 缺測時異常值狀態清除
-                                    if (isAlarm != 0)
-                                    {
-                                        isAlarm = 0;
-                                        needUpdateAlarm = true;
-                                    }
 
                                     string channelToken = _configuration["Line:channelAccessToken"];
                                     string groupId = _configuration["Line:groupId"];
@@ -115,28 +108,29 @@ namespace Wra10Core2023.Services
                                     isDisc = 0;
                                     needUpdateDisc = true;
                                 }
+                            }
 
-                                // 再檢查異常值
-                                if (LastValue1 == -998)
+                            // 檢查異常值
+                            if (LastValue1 <= -888)
+                            {
+                                if (isAlarm != 1) // 原本不是異常 → 更新 & 通報
                                 {
-                                    if (isAlarm != 1) // 原本不是異常 → 更新 & 通報
-                                    {
-                                        isAlarm = 1;
-                                        needUpdateAlarm = true;
+                                    isAlarm = 1;
+                                    needUpdateAlarm = true;
 
-                                        string channelToken = _configuration["Line:channelAccessToken"];
-                                        string groupId = _configuration["Line:groupId"];
-                                        string message = $"⚠️異常值通報\n站點名稱：{areaName} {sensorNameA}\r\n感測器回傳異常值 (-998)";
+                                    // string channelToken = _configuration["Line:channelAccessToken"];
+                                    // string groupId = _configuration["Line:groupId"];
+                                    // string message = $"⚠️異常值通報\n站點名稱：{areaName} {sensorNameA}\r\n感測器回傳異常值 (-998)";
 
-                                        var notify = new NotifyService(channelToken, _configuration);
-                                        if (lat.HasValue && lng.HasValue)
-                                            await notify.PushMapAlertAsync(groupId, lat.Value.ToString(), lng.Value.ToString(), message);
-                                        else
-                                            await notify.PushTextAsync(groupId, message);
-                                    }
+                                    // var notify = new NotifyService(channelToken, _configuration);
+                                    // if (lat.HasValue && lng.HasValue)
+                                    //     await notify.PushMapAlertAsync(groupId, lat.Value.ToString(), lng.Value.ToString(), message);
+                                    // else
+                                    //     await notify.PushTextAsync(groupId, message);
                                 }
-                                else
-                                {
+                            }
+                            else
+                            {
                                     if (isAlarm != 0) // 從異常恢復
                                     {
                                         isAlarm = 0;
@@ -150,18 +144,19 @@ namespace Wra10Core2023.Services
                                         string alertLevel = "";
 
                                         // 判斷警戒等級 (一級警戒最嚴重)
-                                        // 只在警戒值不為 NULL (不等於 MaxValue) 時才進行判斷
-                                        if (threshold1 != double.MaxValue && LastValue1 >= threshold1)
+                                        // 使用絕對值進行判斷，只在警戒值不為 NULL (不等於 MaxValue) 時才進行判斷
+                                        double absValue = Math.Abs(LastValue1);
+                                        if (threshold1 != double.MaxValue && absValue >= threshold1)
                                         {
                                             newThresholdAlarm = 1;
                                             alertLevel = "一級";
                                         }
-                                        else if (threshold2 != double.MaxValue && LastValue1 >= threshold2)
+                                        else if (threshold2 != double.MaxValue && absValue >= threshold2)
                                         {
                                             newThresholdAlarm = 2;
                                             alertLevel = "二級";
                                         }
-                                        else if (hasLevel3 && threshold3 != double.MaxValue && LastValue1 >= threshold3)
+                                        else if (hasLevel3 && threshold3 != double.MaxValue && absValue >= threshold3)
                                         {
                                             newThresholdAlarm = 3;
                                             alertLevel = "三級";
@@ -218,7 +213,7 @@ namespace Wra10Core2023.Services
                                     {
                                         int newThresholdAlarm = 0;
                                         string alertLevel = "";
-                                        if (threshold1 != double.MaxValue && LastValue1 >= threshold1)
+                                        if (threshold1 != double.MaxValue && Math.Abs(LastValue1) >= threshold1)
                                         {
                                             newThresholdAlarm = 1;
                                             alertLevel = "一級";
@@ -245,9 +240,7 @@ namespace Wra10Core2023.Services
                                             needUpdateAlarm = true;
                                         }
                                     }
-                                }
                             }
-
 
                             // 更新資料庫
                             if (needUpdateDisc || needUpdateAlarm)
