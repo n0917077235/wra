@@ -309,6 +309,16 @@ const routes: Array<RouteRecordRaw> = [
         },
       },
       {
+        path: 'forminsert',
+        name: 'forminsert',
+        component: () =>
+          import(/* webpackChunkName: "test12" */ '@/views/FormInsert/index.vue'),
+        meta: {
+          clearMainPadding: 1,
+          routerName: '電子表單查詢', requiresAuth: true
+        },
+      },
+      {
         path: 'search',
         name: 'search',
         component: () =>
