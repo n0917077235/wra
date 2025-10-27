@@ -90,53 +90,11 @@ import { Line } from 'vue-chartjs'
 
 declare const ol: any;
 
-// 註冊 ChartJS 組件，包括 Filler 插件用於區域填充
+// 註冊 ChartJS 組件（不註冊 Filler，僅本頁 fill 屬性生效）
 ChartJS.register(Title, Tooltip, Legend, LineElement, CategoryScale, LinearScale, PointElement, Filler)
 
-// 自定義插件：確保填充到 Y 軸的最小值
-const fillToMinPlugin = {
-  id: 'fillToMin',
-  beforeDraw: (chart: any) => {
-    const { ctx, chartArea, scales } = chart
-    if (!chartArea || !scales.y) return
-    
-    // 獲取 Y 軸的最小值在畫布上的位置
-    const minY = scales.y.getPixelForValue(scales.y.min)
-    
-    // 對每個數據集應用填充
-    chart.data.datasets.forEach((dataset: any, i: number) => {
-      if (!dataset._meta) return
-      
-      const meta = Object.values(chart.getDatasetMeta(i))[0] as any
-      if (!meta || !meta.data || !meta.data.length) return
-      
-      // 繪製填充區域
-      ctx.save()
-      ctx.fillStyle = dataset.backgroundColor || 'rgba(54, 162, 235, 0.2)'
-      ctx.beginPath()
-      
-      // 從第一個點開始
-      const firstPoint = meta.data[0]
-      ctx.moveTo(firstPoint.x, firstPoint.y)
-      
-      // 繪製折線
-      meta.data.forEach((point: any) => {
-        ctx.lineTo(point.x, point.y)
-      })
-      
-      // 繪製到底部的邊界
-      const lastPoint = meta.data[meta.data.length - 1]
-      ctx.lineTo(lastPoint.x, minY)
-      ctx.lineTo(firstPoint.x, minY)
-      ctx.closePath()
-      ctx.fill()
-      ctx.restore()
-    })
-  }
-}
 
 // 註冊自定義插件
-ChartJS.register(fillToMinPlugin)
 
 // 引入 LineChart 並重命名為 LineChartComponent
 const LineChart = Line
@@ -328,10 +286,7 @@ const chartOptions = computed(() => {
         position: 'top' as const
       },
       filler: {
-        propagate: false // 禁用默認填充，改用我們的自定義插件
-      },
-      fillToMin: {
-        enabled: true // 啟用我們的自定義填充插件
+        propagate: false // 禁用默認填充
       }
     },
     elements: {

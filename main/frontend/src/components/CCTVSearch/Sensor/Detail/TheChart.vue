@@ -48,7 +48,6 @@ const data = computed<any>(() => {
           if (dataset.label === "初始值") {
             console.log('Exact match found: ' + dataset.label);
           }
-          
           return {
             ...dataset,
             data: dataset.data.map(point => ({
@@ -57,6 +56,7 @@ const data = computed<any>(() => {
             })),
             borderWidth: 1,
             pointRadius: 0, // 移除資料端點的圓圈
+            fill: false, // 禁用區域填色
             ...props.chartData.sensorId.includes("EQ") ? { borderColor: getBorderColor(index) } : {}, // 動態設定線段顏色
             ...props.chartData.sensorId.includes("EQ") ? { backgroundColor: getBorderColor(index) } : {}, // 動態設定背景顏色
             ...dataset.label.charCodeAt(1) == 22987 ? { borderColor: 'rgb(160,160,160)' } : {},

@@ -19,7 +19,7 @@ public class Program
     // http://rivermonitoring.wra10.gov.tw/v2
     // because the frontend embeds many other sites from the same domain
     // and CORS required our site to be deployed with subfolder url.
-    private const string PublicPath = "/v2";
+    private const string PublicPath = "/";
 
     public static void Main(string[] args)
     {
@@ -122,10 +122,10 @@ public class Program
             if (lineSection.Exists())
             {
                 //services.AddHostedService<Wra10Core2023.Services.ScheduledTaskServiceSystem>();
-                //services.AddHostedService<Wra10Core2023.Services.ScheduledTaskServiceList>();
+                // services.AddHostedService<Wra10Core2023.Services.ScheduledTaskServiceList>();
                 // services.AddHostedService<Wra10Core2023.Services.ScheduledTaskServiceSensor>();
                 // services.AddHostedService<Wra10Core2023.Services.ScheduledTaskServiceCamera>();
-                // services.AddHostedService<Wra10Core2023.Services.ScheduledTaskServiceEarthquake>();
+                services.AddHostedService<Wra10Core2023.Services.ScheduledTaskServiceEarthquake>();
                 Console.WriteLine("定時排程服務已啟動。");
             }
             else

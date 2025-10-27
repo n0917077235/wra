@@ -57,6 +57,7 @@ namespace Wra10Core2023.Controllers
                     if (sourceType == "group" || sourceType == "room")
                     {
                         // 如果是來自群組或聊天室的訊息，直接忽略不處理
+                        //Console.WriteLine("Group ID：" + source.GetProperty("groupId").GetString());
                         return Ok();
                     }
                     

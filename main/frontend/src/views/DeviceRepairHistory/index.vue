@@ -566,11 +566,14 @@ async function searchHistory() {
       updateDeviceTotal(d, stationListArr)
     })
 
-    historyDevices.value.push({
-      year,
-      devices: devicesArr,
-      stationList: stationListArr
-    })
+    // 只有當有設備資料時才加入此年度
+    if (devicesArr.length > 0) {
+      historyDevices.value.push({
+        year,
+        devices: devicesArr,
+        stationList: stationListArr
+      })
+    }
   })
   // 預設分頁選最小年份
   if (historyDevices.value.length > 0) {
