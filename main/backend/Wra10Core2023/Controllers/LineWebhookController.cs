@@ -203,7 +203,7 @@ namespace Wra10Core2023.Controllers
                                         await ReplySensorTypeMenuAsync(notify, replyToken!);
                                         return Ok();
                                     }
-                                    if (userText == "選擇組別")
+                                    if (userText == "選擇河系")
                                     {
                                         await SetUserStatusAsync(userId, "area");
                                         await ReplyAreaMenuAsync(notify, replyToken!);
@@ -228,7 +228,7 @@ namespace Wra10Core2023.Controllers
                                 case "area":
                                     if (string.IsNullOrWhiteSpace(userText))
                                     {
-                                        await notify.ReplyTextAsync(replyToken!, "請選擇感測器組別。");
+                                        await notify.ReplyTextAsync(replyToken!, "請選擇感測器河系。");
                                         return Ok();
                                     }
                                     await HandleAreaSelectedAsync(userId, userText, notify, replyToken!, userInfo.Type);
@@ -400,7 +400,7 @@ namespace Wra10Core2023.Controllers
             {
                 var buttons = new List<object>
                 {
-                    new { type = "text", text = "請選擇感測器類組別", weight = "bold", size = "lg", margin = "md" }
+                    new { type = "text", text = "請選擇感測器類河系", weight = "bold", size = "lg", margin = "md" }
                 };
                 for (int j = i; j < Math.Min(i + btnsPerBubble, dt.Rows.Count); j++)
                 {
@@ -662,7 +662,7 @@ namespace Wra10Core2023.Controllers
         {
             // 查詢參數完整性檢查
             var missingParams = new List<string>();
-            if (string.IsNullOrWhiteSpace(userInfo.Area)) missingParams.Add("感測器組別");
+            if (string.IsNullOrWhiteSpace(userInfo.Area)) missingParams.Add("感測器河系");
             if (string.IsNullOrWhiteSpace(userInfo.Type)) missingParams.Add("感測器類型");
             if (string.IsNullOrWhiteSpace(userInfo.SensorId)) missingParams.Add("感測器ID");
             if (string.IsNullOrWhiteSpace(userInfo.SensorName)) missingParams.Add("感測器名稱");

@@ -182,8 +182,8 @@ namespace Wra10Core2023.Services
                 new LineAction 
                 { 
                     type = "message", 
-                    label = string.IsNullOrWhiteSpace(area) ? "選擇組別" : area, 
-                    text = "選擇組別" 
+                    label = string.IsNullOrWhiteSpace(area) ? "選擇河系" : area, 
+                    text = "選擇河系" 
                 },
                 new LineAction 
                 { 
@@ -215,7 +215,7 @@ namespace Wra10Core2023.Services
                         template = new ButtonsTemplate
                         {
                             title = "篩選感測器",
-                            text = "請選擇組別與感測器類型",
+                            text = "請選擇河系與感測器類型",
                             actions = actions
                         }
                     }
